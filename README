@@ -1,0 +1,15 @@
+
+ gps tracker with a gprs connection for reporting and command input.
+
+ UNDER DEVELOPMENT, FAR FROM BEING READY
+
+ source:       https://github.com/rodan/tracy 
+ author:       Petre Rodan <petre.rodan@simplex.ro>
+ license:      GNU GPLv3
+
+Features:
+ - an MSP430F5510 uC for very low quiescent current
+ - programming/debug via TI spy-bi-wire
+ - can be powered from a 12V circuit inside a vehicle, also has a LiPo cell for standalone opperation
+ - analog readout of battery voltage, input voltage
+
