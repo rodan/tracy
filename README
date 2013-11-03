@@ -13,3 +13,5 @@ Features:
  - can be powered from a 12V circuit inside a vehicle, also has a LiPo cell for standalone opperation
  - analog readout of battery voltage, input voltage
 
+ nmea parsers are based on the NMEA library http://sourceforge.net/projects/nmea/
+

@@ -1,0 +1,308 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.8	//
+AR	Common.mk	/^AR		= ar$/;"	m
+AS	Common.mk	/^AS		= as$/;"	m
+CC	Common.mk	/^CC		= gcc$/;"	m
+DEBUG	Makefile	/^DEBUG := $(shell grep "^\\#define CONFIG_DEBUG" config.h)$/;"	m
+GPGGA	nmea/sentence.h	/^    GPGGA   = 0x0001,   \/**< GGA - Essential fix data which provide 3D location and accuracy data. *\/$/;"	e	enum:nmeaPACKTYPE
+GPGSA	nmea/sentence.h	/^    GPGSA   = 0x0002,   \/**< GSA - GPS receiver operating mode, SVs used for navigation, and DOP values. *\/$/;"	e	enum:nmeaPACKTYPE
+GPGSV	nmea/sentence.h	/^    GPGSV   = 0x0004,   \/**< GSV - Number of SVs in view, PRN numbers, elevation, azimuth & SNR values. *\/$/;"	e	enum:nmeaPACKTYPE
+GPNON	nmea/sentence.h	/^    GPNON   = 0x0000,   \/**< Unknown packet type. *\/$/;"	e	enum:nmeaPACKTYPE
+GPRMC	nmea/sentence.h	/^    GPRMC   = 0x0008,   \/**< RMC - Recommended Minimum Specific GPS\/TRANSIT Data. *\/$/;"	e	enum:nmeaPACKTYPE
+GPVTG	nmea/sentence.h	/^    GPVTG   = 0x0010    \/**< VTG - Actual track made good and speed over ground. *\/$/;"	e	enum:nmeaPACKTYPE
+HDOP	nmea/info.h	/^    double  HDOP;       \/**< Horizontal Dilution Of Precision *\/$/;"	m	struct:_nmeaINFO
+HDOP	nmea/sentence.h	/^    double  HDOP;       \/**< Horizontal dilution of precision *\/$/;"	m	struct:_nmeaGPGGA
+HDOP	nmea/sentence.h	/^    double  HDOP;       \/**< Horizontal dilution of precision *\/$/;"	m	struct:_nmeaGPGSA
+LD	Common.mk	/^LD		= ld$/;"	m
+LDFLAGS	Common.mk	/^LDFLAGS		=$/;"	m
+NMEA_ASSERT	nmea/config.h	46;"	d
+NMEA_ASSERT	nmea/config.h	48;"	d
+NMEA_CE	nmea/config.h	23;"	d
+NMEA_CONVSTR_BUF	nmea/config.h	19;"	d
+NMEA_DEF_LAT	nmea/info.h	31;"	d
+NMEA_DEF_LON	nmea/info.h	32;"	d
+NMEA_DEF_PARSEBUFF	nmea/context.h	16;"	d
+NMEA_DOP_FACTOR	nmea/gmath.h	23;"	d
+NMEA_EARTHRADIUS_KM	nmea/gmath.h	18;"	d
+NMEA_EARTHRADIUS_M	nmea/gmath.h	19;"	d
+NMEA_EARTH_FLATTENING	nmea/gmath.h	22;"	d
+NMEA_EARTH_SEMIMAJORAXIS_KM	nmea/gmath.h	21;"	d
+NMEA_EARTH_SEMIMAJORAXIS_M	nmea/gmath.h	20;"	d
+NMEA_FIX_2D	nmea/info.h	24;"	d
+NMEA_FIX_3D	nmea/info.h	25;"	d
+NMEA_FIX_BAD	nmea/info.h	23;"	d
+NMEA_GEN_LAST	nmea/generator.h	/^    NMEA_GEN_LAST$/;"	e	enum:nmeaGENTYPE
+NMEA_GEN_NOISE	nmea/generator.h	/^    NMEA_GEN_NOISE = 0,$/;"	e	enum:nmeaGENTYPE
+NMEA_GEN_POS_RANDMOVE	nmea/generator.h	/^    NMEA_GEN_POS_RANDMOVE,$/;"	e	enum:nmeaGENTYPE
+NMEA_GEN_ROTATE	nmea/generator.h	/^    NMEA_GEN_ROTATE,$/;"	e	enum:nmeaGENTYPE
+NMEA_GEN_SAT_ROTATE	nmea/generator.h	/^    NMEA_GEN_SAT_ROTATE,$/;"	e	enum:nmeaGENTYPE
+NMEA_GEN_SAT_STATIC	nmea/generator.h	/^    NMEA_GEN_SAT_STATIC,$/;"	e	enum:nmeaGENTYPE
+NMEA_GEN_STATIC	nmea/generator.h	/^    NMEA_GEN_STATIC,$/;"	e	enum:nmeaGENTYPE
+NMEA_INLINE	nmea/config.h	38;"	d
+NMEA_INLINE	nmea/config.h	41;"	d
+NMEA_MAXSAT	nmea/info.h	27;"	d
+NMEA_MIN_PARSEBUFF	nmea/context.h	17;"	d
+NMEA_NSATPACKS	nmea/info.h	29;"	d
+NMEA_PI	nmea/gmath.h	16;"	d
+NMEA_PI180	nmea/gmath.h	17;"	d
+NMEA_POSIX	nmea/config.h	37;"	d
+NMEA_POSIX	nmea/config.h	40;"	d
+NMEA_SATINPACK	nmea/info.h	28;"	d
+NMEA_SIG_BAD	nmea/info.h	18;"	d
+NMEA_SIG_HIGH	nmea/info.h	21;"	d
+NMEA_SIG_LOW	nmea/info.h	19;"	d
+NMEA_SIG_MID	nmea/info.h	20;"	d
+NMEA_TIMEPARSE_BUF	nmea/config.h	20;"	d
+NMEA_TOKS_COMPARE	nmea/tok.c	22;"	d	file:
+NMEA_TOKS_PERCENT	nmea/tok.c	23;"	d	file:
+NMEA_TOKS_TYPE	nmea/tok.c	25;"	d	file:
+NMEA_TOKS_WIDTH	nmea/tok.c	24;"	d	file:
+NMEA_TUD_KNOTS	nmea/units.h	21;"	d
+NMEA_TUD_MILES	nmea/units.h	22;"	d
+NMEA_TUD_YARDS	nmea/units.h	20;"	d
+NMEA_TUS_MS	nmea/units.h	28;"	d
+NMEA_UNI	nmea/config.h	29;"	d
+NMEA_VERSION	nmea/config.h	14;"	d
+NMEA_VERSION_MAJOR	nmea/config.h	15;"	d
+NMEA_VERSION_MINOR	nmea/config.h	16;"	d
+NMEA_VERSION_PATCH	nmea/config.h	17;"	d
+NMEA_WIN	nmea/config.h	27;"	d
+OBJS	Makefile	/^OBJS := $(patsubst %.c,%.o,$(SRCS))$/;"	m
+PDOP	nmea/info.h	/^    double  PDOP;       \/**< Position Dilution Of Precision *\/$/;"	m	struct:_nmeaINFO
+PDOP	nmea/sentence.h	/^    double  PDOP;       \/**< Dilution of precision *\/$/;"	m	struct:_nmeaGPGSA
+SRCS	Makefile	/^SRCS := $(wildcard *.c)$/;"	m
+SUBDIRS	Makefile	/^SUBDIRS = nmea$/;"	m
+TARGET	Makefile	/^TARGET	:= DEBUG$/;"	m
+TARGET	Makefile	/^TARGET	:= RELEASE$/;"	m
+VDOP	nmea/info.h	/^    double  VDOP;       \/**< Vertical Dilution Of Precision *\/$/;"	m	struct:_nmeaINFO
+VDOP	nmea/sentence.h	/^    double  VDOP;       \/**< Vertical dilution of precision *\/$/;"	m	struct:_nmeaGPGSA
+_CONFIG_H_	config.h	2;"	d
+__NMEA_CONFIG_H__	nmea/config.h	12;"	d
+__NMEA_CONTEXT_H__	nmea/context.h	12;"	d
+__NMEA_GENERATE_H__	nmea/generate.h	12;"	d
+__NMEA_GENERATOR_H__	nmea/generator.h	12;"	d
+__NMEA_GMATH_H__	nmea/gmath.h	12;"	d
+__NMEA_H__	nmea/nmea.h	12;"	d
+__NMEA_INFO_H__	nmea/info.h	14;"	d
+__NMEA_PARSER_H__	nmea/parser.h	12;"	d
+__NMEA_PARSE_H__	nmea/parse.h	12;"	d
+__NMEA_SENTENCE_H__	nmea/sentence.h	14;"	d
+__NMEA_TIME_H__	nmea/time.h	14;"	d
+__NMEA_TOK_H__	nmea/tok.h	12;"	d
+__NMEA_UNITS_H__	nmea/units.h	12;"	d
+__nmea_create_generator	nmea/generator.c	/^nmeaGENERATOR * __nmea_create_generator(int type, nmeaINFO *info)$/;"	f
+_nmeaGENERATOR	nmea/generator.h	/^typedef struct _nmeaGENERATOR$/;"	s
+_nmeaGPGGA	nmea/sentence.h	/^typedef struct _nmeaGPGGA$/;"	s
+_nmeaGPGSA	nmea/sentence.h	/^typedef struct _nmeaGPGSA$/;"	s
+_nmeaGPGSV	nmea/sentence.h	/^typedef struct _nmeaGPGSV$/;"	s
+_nmeaGPRMC	nmea/sentence.h	/^typedef struct _nmeaGPRMC$/;"	s
+_nmeaGPVTG	nmea/sentence.h	/^typedef struct _nmeaGPVTG$/;"	s
+_nmeaINFO	nmea/info.h	/^typedef struct _nmeaINFO$/;"	s
+_nmeaPARSER	nmea/parser.h	/^typedef struct _nmeaPARSER$/;"	s
+_nmeaPOS	nmea/info.h	/^typedef struct _nmeaPOS$/;"	s
+_nmeaPROPERTY	nmea/context.h	/^typedef struct _nmeaPROPERTY$/;"	s
+_nmeaParserNODE	nmea/parser.c	/^typedef struct _nmeaParserNODE$/;"	s	file:
+_nmeaSATELLITE	nmea/info.h	/^typedef struct _nmeaSATELLITE$/;"	s
+_nmeaSATINFO	nmea/info.h	/^typedef struct _nmeaSATINFO$/;"	s
+_nmeaTIME	nmea/time.h	/^typedef struct _nmeaTIME$/;"	s
+_nmea_parse_time	nmea/parse.c	/^int _nmea_parse_time(const char *buff, int buff_sz, nmeaTIME *res)$/;"	f
+azimuth	nmea/info.h	/^    int     azimuth;    \/**< Azimuth, degrees from true north, 000 to 359 *\/$/;"	m	struct:_nmeaSATELLITE
+buff_size	nmea/parser.h	/^    int buff_size;$/;"	m	struct:_nmeaPARSER
+buff_use	nmea/parser.h	/^    int buff_use;$/;"	m	struct:_nmeaPARSER
+buffer	nmea/parser.h	/^    unsigned char *buffer;$/;"	m	struct:_nmeaPARSER
+day	nmea/time.h	/^    int     day;        \/**< Day of the month - [1,31] *\/$/;"	m	struct:_nmeaTIME
+dec	nmea/sentence.h	/^    double  dec;        \/**< Magnetic track made good *\/$/;"	m	struct:_nmeaGPVTG
+dec_m	nmea/sentence.h	/^    char    dec_m;      \/**< Fixed text 'M' *\/$/;"	m	struct:_nmeaGPVTG
+declin_ew	nmea/sentence.h	/^    char    declin_ew;  \/**< [E]ast or [W]est *\/$/;"	m	struct:_nmeaGPRMC
+declination	nmea/info.h	/^    double  declination; \/**< Magnetic variation degrees (Easterly var. subtracts from true course) *\/$/;"	m	struct:_nmeaINFO
+declination	nmea/sentence.h	/^    double  declination; \/**< Magnetic variation degrees (Easterly var. subtracts from true course) *\/$/;"	m	struct:_nmeaGPRMC
+destroy_call	nmea/generator.h	/^    nmeaNMEA_GEN_DESTROY destroy_call;$/;"	m	struct:_nmeaGENERATOR
+dgps_age	nmea/sentence.h	/^    double  dgps_age;   \/**< Time in seconds since last DGPS update *\/$/;"	m	struct:_nmeaGPGGA
+dgps_sid	nmea/sentence.h	/^    int     dgps_sid;   \/**< DGPS station ID number *\/$/;"	m	struct:_nmeaGPGGA
+diff	nmea/sentence.h	/^    double  diff;       \/**< Geoidal separation (Diff. between WGS-84 earth ellipsoid and mean sea level. '-' = geoid is below WGS-84 ellipsoid) *\/$/;"	m	struct:_nmeaGPGGA
+diff_units	nmea/sentence.h	/^    char    diff_units; \/**< [M]eters (Units of geoidal separation) *\/$/;"	m	struct:_nmeaGPGGA
+dir	nmea/sentence.h	/^    double  dir;        \/**< True track made good (degrees) *\/$/;"	m	struct:_nmeaGPVTG
+dir_t	nmea/sentence.h	/^    char    dir_t;      \/**< Fixed text 'T' indicates that track made good is relative to true north *\/$/;"	m	struct:_nmeaGPVTG
+direction	nmea/info.h	/^    double  direction;  \/**< Track angle in degrees True *\/$/;"	m	struct:_nmeaINFO
+direction	nmea/sentence.h	/^    double  direction;  \/**< Track angle in degrees True *\/$/;"	m	struct:_nmeaGPRMC
+elv	nmea/info.h	/^    double  elv;        \/**< Antenna altitude above\/below mean sea level (geoid) in meters *\/$/;"	m	struct:_nmeaINFO
+elv	nmea/info.h	/^    int     elv;        \/**< Elevation in degrees, 90 maximum *\/$/;"	m	struct:_nmeaSATELLITE
+elv	nmea/sentence.h	/^    double  elv;        \/**< Antenna altitude above\/below mean sea level (geoid) *\/$/;"	m	struct:_nmeaGPGGA
+elv_units	nmea/sentence.h	/^    char    elv_units;  \/**< [M]eters (Antenna height unit) *\/$/;"	m	struct:_nmeaGPGGA
+end_node	nmea/parser.h	/^    void *end_node;$/;"	m	struct:_nmeaPARSER
+error	parse.c	/^void error(const char *str, int str_size)$/;"	f
+error_func	nmea/context.h	/^    nmeaErrorFunc   error_func;$/;"	m	struct:_nmeaPROPERTY
+ew	nmea/sentence.h	/^    char    ew;         \/**< [E]ast or [W]est *\/$/;"	m	struct:_nmeaGPGGA
+ew	nmea/sentence.h	/^    char    ew;         \/**< [E]ast or [W]est *\/$/;"	m	struct:_nmeaGPRMC
+fix	nmea/info.h	/^    int     fix;        \/**< Operating mode, used for navigation (1 = Fix not available; 2 = 2D; 3 = 3D) *\/$/;"	m	struct:_nmeaINFO
+fix_mode	nmea/sentence.h	/^    char    fix_mode;   \/**< Mode (M = Manual, forced to operate in 2D or 3D; A = Automatic, 3D\/2D) *\/$/;"	m	struct:_nmeaGPGSA
+fix_type	nmea/sentence.h	/^    int     fix_type;   \/**< Type, used for navigation (1 = Fix not available; 2 = 2D; 3 = 3D) *\/$/;"	m	struct:_nmeaGPGSA
+gen_data	nmea/generator.h	/^    void                *gen_data;$/;"	m	struct:_nmeaGENERATOR
+hour	nmea/time.h	/^    int     hour;       \/**< Hours since midnight - [0,23] *\/$/;"	m	struct:_nmeaTIME
+hsec	nmea/time.h	/^    int     hsec;       \/**< Hundredth part of second - [0,99] *\/$/;"	m	struct:_nmeaTIME
+id	nmea/info.h	/^    int     id;         \/**< Satellite PRN number *\/$/;"	m	struct:_nmeaSATELLITE
+in_use	nmea/info.h	/^    int     in_use;     \/**< Used in position fix *\/$/;"	m	struct:_nmeaSATELLITE
+init_call	nmea/generator.h	/^    nmeaNMEA_GEN_INIT    init_call;$/;"	m	struct:_nmeaGENERATOR
+inuse	nmea/info.h	/^    int     inuse;      \/**< Number of satellites in use (not those in view) *\/$/;"	m	struct:_nmeaSATINFO
+inview	nmea/info.h	/^    int     inview;     \/**< Total number of satellites in view *\/$/;"	m	struct:_nmeaSATINFO
+lat	nmea/info.h	/^    double  lat;        \/**< Latitude in NDEG - +\/-[degree][min].[sec\/60] *\/$/;"	m	struct:_nmeaINFO
+lat	nmea/info.h	/^    double lat;         \/**< Latitude *\/$/;"	m	struct:_nmeaPOS
+lat	nmea/sentence.h	/^	double  lat;        \/**< Latitude in NDEG - [degree][min].[sec\/60] *\/$/;"	m	struct:_nmeaGPGGA
+lat	nmea/sentence.h	/^	double  lat;        \/**< Latitude in NDEG - [degree][min].[sec\/60] *\/$/;"	m	struct:_nmeaGPRMC
+lon	nmea/info.h	/^    double  lon;        \/**< Longitude in NDEG - +\/-[degree][min].[sec\/60] *\/$/;"	m	struct:_nmeaINFO
+lon	nmea/info.h	/^    double lon;         \/**< Longitude *\/$/;"	m	struct:_nmeaPOS
+lon	nmea/sentence.h	/^	double  lon;        \/**< Longitude in NDEG - [degree][min].[sec\/60] *\/$/;"	m	struct:_nmeaGPGGA
+lon	nmea/sentence.h	/^	double  lon;        \/**< Longitude in NDEG - [degree][min].[sec\/60] *\/$/;"	m	struct:_nmeaGPRMC
+loop_call	nmea/generator.h	/^    nmeaNMEA_GEN_LOOP    loop_call;$/;"	m	struct:_nmeaGENERATOR
+main	parse.c	/^int main()$/;"	f
+min	nmea/time.h	/^    int     min;        \/**< Minutes after the hour - [0,59] *\/$/;"	m	struct:_nmeaTIME
+mode	nmea/sentence.h	/^    char    mode;       \/**< Mode indicator of fix type (A = autonomous, D = differential, E = estimated, N = not valid, S = simulator) *\/$/;"	m	struct:_nmeaGPRMC
+mon	nmea/time.h	/^    int     mon;        \/**< Months since January - [0,11] *\/$/;"	m	struct:_nmeaTIME
+next	nmea/generator.h	/^    struct _nmeaGENERATOR *next;$/;"	m	struct:_nmeaGENERATOR	typeref:struct:_nmeaGENERATOR::_nmeaGENERATOR
+next_node	nmea/parser.c	/^    struct _nmeaParserNODE *next_node;$/;"	m	struct:_nmeaParserNODE	typeref:struct:_nmeaParserNODE::_nmeaParserNODE	file:
+nmeaErrorFunc	nmea/context.h	/^typedef void (*nmeaErrorFunc)(const char *str, int str_size);$/;"	t
+nmeaGENERATOR	nmea/generator.h	/^} nmeaGENERATOR;$/;"	t	typeref:struct:_nmeaGENERATOR
+nmeaGENTYPE	nmea/generator.h	/^enum nmeaGENTYPE$/;"	g
+nmeaGPGGA	nmea/sentence.h	/^} nmeaGPGGA;$/;"	t	typeref:struct:_nmeaGPGGA
+nmeaGPGSA	nmea/sentence.h	/^} nmeaGPGSA;$/;"	t	typeref:struct:_nmeaGPGSA
+nmeaGPGSV	nmea/sentence.h	/^} nmeaGPGSV;$/;"	t	typeref:struct:_nmeaGPGSV
+nmeaGPRMC	nmea/sentence.h	/^} nmeaGPRMC;$/;"	t	typeref:struct:_nmeaGPRMC
+nmeaGPVTG	nmea/sentence.h	/^} nmeaGPVTG;$/;"	t	typeref:struct:_nmeaGPVTG
+nmeaINFO	nmea/info.h	/^} nmeaINFO;$/;"	t	typeref:struct:_nmeaINFO
+nmeaNMEA_GEN_DESTROY	nmea/generator.h	/^typedef int (*nmeaNMEA_GEN_DESTROY)(struct _nmeaGENERATOR *gen);$/;"	t
+nmeaNMEA_GEN_INIT	nmea/generator.h	/^typedef int (*nmeaNMEA_GEN_INIT)(struct _nmeaGENERATOR *gen, nmeaINFO *info);$/;"	t
+nmeaNMEA_GEN_LOOP	nmea/generator.h	/^typedef int (*nmeaNMEA_GEN_LOOP)(struct _nmeaGENERATOR *gen, nmeaINFO *info);$/;"	t
+nmeaNMEA_GEN_RESET	nmea/generator.h	/^typedef int (*nmeaNMEA_GEN_RESET)(struct _nmeaGENERATOR *gen, nmeaINFO *info);$/;"	t
+nmeaPACKTYPE	nmea/sentence.h	/^enum nmeaPACKTYPE$/;"	g
+nmeaPARSER	nmea/parser.h	/^} nmeaPARSER;$/;"	t	typeref:struct:_nmeaPARSER
+nmeaPOS	nmea/info.h	/^} nmeaPOS;$/;"	t	typeref:struct:_nmeaPOS
+nmeaPROPERTY	nmea/context.h	/^} nmeaPROPERTY;$/;"	t	typeref:struct:_nmeaPROPERTY
+nmeaParserNODE	nmea/parser.c	/^} nmeaParserNODE;$/;"	t	typeref:struct:_nmeaParserNODE	file:
+nmeaSATELLITE	nmea/info.h	/^} nmeaSATELLITE;$/;"	t	typeref:struct:_nmeaSATELLITE
+nmeaSATINFO	nmea/info.h	/^} nmeaSATINFO;$/;"	t	typeref:struct:_nmeaSATINFO
+nmeaTIME	nmea/time.h	/^} nmeaTIME;$/;"	t	typeref:struct:_nmeaTIME
+nmeaTraceFunc	nmea/context.h	/^typedef void (*nmeaTraceFunc)(const char *str, int str_size);$/;"	t
+nmea_GPGGA2info	nmea/parse.c	/^void nmea_GPGGA2info(nmeaGPGGA *pack, nmeaINFO *info)$/;"	f
+nmea_GPGSA2info	nmea/parse.c	/^void nmea_GPGSA2info(nmeaGPGSA *pack, nmeaINFO *info)$/;"	f
+nmea_GPGSV2info	nmea/parse.c	/^void nmea_GPGSV2info(nmeaGPGSV *pack, nmeaINFO *info)$/;"	f
+nmea_GPRMC2info	nmea/parse.c	/^void nmea_GPRMC2info(nmeaGPRMC *pack, nmeaINFO *info)$/;"	f
+nmea_GPVTG2info	nmea/parse.c	/^void nmea_GPVTG2info(nmeaGPVTG *pack, nmeaINFO *info)$/;"	f
+nmea_atof	nmea/tok.c	/^double nmea_atof(const char *str, int str_sz)$/;"	f
+nmea_atoi	nmea/tok.c	/^int nmea_atoi(const char *str, int str_sz, int radix)$/;"	f
+nmea_calc_crc	nmea/tok.c	/^int nmea_calc_crc(const char *buff, int buff_sz)$/;"	f
+nmea_calc_pdop	nmea/gmath.c	/^double nmea_calc_pdop(double hdop, double vdop)$/;"	f
+nmea_create_generator	nmea/generator.c	/^nmeaGENERATOR * nmea_create_generator(int type, nmeaINFO *info)$/;"	f
+nmea_degree2ndeg	nmea/gmath.c	/^double nmea_degree2ndeg(double val)$/;"	f
+nmea_degree2radian	nmea/gmath.c	/^double nmea_degree2radian(double val)$/;"	f
+nmea_destroy_generator	nmea/generator.c	/^void nmea_destroy_generator(nmeaGENERATOR *gen)$/;"	f
+nmea_distance	nmea/gmath.c	/^double nmea_distance($/;"	f
+nmea_distance_ellipsoid	nmea/gmath.c	/^double nmea_distance_ellipsoid($/;"	f
+nmea_dop2meters	nmea/gmath.c	/^double nmea_dop2meters(double dop)$/;"	f
+nmea_error	nmea/context.c	/^void nmea_error(const char *str, ...)$/;"	f
+nmea_find_tail	nmea/parse.c	/^int nmea_find_tail(const char *buff, int buff_sz, int *res_crc)$/;"	f
+nmea_gen_GPGGA	nmea/generate.c	/^int nmea_gen_GPGGA(char *buff, int buff_sz, nmeaGPGGA *pack)$/;"	f
+nmea_gen_GPGSA	nmea/generate.c	/^int nmea_gen_GPGSA(char *buff, int buff_sz, nmeaGPGSA *pack)$/;"	f
+nmea_gen_GPGSV	nmea/generate.c	/^int nmea_gen_GPGSV(char *buff, int buff_sz, nmeaGPGSV *pack)$/;"	f
+nmea_gen_GPRMC	nmea/generate.c	/^int nmea_gen_GPRMC(char *buff, int buff_sz, nmeaGPRMC *pack)$/;"	f
+nmea_gen_GPVTG	nmea/generate.c	/^int nmea_gen_GPVTG(char *buff, int buff_sz, nmeaGPVTG *pack)$/;"	f
+nmea_gen_add	nmea/generator.c	/^void nmea_gen_add(nmeaGENERATOR *to, nmeaGENERATOR *gen)$/;"	f
+nmea_gen_destroy	nmea/generator.c	/^void nmea_gen_destroy(nmeaGENERATOR *gen)$/;"	f
+nmea_gen_init	nmea/generator.c	/^int nmea_gen_init(nmeaGENERATOR *gen, nmeaINFO *info)$/;"	f
+nmea_gen_loop	nmea/generator.c	/^int nmea_gen_loop(nmeaGENERATOR *gen, nmeaINFO *info)$/;"	f
+nmea_gen_reset	nmea/generator.c	/^int nmea_gen_reset(nmeaGENERATOR *gen, nmeaINFO *info)$/;"	f
+nmea_generate	nmea/generate.c	/^int nmea_generate($/;"	f
+nmea_generate_from	nmea/generator.c	/^int nmea_generate_from($/;"	f
+nmea_gsv_npack	nmea/generate.c	/^int nmea_gsv_npack(int sat_count)$/;"	f
+nmea_igen_noise_init	nmea/generator.c	/^int nmea_igen_noise_init(nmeaGENERATOR *gen, nmeaINFO *info)$/;"	f
+nmea_igen_noise_loop	nmea/generator.c	/^int nmea_igen_noise_loop(nmeaGENERATOR *gen, nmeaINFO *info)$/;"	f
+nmea_igen_noise_reset	nmea/generator.c	/^int nmea_igen_noise_reset(nmeaGENERATOR *gen, nmeaINFO *info)$/;"	f
+nmea_igen_pos_rmove_destroy	nmea/generator.c	/^int nmea_igen_pos_rmove_destroy(nmeaGENERATOR *gen)$/;"	f
+nmea_igen_pos_rmove_init	nmea/generator.c	/^int nmea_igen_pos_rmove_init(nmeaGENERATOR *gen, nmeaINFO *info)$/;"	f
+nmea_igen_pos_rmove_loop	nmea/generator.c	/^int nmea_igen_pos_rmove_loop(nmeaGENERATOR *gen, nmeaINFO *info)$/;"	f
+nmea_igen_rotate_init	nmea/generator.c	/^int nmea_igen_rotate_init(nmeaGENERATOR *gen, nmeaINFO *info)$/;"	f
+nmea_igen_rotate_loop	nmea/generator.c	/^int nmea_igen_rotate_loop(nmeaGENERATOR *gen, nmeaINFO *info)$/;"	f
+nmea_igen_rotate_reset	nmea/generator.c	/^int nmea_igen_rotate_reset(nmeaGENERATOR *gen, nmeaINFO *info)$/;"	f
+nmea_igen_static_init	nmea/generator.c	/^int nmea_igen_static_init(nmeaGENERATOR *gen, nmeaINFO *info)$/;"	f
+nmea_igen_static_loop	nmea/generator.c	/^int nmea_igen_static_loop(nmeaGENERATOR *gen, nmeaINFO *info)$/;"	f
+nmea_igen_static_reset	nmea/generator.c	/^int nmea_igen_static_reset(nmeaGENERATOR *gen, nmeaINFO *info)$/;"	f
+nmea_info2GPGGA	nmea/generate.c	/^void nmea_info2GPGGA(const nmeaINFO *info, nmeaGPGGA *pack)$/;"	f
+nmea_info2GPGSA	nmea/generate.c	/^void nmea_info2GPGSA(const nmeaINFO *info, nmeaGPGSA *pack)$/;"	f
+nmea_info2GPGSV	nmea/generate.c	/^void nmea_info2GPGSV(const nmeaINFO *info, nmeaGPGSV *pack, int pack_idx)$/;"	f
+nmea_info2GPRMC	nmea/generate.c	/^void nmea_info2GPRMC(const nmeaINFO *info, nmeaGPRMC *pack)$/;"	f
+nmea_info2GPVTG	nmea/generate.c	/^void nmea_info2GPVTG(const nmeaINFO *info, nmeaGPVTG *pack)$/;"	f
+nmea_info2pos	nmea/gmath.c	/^void nmea_info2pos(const nmeaINFO *info, nmeaPOS *pos)$/;"	f
+nmea_meters2dop	nmea/gmath.c	/^double nmea_meters2dop(double meters)$/;"	f
+nmea_move_horz	nmea/gmath.c	/^int nmea_move_horz($/;"	f
+nmea_move_horz_ellipsoid	nmea/gmath.c	/^int nmea_move_horz_ellipsoid($/;"	f
+nmea_ndeg2degree	nmea/gmath.c	/^double nmea_ndeg2degree(double val)$/;"	f
+nmea_ndeg2radian	nmea/gmath.c	/^double nmea_ndeg2radian(double val)$/;"	f
+nmea_pack_type	nmea/parse.c	/^int nmea_pack_type(const char *buff, int buff_sz)$/;"	f
+nmea_parse	nmea/parser.c	/^int nmea_parse(    $/;"	f
+nmea_parse_GPGGA	nmea/parse.c	/^int nmea_parse_GPGGA(const char *buff, int buff_sz, nmeaGPGGA *pack)$/;"	f
+nmea_parse_GPGSA	nmea/parse.c	/^int nmea_parse_GPGSA(const char *buff, int buff_sz, nmeaGPGSA *pack)$/;"	f
+nmea_parse_GPGSV	nmea/parse.c	/^int nmea_parse_GPGSV(const char *buff, int buff_sz, nmeaGPGSV *pack)$/;"	f
+nmea_parse_GPRMC	nmea/parse.c	/^int nmea_parse_GPRMC(const char *buff, int buff_sz, nmeaGPRMC *pack)$/;"	f
+nmea_parse_GPVTG	nmea/parse.c	/^int nmea_parse_GPVTG(const char *buff, int buff_sz, nmeaGPVTG *pack)$/;"	f
+nmea_parser_buff_clear	nmea/parser.c	/^int nmea_parser_buff_clear(nmeaPARSER *parser)$/;"	f
+nmea_parser_destroy	nmea/parser.c	/^void nmea_parser_destroy(nmeaPARSER *parser)$/;"	f
+nmea_parser_drop	nmea/parser.c	/^int nmea_parser_drop(nmeaPARSER *parser)$/;"	f
+nmea_parser_init	nmea/parser.c	/^int nmea_parser_init(nmeaPARSER *parser)$/;"	f
+nmea_parser_peek	nmea/parser.c	/^int nmea_parser_peek(nmeaPARSER *parser, void **pack_ptr)$/;"	f
+nmea_parser_pop	nmea/parser.c	/^int nmea_parser_pop(nmeaPARSER *parser, void **pack_ptr)$/;"	f
+nmea_parser_push	nmea/parser.c	/^int nmea_parser_push(nmeaPARSER *parser, const char *buff, int buff_sz)$/;"	f
+nmea_parser_queue_clear	nmea/parser.c	/^int nmea_parser_queue_clear(nmeaPARSER *parser)$/;"	f
+nmea_parser_real_push	nmea/parser.c	/^int nmea_parser_real_push(nmeaPARSER *parser, const char *buff, int buff_sz)$/;"	f
+nmea_parser_top	nmea/parser.c	/^int nmea_parser_top(nmeaPARSER *parser)$/;"	f
+nmea_pos2info	nmea/gmath.c	/^void nmea_pos2info(const nmeaPOS *pos, nmeaINFO *info)$/;"	f
+nmea_printf	nmea/tok.c	/^int nmea_printf(char *buff, int buff_sz, const char *format, ...)$/;"	f
+nmea_property	nmea/context.c	/^nmeaPROPERTY * nmea_property()$/;"	f
+nmea_radian2degree	nmea/gmath.c	/^double nmea_radian2degree(double val)$/;"	f
+nmea_radian2ndeg	nmea/gmath.c	/^double nmea_radian2ndeg(double val)$/;"	f
+nmea_random	nmea/generator.c	/^double nmea_random(double min, double max)$/;"	f
+nmea_scanf	nmea/tok.c	/^int nmea_scanf(const char *buff, int buff_sz, const char *format, ...)$/;"	f
+nmea_time_now	nmea/time.c	/^void nmea_time_now(nmeaTIME *stm)$/;"	f
+nmea_trace	nmea/context.c	/^void nmea_trace(const char *str, ...)$/;"	f
+nmea_trace_buff	nmea/context.c	/^void nmea_trace_buff(const char *buff, int buff_size)$/;"	f
+nmea_zero_GPGGA	nmea/sentence.c	/^void nmea_zero_GPGGA(nmeaGPGGA *pack)$/;"	f
+nmea_zero_GPGSA	nmea/sentence.c	/^void nmea_zero_GPGSA(nmeaGPGSA *pack)$/;"	f
+nmea_zero_GPGSV	nmea/sentence.c	/^void nmea_zero_GPGSV(nmeaGPGSV *pack)$/;"	f
+nmea_zero_GPRMC	nmea/sentence.c	/^void nmea_zero_GPRMC(nmeaGPRMC *pack)$/;"	f
+nmea_zero_GPVTG	nmea/sentence.c	/^void nmea_zero_GPVTG(nmeaGPVTG *pack)$/;"	f
+nmea_zero_INFO	nmea/info.c	/^void nmea_zero_INFO(nmeaINFO *info)$/;"	f
+ns	nmea/sentence.h	/^    char    ns;         \/**< [N]orth or [S]outh *\/$/;"	m	struct:_nmeaGPGGA
+ns	nmea/sentence.h	/^    char    ns;         \/**< [N]orth or [S]outh *\/$/;"	m	struct:_nmeaGPRMC
+pack	nmea/parser.c	/^    void *pack;$/;"	m	struct:_nmeaParserNODE	file:
+packType	nmea/parser.c	/^    int packType;$/;"	m	struct:_nmeaParserNODE	file:
+pack_count	nmea/sentence.h	/^    int     pack_count; \/**< Total number of messages of this type in this cycle *\/$/;"	m	struct:_nmeaGPGSV
+pack_index	nmea/sentence.h	/^    int     pack_index; \/**< Message number *\/$/;"	m	struct:_nmeaGPGSV
+parse_buff_size	nmea/context.h	/^    int             parse_buff_size;$/;"	m	struct:_nmeaPROPERTY
+reset_call	nmea/generator.h	/^    nmeaNMEA_GEN_RESET   reset_call;$/;"	m	struct:_nmeaGENERATOR
+sat	nmea/info.h	/^    nmeaSATELLITE sat[NMEA_MAXSAT]; \/**< Satellites information *\/$/;"	m	struct:_nmeaSATINFO
+sat_count	nmea/sentence.h	/^    int     sat_count;  \/**< Total number of satellites in view *\/$/;"	m	struct:_nmeaGPGSV
+sat_data	nmea/sentence.h	/^    nmeaSATELLITE sat_data[NMEA_SATINPACK];$/;"	m	struct:_nmeaGPGSV
+sat_prn	nmea/sentence.h	/^    int     sat_prn[NMEA_MAXSAT]; \/**< PRNs of satellites used in position fix (null for unused fields) *\/$/;"	m	struct:_nmeaGPGSA
+satinfo	nmea/info.h	/^    nmeaSATINFO satinfo; \/**< Satellites information *\/$/;"	m	struct:_nmeaINFO
+satinuse	nmea/sentence.h	/^	int     satinuse;   \/**< Number of satellites in use (not those in view) *\/$/;"	m	struct:_nmeaGPGGA
+sec	nmea/time.h	/^    int     sec;        \/**< Seconds after the minute - [0,59] *\/$/;"	m	struct:_nmeaTIME
+sig	nmea/info.h	/^    int     sig;        \/**< GPS quality indicator (0 = Invalid; 1 = Fix; 2 = Differential, 3 = Sensitive) *\/$/;"	m	struct:_nmeaINFO
+sig	nmea/info.h	/^    int     sig;        \/**< Signal, 00-99 dB *\/$/;"	m	struct:_nmeaSATELLITE
+sig	nmea/sentence.h	/^    int     sig;        \/**< GPS quality indicator (0 = Invalid; 1 = Fix; 2 = Differential, 3 = Sensitive) *\/$/;"	m	struct:_nmeaGPGGA
+smask	nmea/info.h	/^    int     smask;      \/**< Mask specifying types of packages from which data have been obtained *\/$/;"	m	struct:_nmeaINFO
+speed	nmea/info.h	/^    double  speed;      \/**< Speed over the ground in kilometers\/hour *\/$/;"	m	struct:_nmeaINFO
+speed	nmea/sentence.h	/^    double  speed;      \/**< Speed over the ground in knots *\/$/;"	m	struct:_nmeaGPRMC
+spk	nmea/sentence.h	/^    double  spk;        \/**< Ground speed, kilometers per hour *\/$/;"	m	struct:_nmeaGPVTG
+spk_k	nmea/sentence.h	/^    char    spk_k;      \/**< Fixed text 'K' indicates that speed over ground is in kilometers\/hour *\/$/;"	m	struct:_nmeaGPVTG
+spn	nmea/sentence.h	/^    double  spn;        \/**< Ground speed, knots *\/$/;"	m	struct:_nmeaGPVTG
+spn_n	nmea/sentence.h	/^    char    spn_n;      \/**< Fixed text 'N' indicates that speed over ground is in knots *\/$/;"	m	struct:_nmeaGPVTG
+status	nmea/sentence.h	/^    char    status;     \/**< Status (A = active or V = void) *\/$/;"	m	struct:_nmeaGPRMC
+top_node	nmea/parser.h	/^    void *top_node;$/;"	m	struct:_nmeaPARSER
+trace	parse.c	/^void trace(const char *str, int str_size)$/;"	f
+trace_func	nmea/context.h	/^    nmeaTraceFunc   trace_func;$/;"	m	struct:_nmeaPROPERTY
+utc	nmea/info.h	/^    nmeaTIME utc;       \/**< UTC of position *\/$/;"	m	struct:_nmeaINFO
+utc	nmea/sentence.h	/^    nmeaTIME utc;       \/**< UTC of position (just time) *\/$/;"	m	struct:_nmeaGPGGA
+utc	nmea/sentence.h	/^    nmeaTIME utc;       \/**< UTC of position *\/$/;"	m	struct:_nmeaGPRMC
+year	nmea/time.h	/^    int     year;       \/**< Years since 1900 *\/$/;"	m	struct:_nmeaTIME
