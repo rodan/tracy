@@ -74,6 +74,7 @@ NMEA_WIN	nmea/config.h	27;"	d
 OBJS	Makefile	/^OBJS := $(patsubst %.c,%.o,$(SRCS))$/;"	m
 PDOP	nmea/info.h	/^    double  PDOP;       \/**< Position Dilution Of Precision *\/$/;"	m	struct:_nmeaINFO
 PDOP	nmea/sentence.h	/^    double  PDOP;       \/**< Dilution of precision *\/$/;"	m	struct:_nmeaGPGSA
+SMAX	parse.c	12;"	d	file:
 SRCS	Makefile	/^SRCS := $(wildcard *.c)$/;"	m
 SUBDIRS	Makefile	/^SUBDIRS = nmea$/;"	m
 TARGET	Makefile	/^TARGET	:= DEBUG$/;"	m
