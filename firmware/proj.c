@@ -42,19 +42,30 @@ static void do_smth(enum sys_message msg)
 
 static void parse_gps(enum sys_message msg)
 {
-
-    if (uart0_rx_buf != 0xd) {
-        if (gps_rx_buf_p < GPSMAX-1) {
-            gps_rx_buf[gps_rx_buf_p] = uart0_rx_buf;
-            gps_rx_buf_p++;
-        } else {
+    /*
+    for (i=0,i<uart0_p;i++) {
+        if (uart0_rx_buf[i] == 0x0a)
+            continue;
+        if (uart0_rx_buf[i] == 0x0d) {
+            uart0_tx_str(gps_rx_buf, gps_rx_buf_p);
+            snprintf(str_temp, 10," _%03d_\r\n", gps_rx_buf_p);
+            uart0_tx_str(str_temp, strlen(str_temp));
             gps_rx_buf_p = 0;
+        } else {
+            if (gps_rx_buf_p < GPSMAX-1) {
+                gps_rx_buf[gps_rx_buf_p] = uart0_rx_buf;
+                gps_rx_buf_p++;
+            } else {
+                gps_rx_buf_p = 0;
+            }
         }
-    } else {
-        uart0_tx_str(gps_rx_buf, gps_rx_buf_p);
-        uart0_tx_str("\r\n" , 2);
-        gps_rx_buf_p = 0;
     }
+    */
+    uart0_tx_str(uart0_rx_buf, uart0_p);
+    snprintf(str_temp, 10," _%03d_\r\n", uart0_p);
+    uart0_tx_str(str_temp, strlen(str_temp));
+    uart0_p = 0;
+    uart0_rx_enable = 1;
 }
 
 int main(void)
