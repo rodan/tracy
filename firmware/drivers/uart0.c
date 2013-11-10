@@ -46,6 +46,8 @@ void USCI_A0_ISR(void)
     switch (iv) {
     case 2:
         ev = UART0_EV_RX;
+        uart0_rx_buf = UCA0RXBUF;
+        _BIC_SR_IRQ(LPM3_bits);
         break;
     case 4:
         ev = UART0_EV_TX;

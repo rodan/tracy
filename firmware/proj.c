@@ -21,8 +21,14 @@
 #include "drivers/serial_bitbang.h"
 #include "drivers/adc.h"
 
+#define GPSMAX 255
+
 char str_temp[64];
 
+char gps_rx_buf[GPSMAX];
+uint8_t gps_rx_buf_p = 0;
+
+/*
 static void do_smth(enum sys_message msg)
 {
     snprintf(str_temp, 53,"%04d%02d%02d %02d:%02d\r\n",
@@ -32,6 +38,24 @@ static void do_smth(enum sys_message msg)
     uart0_tx_str(str_temp, strlen(str_temp));
     uart1_tx_str(str_temp, strlen(str_temp));
 }
+*/
+
+static void parse_gps(enum sys_message msg)
+{
+
+    if (uart0_rx_buf != 0xd) {
+        if (gps_rx_buf_p < GPSMAX-1) {
+            gps_rx_buf[gps_rx_buf_p] = uart0_rx_buf;
+            gps_rx_buf_p++;
+        } else {
+            gps_rx_buf_p = 0;
+        }
+    } else {
+        uart0_tx_str(gps_rx_buf, gps_rx_buf_p);
+        uart0_tx_str("\r\n" , 2);
+        gps_rx_buf_p = 0;
+    }
+}
 
 int main(void)
 {
@@ -39,11 +63,14 @@ int main(void)
     uart0_init();
     uart1_init();
 
-    sys_messagebus_register(&do_smth, SYS_MSG_RTC_SECOND);
+    //sys_messagebus_register(&do_smth, SYS_MSG_RTC_SECOND);
+
+    // parse GPS output
+    sys_messagebus_register(&parse_gps, SYS_MSG_UART0_RX);
 
     while (1) {
         sleep();
-        __no_operation();
+        //__no_operation();
         //wake_up();
 #ifdef USE_WATCHDOG
         // reset watchdog counter
@@ -89,9 +116,10 @@ void main_init(void)
     UCSCTL6 &= ~(XT1OFF | XT1DRIVE0);
 
     P1SEL = 0x0;
-    P1DIR = 0xf0;
-    P1OUT = 0x40;
-    P1REN = 0x0f;
+    P1DIR = 0xff;
+    //P1DIR = 0x00;
+    P1OUT = 0x00;
+    P1REN = 0x00;
 
     P2SEL = 0x0;
     P2DIR = 0x1;
@@ -101,19 +129,18 @@ void main_init(void)
     P3DIR = 0x1f;
     P3OUT = 0x0;
 
-    P4SEL = 0x0e;
-    P4DIR = 0xfe;
-    P4REN = 0x01;
+    P4SEL = 0x0;
+    P4DIR = 0xff;
+    P4REN = 0x0;
     P4OUT = 0x0;
 
     //P5SEL is set above
-    P5SEL |= 0x3;
-    P5DIR = 0x0;
+    P5DIR = 0x2;
     P5OUT = 0x0;
 
-    P6SEL = 0x3;
-    P6DIR = 0x0;
-    P6OUT = 0x0;
+    P6SEL = 0x0;
+    P6DIR = 0x2;
+    P6OUT = 0x2;
 
     PJOUT = 0x00;
     PJDIR = 0xFF;
@@ -189,6 +216,16 @@ void check_events(void)
     if (timer_a1_last_event) {
         msg |= timer_a1_last_event << 7;
         timer_a1_last_event = 0;
+    }
+    // drivers/uart0
+    if (uart0_last_event == UART0_EV_RX) {
+        msg |= BITA;
+        uart0_last_event = 0;
+    }
+    // drivers/uart1
+    if (uart1_last_event == UART1_EV_RX) {
+        msg |= BITB;
+        uart1_last_event = 0;
     }
     while (p) {
         // notify listener if he registered for any of these messages

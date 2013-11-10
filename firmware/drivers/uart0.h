@@ -8,6 +8,8 @@ enum uart0_tevent {
     UART0_EV_TX = BIT1
 };
 
+char uart0_rx_buf;
+
 void uart0_init();
 uint16_t uart0_tx_str(char *str, uint16_t size);
 

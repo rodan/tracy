@@ -16,9 +16,9 @@
 //         |  |                 | 32kHz
 //         ---|RST          XOUT|-
 //            |                 |
-//            |     P3.3/UCA0TXD|------------>
+//            |     P4.4/UCA0TXD|------------>
 //            |                 | 9600 - 8N1
-//            |     P3.4/UCA0RXD|<------------
+//            |     P4.5/UCA0RXD|<------------
 //
 //   D. Archbold
 //   Texas Instruments Inc.
@@ -65,6 +65,8 @@ void USCI_A1_ISR(void)
     switch (iv) {
     case 2:
         ev = UART1_EV_RX;
+        uart1_rx_buf = UCA1RXBUF;
+        _BIC_SR_IRQ(LPM3_bits);
         break;
     case 4:
         ev = UART1_EV_TX;
