@@ -38,7 +38,7 @@ void timer1_A0_ISR(void)
     }
     return;
 
-exit_lpm3:
+ exit_lpm3:
     // exit from LPM3, give execution back to mainloop
     _BIC_SR_IRQ(LPM3_bits);
 }

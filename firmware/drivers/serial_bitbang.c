@@ -6,11 +6,11 @@
 //  available from:  https://github.com/rodan/
 //  license:         GNU GPLv3
 
-
 #include "serial_bitbang.h"
 
 // returns one of I2C_ACK, I2C_NAK, I2C_MISSING_SCL_PULLUP or I2C_MISSING_SDA_PULLUP
-uint8_t i2cm_rxfrom(const uint8_t slave_address, uint8_t* data, uint16_t length)
+uint8_t i2cm_rxfrom(const uint8_t slave_address, uint8_t * data,
+                    uint16_t length)
 {
     uint8_t rv;
     rv = i2cm_start();
@@ -33,14 +33,14 @@ uint8_t i2cm_tx(const uint8_t data, const uint8_t options)
     register uint8_t slarw = 0;
 
     if (options & I2C_READ) {
-        slarw = ( data << 1 ) | BIT0;
+        slarw = (data << 1) | BIT0;
     } else if (options & I2C_WRITE) {
         slarw = data << 1;
     } else if (options & I2C_NO_ADDR_SHIFT) {
         slarw = data;
     }
 
-    for (i=0; i<8; i++) {
+    for (i = 0; i < 8; i++) {
         if (slarw & 0x80) {
             sda_high;
         } else {
@@ -65,10 +65,10 @@ uint8_t i2cm_tx(const uint8_t data, const uint8_t options)
     return rv;
 }
 
-uint8_t i2cm_rx(uint8_t *buf, const uint16_t length, const uint8_t options)
+uint8_t i2cm_rx(uint8_t * buf, const uint16_t length, const uint8_t options)
 {
     uint8_t data;
-    volatile unsigned int i,j;
+    volatile unsigned int i, j;
 
     if (options & I2C_SDA_WAIT) {
         delay_c;
@@ -79,14 +79,14 @@ uint8_t i2cm_rx(uint8_t *buf, const uint16_t length, const uint8_t options)
         }
     }
 
-    for (j=0; j<length; j++) {
+    for (j = 0; j < length; j++) {
         sda_high;
         data = 0;
         i = 0;
         for (; i < 8; ++i) {
             scl_high;
             if (!(I2C_MASTER_IN & I2C_MASTER_SCL)) {
-                _NOP(); // wait if slave holds the clk low
+                _NOP();         // wait if slave holds the clk low
             }
             data <<= 1;
             if (I2C_MASTER_IN & I2C_MASTER_SDA)
@@ -94,7 +94,7 @@ uint8_t i2cm_rx(uint8_t *buf, const uint16_t length, const uint8_t options)
             scl_low;
         }
         *buf++ = data;
-        if (j != length-1) {
+        if (j != length - 1) {
             sda_low;
         }
         // send ack
@@ -142,5 +142,3 @@ void i2cm_stop(void)
     sda_high;
     delay_s;
 }
-
-

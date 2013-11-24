@@ -26,8 +26,6 @@
 //   Built with CCSv4 and IAR Embedded Workbench Version: 4.21
 //******************************************************************************
 
-
-
 #include "uart1.h"
 
 void uart1_init(void)
@@ -76,4 +74,3 @@ void USCI_A1_ISR(void)
     }
     uart1_last_event |= ev;
 }
-

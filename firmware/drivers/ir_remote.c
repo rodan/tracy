@@ -85,7 +85,6 @@ uint8_t decode_rc5(decode_results * results)
     if (data > 2047) {
         data -= 2048;
     }
-
     // Success
     results->bits = nbits;
     results->value = data;

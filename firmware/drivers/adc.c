@@ -17,12 +17,12 @@ volatile uint8_t adcready;
 // vref is one of:  REFVSEL_0  - 1.5v vref
 //                  REFVSEL_1  - 2.0v vref
 //                  REFVSEL_2  - 2.5v vref
-void adc10_read(const uint8_t port, uint16_t *rv, const uint8_t vref)
+void adc10_read(const uint8_t port, uint16_t * rv, const uint8_t vref)
 {
     //*((uint16_t *)portreg) |= 1 << port;
     // if ref or adc10 are busy then wait
-    while (REFCTL0 & REFGENBUSY);
-    while (ADC10CTL1 & ADC10BUSY);
+    while (REFCTL0 & REFGENBUSY) ;
+    while (ADC10CTL1 & ADC10BUSY) ;
     // enable reference
     if ((REFCTL0 & 0x30) != vref) {
         // need to change vref
@@ -43,7 +43,7 @@ void adc10_read(const uint8_t port, uint16_t *rv, const uint8_t vref)
     // trigger conversion
     ADC10IE = ADC10IE0;
     ADC10CTL0 |= ADC10ENC + ADC10SC;
-    while (!adcready);
+    while (!adcready) ;
 }
 
 void adc10_halt(void)

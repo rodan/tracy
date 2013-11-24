@@ -41,7 +41,6 @@ void SetVCoreUp(unsigned char level)    // Note: change level by one step only
 
     SVSMLCTL = SVSLE + SVMLE + SVSMLRRL0 * level;       // Set SVM new Level
 
-
     while ((PMMIFG & SVSMLDLYIFG) == 0) ;       // Wait till SVM is settled (Delay)
 
     PMMCTL0_L = PMMCOREV0 * level;      // Set VCore to x

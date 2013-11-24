@@ -1,7 +1,7 @@
 #ifndef __RTCA_H__
 #define __RTCA_H__
 
-#include <proj.h>
+#include "proj.h"
 
 enum rtca_tevent {
     RTCA_EV_ALARM = BIT0,

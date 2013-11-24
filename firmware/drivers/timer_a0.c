@@ -2,14 +2,13 @@
 //   timer a0 handling
 //   CCR0 is currently unused
 //   CCR1 is currently unused
-//   CCR2 is currently unused
+//   CCR2 is used for timer_a0_delay_noblk()
 //   CCR3 is currently unused
 //   CCR4 is used for timer_a0_delay()
 //
 //   author:          Petre Rodan <petre.rodan@simplex.ro>
 //   available from:  https://github.com/rodan/
 //   license:         GNU GPLv3
-
 
 #include "timer_a0.h"
 
@@ -27,12 +26,12 @@ void timer_a0_delay(uint32_t microseconds)
 {
     // one tick of ACLK is 1/32768 s
     /*
-    if (microseconds < 31) {
-        microseconds = 31;
-    } else if (microseconds > 1999964) {
-        microseconds = 1999964;
-    }
-    */
+       if (microseconds < 31) {
+       microseconds = 31;
+       } else if (microseconds > 1999964) {
+       microseconds = 1999964;
+       }
+     */
 
     uint32_t ticks = microseconds / 30.5175;
     __disable_interrupt();
@@ -41,6 +40,7 @@ void timer_a0_delay(uint32_t microseconds)
     __enable_interrupt();
     timer_a0_last_event &= ~TIMER_A0_EVENT_CCR4;
     while (1) {
+        _BIS_SR(LPM3_bits + GIE);
         __no_operation();
 #ifdef USE_WATCHDOG
         // reset watchdog
@@ -49,25 +49,39 @@ void timer_a0_delay(uint32_t microseconds)
         if (timer_a0_last_event & TIMER_A0_EVENT_CCR4)
             break;
     }
-    __disable_interrupt();
-    //TA0CCTL4 &= ~CCIE;
-    TA0CCTL4 = 0;
-    __enable_interrupt();
+    TA0CCTL4 &= ~CCIE;
     timer_a0_last_event &= ~TIMER_A0_EVENT_CCR4;
+}
+
+void timer_a0_delay_noblk(uint32_t microseconds)
+{
+    uint32_t ticks = microseconds / 30.5175;
+    __disable_interrupt();
+    TA0CCR2 = TA0R + ticks;
+    TA0CCTL2 = 0;
+    TA0CCTL2 = CCIE;
+    __enable_interrupt();
 }
 
 __attribute__ ((interrupt(TIMER0_A1_VECTOR)))
 void timer0_A1_ISR(void)
 {
     uint16_t iv = TA0IV;
-    // timer used by timer_a0_delay()
     if (iv == TA0IV_TA0CCR4) {
+        // timer used by timer_a0_delay()
         timer_a0_last_event |= TIMER_A0_EVENT_CCR4;
         goto exit_lpm3;
+    } else if (iv == TA0IV_TA0CCR2) {
+        // timer used by timer_a0_delay_noblk()
+        // disable interrupt
+        TA0CCTL2 &= ~CCIE;
+        timer_a0_last_event |= TIMER_A0_EVENT_CCR2;
+        // return to LPM3 (don't mess with SR bits)
+        return;
     }
+
     return;
  exit_lpm3:
     /* exit from LPM3, give execution back to mainloop */
     _BIC_SR_IRQ(LPM3_bits);
 }
-

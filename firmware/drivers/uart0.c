@@ -64,7 +64,7 @@ void USCI_A0_ISR(void)
         } else {
             uart0_rx_err++;
             if (rx == 0x0d) {
-                uart0_rx_err = 0; 
+                uart0_rx_err = 0;
             }
         }
         break;
@@ -76,4 +76,3 @@ void USCI_A0_ISR(void)
     }
     uart0_last_event |= ev;
 }
-
