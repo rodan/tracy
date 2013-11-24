@@ -26,7 +26,7 @@ void adc10_read(const uint8_t port, uint16_t *rv, const uint8_t vref)
     // enable reference
     if ((REFCTL0 & 0x30) != vref) {
         // need to change vref
-        REFCTL0 &= ~0x30 + REFON;
+        REFCTL0 &= ~(0x30 + REFON);
         REFCTL0 |= REFMSTR + vref + REFON;
     } else {
         REFCTL0 |= REFMSTR + REFON;
