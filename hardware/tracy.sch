@@ -16593,6 +16593,94 @@ Source: http://www.diodes.com/datasheets/ds23001.pdf</description>
 </deviceset>
 </devicesets>
 </library>
+<library name="Simplex-Connectors">
+<description>finest footprints by petre rodan</description>
+<packages>
+<package name="SIMLOCK_C707_10M006">
+<description>Amphenol SIMLOCK &lt;b&gt; C707 10M006 000 2&lt;/b&gt;</description>
+<hole x="0" y="0" drill="1.6"/>
+<hole x="22" y="1.6" drill="1.6"/>
+<hole x="0" y="12.7" drill="1.6"/>
+<hole x="22" y="11.5" drill="1.6"/>
+<smd name="LOCK_2" x="-4.2" y="9.35" dx="3" dy="0.9" layer="1"/>
+<smd name="LOCK_1" x="-4.2" y="10.62" dx="3" dy="0.9" layer="1"/>
+<smd name="CLK" x="26.9" y="10.07" dx="3" dy="0.9" layer="1"/>
+<smd name="IO" x="26.9" y="8.8" dx="3" dy="0.9" layer="1"/>
+<smd name="RST" x="26.9" y="7.53" dx="3" dy="0.9" layer="1"/>
+<smd name="VPROG" x="26.9" y="6.26" dx="3" dy="0.9" layer="1"/>
+<smd name="VCC" x="26.9" y="4.99" dx="3" dy="0.9" layer="1"/>
+<smd name="GND" x="26.9" y="3.72" dx="3" dy="0.9" layer="1"/>
+<wire x1="-3" y1="-3.6" x2="5" y2="-3.6" width="0.127" layer="21"/>
+<wire x1="5" y1="-3.6" x2="5" y2="-2.6" width="0.127" layer="21"/>
+<wire x1="5" y1="-2.6" x2="25" y2="-2.6" width="0.127" layer="21"/>
+<wire x1="-3" y1="-3.6" x2="-3" y2="-1.1" width="0.127" layer="21"/>
+<wire x1="-3" y1="-1.1" x2="-2" y2="-1.1" width="0.127" layer="21"/>
+<wire x1="-2" y1="-1.1" x2="-2" y2="5.6" width="0.127" layer="21"/>
+<wire x1="-2" y1="5.6" x2="-3" y2="5.6" width="0.127" layer="21"/>
+<wire x1="-3" y1="5.6" x2="-3" y2="7.1" width="0.127" layer="21"/>
+<wire x1="-3" y1="7.1" x2="-2" y2="7.1" width="0.127" layer="21"/>
+<wire x1="-2" y1="7.1" x2="-2" y2="8" width="0.127" layer="21"/>
+<wire x1="-2" y1="8" x2="-1" y2="8" width="0.127" layer="21"/>
+<wire x1="-1" y1="8" x2="-1" y2="12" width="0.127" layer="21"/>
+<wire x1="-1" y1="12" x2="-2" y2="12" width="0.127" layer="21"/>
+<wire x1="-2" y1="12" x2="-2" y2="13.8" width="0.127" layer="21"/>
+<wire x1="-2" y1="13.8" x2="-3" y2="13.8" width="0.127" layer="21"/>
+<wire x1="-3" y1="13.8" x2="-3" y2="16.3" width="0.127" layer="21"/>
+<wire x1="25" y1="-2.6" x2="25" y2="15.3" width="0.127" layer="21"/>
+<wire x1="-3" y1="16.3" x2="5" y2="16.3" width="0.127" layer="21"/>
+<wire x1="5" y1="16.3" x2="5" y2="15.3" width="0.127" layer="21"/>
+<wire x1="5" y1="15.3" x2="9.5" y2="15.3" width="0.127" layer="21"/>
+<wire x1="9.5" y1="15.3" x2="9.5" y2="16.3" width="0.127" layer="21"/>
+<wire x1="9.5" y1="16.3" x2="19.4" y2="16.3" width="0.127" layer="21"/>
+<wire x1="19.4" y1="16.3" x2="19.4" y2="15.3" width="0.127" layer="21"/>
+<wire x1="19.4" y1="15.3" x2="25" y2="15.3" width="0.127" layer="21"/>
+</package>
+</packages>
+<symbols>
+<symbol name="SIMLOCK_C707_10M006">
+<description>Amphenol SIMLOCK &lt;b&gt;C707 10M006 000 2&lt;/b&gt;</description>
+<wire x1="-7.62" y1="12.7" x2="-7.62" y2="-10.16" width="0.254" layer="94"/>
+<wire x1="-7.62" y1="-10.16" x2="7.62" y2="-10.16" width="0.254" layer="94"/>
+<wire x1="7.62" y1="-10.16" x2="7.62" y2="12.7" width="0.254" layer="94"/>
+<wire x1="7.62" y1="12.7" x2="-7.62" y2="12.7" width="0.254" layer="94"/>
+<pin name="LOCK_01" x="-10.16" y="7.62" visible="pad" length="short"/>
+<pin name="LOCK_02" x="-10.16" y="5.08" visible="pad" length="short"/>
+<pin name="CLK" x="10.16" y="7.62" visible="pad" length="short" rot="R180"/>
+<pin name="IO" x="10.16" y="5.08" visible="pad" length="short" rot="R180"/>
+<pin name="RST" x="10.16" y="2.54" visible="pad" length="short" rot="R180"/>
+<pin name="VPROG" x="10.16" y="0" visible="pad" length="short" rot="R180"/>
+<pin name="VCC" x="10.16" y="-2.54" visible="pad" length="short" rot="R180"/>
+<pin name="GND" x="10.16" y="-5.08" visible="pad" length="short" rot="R180"/>
+<text x="-5.08" y="-12.7" size="1.778" layer="96">&gt;VALUE</text>
+<text x="-5.08" y="15.24" size="1.778" layer="95">&gt;NAME</text>
+</symbol>
+</symbols>
+<devicesets>
+<deviceset name="SIMLOCK">
+<description>Amphenol SIMLOCK Card Reader</description>
+<gates>
+<gate name="G$1" symbol="SIMLOCK_C707_10M006" x="0" y="-2.54"/>
+</gates>
+<devices>
+<device name="C707_10M006_000_2" package="SIMLOCK_C707_10M006">
+<connects>
+<connect gate="G$1" pin="CLK" pad="CLK"/>
+<connect gate="G$1" pin="GND" pad="GND"/>
+<connect gate="G$1" pin="IO" pad="IO"/>
+<connect gate="G$1" pin="LOCK_01" pad="LOCK_1"/>
+<connect gate="G$1" pin="LOCK_02" pad="LOCK_2"/>
+<connect gate="G$1" pin="RST" pad="RST"/>
+<connect gate="G$1" pin="VCC" pad="VCC"/>
+<connect gate="G$1" pin="VPROG" pad="VPROG"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+</devices>
+</deviceset>
+</devicesets>
+</library>
 </libraries>
 <attributes>
 </attributes>
@@ -16715,6 +16803,7 @@ Source: http://www.diodes.com/datasheets/ds23001.pdf</description>
 <part name="C15" library="SparkFun-Capacitors" deviceset="CAP_POL" device="D" value="10uF"/>
 <part name="GND8" library="SparkFun" deviceset="GND" device=""/>
 <part name="IC1" library="sim900" deviceset="SIM900" device=""/>
+<part name="U$3" library="Simplex-Connectors" deviceset="SIMLOCK" device="C707_10M006_000_2"/>
 </parts>
 <sheets>
 <sheet>
@@ -16836,6 +16925,7 @@ Source: http://www.diodes.com/datasheets/ds23001.pdf</description>
 <instance part="C15" gate="G$1" x="0" y="76.2"/>
 <instance part="GND8" gate="1" x="22.86" y="241.3"/>
 <instance part="IC1" gate="G$1" x="345.44" y="363.22"/>
+<instance part="U$3" gate="G$1" x="441.96" y="378.46"/>
 </instances>
 <busses>
 </busses>

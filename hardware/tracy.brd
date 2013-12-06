@@ -1056,6 +1056,50 @@ diameter 3.5 mm, vertical, grid 5.08 mm</description>
 </package>
 </packages>
 </library>
+<library name="Simplex-Connectors">
+<description>finest footprints by petre rodan</description>
+<packages>
+<package name="SIMLOCK_C707_10M006">
+<description>Amphenol SIMLOCK &lt;b&gt; C707 10M006 000 2&lt;/b&gt;</description>
+<hole x="0" y="0" drill="1.6"/>
+<hole x="22" y="1.6" drill="1.6"/>
+<hole x="0" y="12.7" drill="1.6"/>
+<hole x="22" y="11.5" drill="1.6"/>
+<smd name="LOCK_2" x="-4.2" y="9.35" dx="3" dy="0.9" layer="1"/>
+<smd name="LOCK_1" x="-4.2" y="10.62" dx="3" dy="0.9" layer="1"/>
+<smd name="CLK" x="26.9" y="10.07" dx="3" dy="0.9" layer="1"/>
+<smd name="IO" x="26.9" y="8.8" dx="3" dy="0.9" layer="1"/>
+<smd name="RST" x="26.9" y="7.53" dx="3" dy="0.9" layer="1"/>
+<smd name="VPROG" x="26.9" y="6.26" dx="3" dy="0.9" layer="1"/>
+<smd name="VCC" x="26.9" y="4.99" dx="3" dy="0.9" layer="1"/>
+<smd name="GND" x="26.9" y="3.72" dx="3" dy="0.9" layer="1"/>
+<wire x1="-3" y1="-3.6" x2="5" y2="-3.6" width="0.127" layer="21"/>
+<wire x1="5" y1="-3.6" x2="5" y2="-2.6" width="0.127" layer="21"/>
+<wire x1="5" y1="-2.6" x2="25" y2="-2.6" width="0.127" layer="21"/>
+<wire x1="-3" y1="-3.6" x2="-3" y2="-1.1" width="0.127" layer="21"/>
+<wire x1="-3" y1="-1.1" x2="-2" y2="-1.1" width="0.127" layer="21"/>
+<wire x1="-2" y1="-1.1" x2="-2" y2="5.6" width="0.127" layer="21"/>
+<wire x1="-2" y1="5.6" x2="-3" y2="5.6" width="0.127" layer="21"/>
+<wire x1="-3" y1="5.6" x2="-3" y2="7.1" width="0.127" layer="21"/>
+<wire x1="-3" y1="7.1" x2="-2" y2="7.1" width="0.127" layer="21"/>
+<wire x1="-2" y1="7.1" x2="-2" y2="8" width="0.127" layer="21"/>
+<wire x1="-2" y1="8" x2="-1" y2="8" width="0.127" layer="21"/>
+<wire x1="-1" y1="8" x2="-1" y2="12" width="0.127" layer="21"/>
+<wire x1="-1" y1="12" x2="-2" y2="12" width="0.127" layer="21"/>
+<wire x1="-2" y1="12" x2="-2" y2="13.8" width="0.127" layer="21"/>
+<wire x1="-2" y1="13.8" x2="-3" y2="13.8" width="0.127" layer="21"/>
+<wire x1="-3" y1="13.8" x2="-3" y2="16.3" width="0.127" layer="21"/>
+<wire x1="25" y1="-2.6" x2="25" y2="15.3" width="0.127" layer="21"/>
+<wire x1="-3" y1="16.3" x2="5" y2="16.3" width="0.127" layer="21"/>
+<wire x1="5" y1="16.3" x2="5" y2="15.3" width="0.127" layer="21"/>
+<wire x1="5" y1="15.3" x2="9.5" y2="15.3" width="0.127" layer="21"/>
+<wire x1="9.5" y1="15.3" x2="9.5" y2="16.3" width="0.127" layer="21"/>
+<wire x1="9.5" y1="16.3" x2="19.4" y2="16.3" width="0.127" layer="21"/>
+<wire x1="19.4" y1="16.3" x2="19.4" y2="15.3" width="0.127" layer="21"/>
+<wire x1="19.4" y1="15.3" x2="25" y2="15.3" width="0.127" layer="21"/>
+</package>
+</packages>
+</library>
 </libraries>
 <attributes>
 </attributes>
@@ -1313,6 +1357,7 @@ design rules under a new name.</description>
 <element name="R13" library="rcl" package="R0805W" value="320" x="-41.6" y="-3.1"/>
 <element name="C15" library="SparkFun-Capacitors" package="PANASONIC_D" value="10uF" x="-39.6" y="-9.5"/>
 <element name="IC1" library="sim900" package="SIM900" value="SIM900" x="-56.7" y="0.3"/>
+<element name="U$3" library="Simplex-Connectors" package="SIMLOCK_C707_10M006" value="SIMLOCKC707_10M006_000_2" x="-64" y="-29.2"/>
 </elements>
 <signals>
 <signal name="N$2">
