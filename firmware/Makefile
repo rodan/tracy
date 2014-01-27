@@ -1,5 +1,5 @@
 
-SUBDIRS = drivers
+SUBDIRS = drivers fatfs
 PROJ = proj
 
 ### Machine flags
@@ -32,7 +32,6 @@ LD		= msp430-ld
 AS		= msp430-as
 AR		= msp430-ar
 
-PYTHON := $(shell which python2 || which python)
 BASH := $(shell which bash || which bash)
 
 .PHONY: all
@@ -45,7 +44,7 @@ BASH := $(shell which bash || which bash)
 .PHONY: tags
 .PHONY: force
 
-all: new_timestamps depend config.h tags $(PROJ).txt
+all: new_timestamps depend config.h tags $(PROJ).elf
 
 #
 # Build list of sources and objects to build
@@ -89,10 +88,7 @@ $(OBJS): $(PROJ).cflags
 
 $(PROJ).elf: $(OBJS)
 	@echo -e "\n>> Building $@ as target $(TARGET)"
-	@$(CC) $(CFLAGS) $(LDFLAGS) $(INCLUDES) -o $@ $+	
-
-$(PROJ).txt: $(PROJ).elf
-	$(PYTHON) tools/memory.py -i $< -o $@
+	@$(CC) $(CFLAGS) $(LDFLAGS) $(INCLUDES) -o $@ $+ && size $@
 
 modinit.o: modinit.c
 	@echo "CC $<"
@@ -115,10 +111,6 @@ new_timestamps:
 tags: $(SRCS)
 	@echo "Generating tags .."
 	@exuberant-ctags -R
-
-config:
-	$(PYTHON) tools/config.py
-	$(PYTHON) tools/make_modinit.py
 
 install: $(PROJ).txt
 	mspdebug olimex-iso-mk2 "prog $<"
