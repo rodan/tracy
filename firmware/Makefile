@@ -1,5 +1,5 @@
 
-SUBDIRS = drivers fatfs
+SUBDIRS = drivers
 PROJ = proj
 
 ### Machine flags
@@ -112,7 +112,7 @@ tags: $(SRCS)
 	@echo "Generating tags .."
 	@exuberant-ctags -R
 
-install: $(PROJ).txt
+install: $(PROJ).elf
 	mspdebug olimex-iso-mk2 "prog $<"
 
 clean: $(SUBDIRS)

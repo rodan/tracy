@@ -24,7 +24,8 @@ enum sys_message {
     SYS_MSG_TIMER1_CRR2 = BIT9, // unused
     // UARTs
     SYS_MSG_UART0_RX = BITA,
-    SYS_MSG_UART1_RX = BITB
+    SYS_MSG_UART1_RX = BITB,
+    SYS_MSG_PYRO_RX = BITC
 };
 
 /*!

@@ -7,14 +7,15 @@ void uart0_init(void)
 {
 
     // get write-access to port mapping registers
+    /*
     //PMAPPWD = 0x02D52;
     PMAPPWD = PMAPKEY;
     PMAPCTL = PMAPRECFG;
     P4MAP2 = PM_UCA0TXD;
     P4MAP3 = PM_UCA0RXD;
     PMAPPWD = 0;
-    // hardware UART
     P4SEL |= BIT2 + BIT3;       // P4.4,5 = USCI_A0 TXD/RXD
+    */
     UCA0CTL1 |= UCSWRST;        // put state machine in reset
     UCA0CTL1 |= UCSSEL_1;       // use ACLK
     UCA0BR0 = 0x03;             // 32kHz/9600=3.41
