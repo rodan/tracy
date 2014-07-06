@@ -1,44 +1,24 @@
-#ifndef __SC_H__
-#define __SC_H__
+#ifndef __PROJ_H__
+#define __PROJ_H__
 
 #include <msp430.h>
 #include <stdlib.h>
 #include "config.h"
 
-// ports
-#define IR_SEL              P1SEL
-#define IR_DIR              P1DIR
-#define IR_IN               P1IN
-#define IR_PIN              BIT0
+// msp430's stdlib.h is missing these
+#ifndef EXIT_SUCCESS
+#define EXIT_SUCCESS    0
+#endif
 
-#define OOK_SEL             P1SEL
-#define OOK_DIR             P1DIR
-#define OOK_OUT             P1OUT
-#define OOK_PIN             BIT1
+#ifndef EXIT_FAILURE
+#define EXIT_FAILURE    1
+#endif
 
-#define I2C_MASTER_DIR      P6DIR
-#define I2C_MASTER_OUT      P6OUT
-#define I2C_MASTER_IN       P6IN
-//port pins
-#define I2C_MASTER_SCL      BIT2
-#define I2C_MASTER_SDA      BIT3
-//Start and Stop delay, most devices need this
-#define I2C_MASTER_SDLY		0x01
-//for long lines or very fast MCLK, unremark and set
-#define I2C_MASTER_DDLY		0x02
+#define true            1
+#define false           0
 
-#define PS_SLAVE_ADDR       0x28
-#define OUTPUT_MIN          0
-#define OUTPUT_MAX          0x3fff              // 2^14 - 1
-#define PRESSURE_MIN        0.0                 // min is 0 for sensors that give absolute values
-#define PRESSURE_MAX        206842.7            // 30psi (and we want results in pascals)
-
-
-#define MCLK_FREQ           8000000
-#define USB_MCLK_FREQ       4000000
-
-#define true                1
-#define false               0
+#define STR_LEN 64
+char str_temp[STR_LEN];
 
 void main_init(void);
 
