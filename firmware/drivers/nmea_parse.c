@@ -1,8 +1,9 @@
 
 #include <string.h>
 #include <stdio.h>
+#include "drivers/rtc.h"
+#include "drivers/nmea_parse.h"
 #include "proj.h"
-#include "nmea_parse.h"
 
 uint8_t nmea_parse(char *s, const uint8_t len)
 {
@@ -20,7 +21,9 @@ uint8_t nmea_parse(char *s, const uint8_t len)
         np = strchr(p, ',');
         if ((np - p) > 5) {
             // only parse 6 digits thus ignore milliseconds
-            str_to_uint32(p, &tmp32, 0, 6, 1, 235959);
+            if ( str_to_uint32(p, &tmp32, 0, 6, 0, 235959) == EXIT_FAILURE ) {
+                return EXIT_FAILURE;
+            }
             mc_t.hour = tmp32 / 10000;
             mc_t.minute = (tmp32 % 10000) / 100;
             mc_t.second = (tmp32 % 100);
@@ -32,6 +35,7 @@ uint8_t nmea_parse(char *s, const uint8_t len)
             mc_t.fix = true;
         } else if (p[0] == 'V') {
             mc_t.fix = false;
+            return EXIT_FAILURE;
         } else {
             return EXIT_FAILURE;
         }
@@ -43,10 +47,14 @@ uint8_t nmea_parse(char *s, const uint8_t len)
         dlen = nd - p;
         rlen = np - nd - 1;
         if ((dlen == 4) && (rlen == 4)) {
-            str_to_uint16(p, &tmp16, 0, dlen, 0, 9000);
+            if ( str_to_uint16(p, &tmp16, 0, dlen, 0, 9000) == EXIT_FAILURE ) {
+                return EXIT_FAILURE;
+            }
             mc_t.lat_deg = tmp16 / 100;
             mc_t.lat_min = tmp16 % 100;
-            str_to_uint16(p + dlen + 1, &mc_t.lat_fr, 0, rlen, 0, 9999);
+            if ( str_to_uint16(p + dlen + 1, &mc_t.lat_fr, 0, rlen, 0, 9999) == EXIT_FAILURE ) {
+                return EXIT_FAILURE;
+            }
         }
 
         // lat_suffix
@@ -68,10 +76,14 @@ uint8_t nmea_parse(char *s, const uint8_t len)
         dlen = nd - p;
         rlen = np - nd - 1;
         if ((dlen == 5) && (rlen == 4)) {
-            str_to_uint16(p, &tmp16, 0, dlen, 0, 18000);
+            if ( str_to_uint16(p, &tmp16, 0, dlen, 0, 18000) == EXIT_FAILURE ) {
+                return EXIT_FAILURE;
+            }
             mc_t.lon_deg = tmp16 / 100;
             mc_t.lon_min = tmp16 % 100;
-            str_to_uint16(p + dlen + 1, &mc_t.lon_fr, 0, rlen, 0, 9999);
+            if ( str_to_uint16(p + dlen + 1, &mc_t.lon_fr, 0, rlen, 0, 9999) == EXIT_FAILURE ) {
+                return EXIT_FAILURE;
+            }
         }
 
         // lon_suffix
@@ -108,13 +120,16 @@ uint8_t nmea_parse(char *s, const uint8_t len)
         p = strchr(p, ',') + 1;
         np = strchr(p, ',');
         if ((np - p) > 5) {
-            str_to_uint32(p, &tmp32, 0, 6, 10000, 311299);
+            if ( str_to_uint32(p, &tmp32, 0, 6, 10000, 311299) == EXIT_FAILURE ) {
+                return EXIT_FAILURE;
+            }
             mc_t.day = tmp32 / 10000;
             mc_t.month = (tmp32 % 10000) / 100;
             mc_t.year = (tmp32 % 100) + 2000;
         }
 
         if (mc_t.fix) {
+            mc_t.fixtime = rtca_time.sys;
             src_p = (uint8_t *) & mc_t;
             dst_p = (uint8_t *) & mc_f;
             for (i = 0; i < sizeof(mc_t); i++) {
@@ -122,7 +137,8 @@ uint8_t nmea_parse(char *s, const uint8_t len)
             }
             memset(&mc_t, 0, sizeof(mc_t));
         }
-
+    } else {
+        return EXIT_FAILURE;
     }
 
     return EXIT_SUCCESS;

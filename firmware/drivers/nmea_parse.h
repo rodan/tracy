@@ -7,7 +7,6 @@ struct nmea_gprmc {
     uint8_t hour;
     uint8_t minute;
     uint8_t second;
-    uint8_t fix;
     uint8_t lat_deg;
     uint8_t lat_min;
     uint16_t lat_fr;
@@ -21,6 +20,8 @@ struct nmea_gprmc {
     uint8_t day;
     uint8_t month;
     uint16_t year;
+    uint8_t fix;
+    uint32_t fixtime;
 };
 
 struct nmea_gprmc mc_f;
