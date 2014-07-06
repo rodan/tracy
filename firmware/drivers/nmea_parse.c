@@ -4,9 +4,6 @@
 #include "proj.h"
 #include "nmea_parse.h"
 
-// XXX
-#include "drivers/uart1.h"
-
 uint8_t nmea_parse(char *s, const uint8_t len)
 {
     char *p = s;
@@ -16,9 +13,6 @@ uint8_t nmea_parse(char *s, const uint8_t len)
     uint8_t i;
     uint16_t dlen, rlen;
     uint8_t *dst_p, *src_p;
-
-    uart1_tx_str(s, len);
-    uart1_tx_str("\r\n", 2);
 
     if (strstr(s, "$GPRMC")) {
         // time
@@ -127,19 +121,6 @@ uint8_t nmea_parse(char *s, const uint8_t len)
                 *dst_p++ = *src_p++;
             }
             memset(&mc_t, 0, sizeof(mc_t));
-
-            /*
-            snprintf(str_temp, STR_LEN, "\r\n%02d:%02d:%02d %02d.%02d.%d\r\n",
-                     mc_f.hour, mc_f.minute, mc_f.second, mc_f.day, mc_f.month,
-                     mc_f.year);
-            uart1_tx_str(str_temp, strlen(str_temp));
-            */
-
-            snprintf(str_temp, STR_LEN, "%d %d.%04d%c %d %d.%04d%c\r\n",
-                     mc_f.lat_deg, mc_f.lat_min, mc_f.lat_fr, mc_f.lat_suffix,
-                     mc_f.lon_deg, mc_f.lon_min, mc_f.lon_fr, mc_f.lon_suffix );
-            uart1_tx_str(str_temp, strlen(str_temp));
-
         }
 
     }
@@ -165,9 +146,9 @@ uint8_t str_to_uint16(char *str, uint16_t * out, const uint8_t seek,
     }
     if ((val >= min) && (val <= max)) {
         *out = val;
-        return 1;
+        return EXIT_SUCCESS;
     } else {
-        return 0;
+        return EXIT_FAILURE;
     }
 }
 
@@ -189,8 +170,8 @@ uint8_t str_to_uint32(char *str, uint32_t * out, const uint8_t seek,
     }
     if ((val >= min) && (val <= max)) {
         *out = val;
-        return 1;
+        return EXIT_SUCCESS;
     } else {
-        return 0;
+        return EXIT_FAILURE;
     }
 }

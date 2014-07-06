@@ -12,11 +12,11 @@ enum uart1_tevent {
 
 volatile char uart1_rx_buf[UART1_RXBUF_SZ];
 volatile uint8_t uart1_p;
-uint8_t uart1_rx_enable;
+volatile uint8_t uart1_rx_enable;
 uint8_t uart1_rx_err;
 
 void uart1_init();
-uint16_t uart1_tx_str(char *str, uint16_t size);
+uint16_t uart1_tx_str(char *str, const uint16_t size);
 
 volatile enum uart1_tevent uart1_last_event;
 

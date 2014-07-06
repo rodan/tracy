@@ -32,24 +32,81 @@
 //const char gps_init[] = "$PMTK314,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*2A\r\n";
 const char gps_init[] = "$PMTK314,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*2C\r\n";
 
-static void do_smth(enum sys_message msg)
-{
-    P1OUT ^= BIT2;
-    /*
-    snprintf(str_temp, STR_LEN,"%04d%02d%02d %02d:%02d\r\n",
-            rtca_time.year, rtca_time.mon, rtca_time.day,
-            rtca_time.hour, rtca_time.min
-            );
-    uart0_tx_str(str_temp, strlen(str_temp));
-    uart1_tx_str(str_temp, strlen(str_temp));
-    */
-}
+const uint32_t rtca_set_period = 86400;
+uint32_t rtca_set_next = 0;
+
+const uint16_t gps_get_period = 600;
+const uint8_t gps_fix_shtd = 5;
+uint16_t gps_retry_period = 300;
+uint32_t gps_get_next = 2;
+uint8_t gps_fix_shtd_ctr = 0;
+uint8_t gps_initialized = false;
 
 static void parse_gps(enum sys_message msg)
 {
     nmea_parse((char *)uart0_rx_buf, uart0_p);
+
+    //uart1_tx_str((char *)uart0_rx_buf, uart0_p);
+    //uart1_tx_str("\r\n", 2);
+
+    if (mc_f.fix) {
+        gps_fix_shtd_ctr++;
+        /*
+           snprintf(str_temp, STR_LEN, "\r\n%02d:%02d:%02d %02d.%02d.%d\r\n",
+           mc_f.hour, mc_f.minute, mc_f.second, mc_f.day, mc_f.month,
+           mc_f.year);
+           uart1_tx_str(str_temp, strlen(str_temp));
+         */
+
+        snprintf(str_temp, STR_LEN, "%d %d.%04d%c %d %d.%04d%c\r\n",
+                 mc_f.lat_deg, mc_f.lat_min, mc_f.lat_fr, mc_f.lat_suffix,
+                 mc_f.lon_deg, mc_f.lon_min, mc_f.lon_fr, mc_f.lon_suffix);
+        uart1_tx_str(str_temp, strlen(str_temp));
+
+
+        if (rtca_time.sys > rtca_set_next) {
+            rtca_time.year = mc_f.year;
+            rtca_time.mon = mc_f.month;
+            rtca_time.day = mc_f.day;
+            rtca_time.hour = mc_f.hour;
+            rtca_time.min = mc_f.minute;
+            rtca_time.sec = mc_f.second;
+
+            rtca_set_time();
+            rtca_set_next += rtca_set_period;
+        }
+    }
+
     uart0_p = 0;
     uart0_rx_enable = 1;
+}
+
+static void do_smth(enum sys_message msg)
+{
+    //P1OUT ^= BIT2;
+    snprintf(str_temp, STR_LEN, "%04d%02d%02d %02d:%02d %ld\r\n",
+             rtca_time.year, rtca_time.mon, rtca_time.day,
+             rtca_time.hour, rtca_time.min, rtca_time.sys);
+    uart1_tx_str(str_temp, strlen(str_temp));
+
+    if (rtca_time.sys > gps_get_next) {
+        GPS_ENABLE;
+
+        if ((rtca_time.sys > gps_get_next + 2) && (!gps_initialized)) {
+            uart0_tx_str((char *)gps_init, 51);
+            gps_initialized = true;
+            sys_messagebus_register(&parse_gps, SYS_MSG_UART0_RX);
+        }
+
+        if ((rtca_time.sys > gps_get_next + gps_retry_period) || (gps_fix_shtd_ctr >= gps_fix_shtd)) {
+            GPS_DISABLE;
+            gps_initialized = false;
+            gps_fix_shtd_ctr = 0;
+            gps_get_next += gps_get_period;
+            sys_messagebus_unregister(&parse_gps);
+        }
+    }
+    
 }
 
 int main(void)
@@ -58,18 +115,11 @@ int main(void)
     uart0_init();
     uart1_init();
 
-    //sys_messagebus_register(&do_smth, SYS_MSG_RTC_SECOND);
-    GPS_ENABLE;
     //GPS_BKP_ENABLE;
     CHARGE_ENABLE;
 
-    timer_a0_delay(1000000);
-    timer_a0_delay(1000000);
-
-    uart0_tx_str((char *)gps_init, 51);
-
     // parse GPS output
-    sys_messagebus_register(&parse_gps, SYS_MSG_UART0_RX);
+    sys_messagebus_register(&do_smth, SYS_MSG_RTC_SECOND);
 
     while (1) {
         sleep();
@@ -197,4 +247,3 @@ void check_events(void)
         p = p->next;
     }
 }
-
