@@ -9,13 +9,14 @@
 #ifndef EXIT_SUCCESS
 #define EXIT_SUCCESS    0
 #endif
-
 #ifndef EXIT_FAILURE
 #define EXIT_FAILURE    1
 #endif
 
 #define true            1
 #define false           0
+
+#define LED_SWITCH      P1OUT ^= BIT2
 
 #define STR_LEN 64
 char str_temp[STR_LEN];
