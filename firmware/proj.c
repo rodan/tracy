@@ -12,60 +12,100 @@
 #include "proj.h"
 #include "calib.h"
 #include "drivers/sys_messagebus.h"
-#include "drivers/pmm.h"
 #include "drivers/rtc.h"
-#include "drivers/timer_a1.h"
 #include "drivers/timer_a0.h"
 #include "drivers/uart0.h"
 #include "drivers/uart1.h"
-#include "drivers/serial_bitbang.h"
 #include "drivers/adc.h"
+#include "drivers/nmea_parse.h"
 
 #define GPSMAX 255
 
-char str_temp[64];
+#define GPS_ENABLE          P6OUT |= BIT0
+#define GPS_DISABLE         P6OUT &= ~BIT0
+#define GPS_BKP_ENABLE      P4OUT |= BIT6
+#define GPS_BKP_DISABLE     P4OUT &= ~BIT6
 
-char gps_rx_buf[GPSMAX];
-uint8_t gps_rx_buf_p = 0;
+#define CHARGE_ENABLE       P6OUT &= ~BIT1
+#define CHARGE_DISABLE      P6OUT |= BIT1
 
-/*
-static void do_smth(enum sys_message msg)
-{
-    snprintf(str_temp, 53,"%04d%02d%02d %02d:%02d\r\n",
-            rtca_time.year, rtca_time.mon, rtca_time.day,
-            rtca_time.hour, rtca_time.min
-            );
-    uart0_tx_str(str_temp, strlen(str_temp));
-    uart1_tx_str(str_temp, strlen(str_temp));
-}
-*/
+//const char gps_init[] = "$PMTK314,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*2A\r\n";
+const char gps_init[] = "$PMTK314,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*2C\r\n";
+
+const uint32_t rtca_set_period = 86400;
+uint32_t rtca_set_next = 0;
+
+const uint16_t gps_get_period = 600;
+const uint8_t gps_fix_shtd = 5;
+uint16_t gps_retry_period = 300;
+uint32_t gps_get_next = 2;
+uint8_t gps_fix_shtd_ctr = 0;
+uint8_t gps_initialized = false;
 
 static void parse_gps(enum sys_message msg)
 {
-    /*
-    for (i=0,i<uart0_p;i++) {
-        if (uart0_rx_buf[i] == 0x0a)
-            continue;
-        if (uart0_rx_buf[i] == 0x0d) {
-            uart0_tx_str(gps_rx_buf, gps_rx_buf_p);
-            snprintf(str_temp, 10," _%03d_\r\n", gps_rx_buf_p);
-            uart0_tx_str(str_temp, strlen(str_temp));
-            gps_rx_buf_p = 0;
-        } else {
-            if (gps_rx_buf_p < GPSMAX-1) {
-                gps_rx_buf[gps_rx_buf_p] = uart0_rx_buf;
-                gps_rx_buf_p++;
-            } else {
-                gps_rx_buf_p = 0;
-            }
+
+    //uart1_tx_str((char *)uart0_rx_buf, uart0_p);
+    //uart1_tx_str("\r\n", 2);
+
+    if ((nmea_parse((char *)uart0_rx_buf, uart0_p) == EXIT_SUCCESS) && (mc_f.fix)) {
+        gps_fix_shtd_ctr++;
+        /*
+           snprintf(str_temp, STR_LEN, "\r\n%02d:%02d:%02d %02d.%02d.%d\r\n",
+           mc_f.hour, mc_f.minute, mc_f.second, mc_f.day, mc_f.month,
+           mc_f.year);
+           uart1_tx_str(str_temp, strlen(str_temp));
+         */
+
+        snprintf(str_temp, STR_LEN, "%d %d.%04d%c %d %d.%04d%c  %lds\r\n",
+                 mc_f.lat_deg, mc_f.lat_min, mc_f.lat_fr, mc_f.lat_suffix,
+                 mc_f.lon_deg, mc_f.lon_min, mc_f.lon_fr, mc_f.lon_suffix,
+                 rtca_time.sys - mc_f.fixtime);
+        uart1_tx_str(str_temp, strlen(str_temp));
+
+
+        if (rtca_time.sys > rtca_set_next) {
+            rtca_time.year = mc_f.year;
+            rtca_time.mon = mc_f.month;
+            rtca_time.day = mc_f.day;
+            rtca_time.hour = mc_f.hour;
+            rtca_time.min = mc_f.minute;
+            rtca_time.sec = mc_f.second;
+
+            rtca_set_time();
+            rtca_set_next += rtca_set_period;
         }
     }
-    */
-    uart0_tx_str(uart0_rx_buf, uart0_p);
-    snprintf(str_temp, 10," _%03d_\r\n", uart0_p);
-    uart0_tx_str(str_temp, strlen(str_temp));
+
     uart0_p = 0;
     uart0_rx_enable = 1;
+}
+
+static void do_smth(enum sys_message msg)
+{
+    //P1OUT ^= BIT2;
+    snprintf(str_temp, STR_LEN, "%04d%02d%02d %02d:%02d %ld\r\n",
+             rtca_time.year, rtca_time.mon, rtca_time.day,
+             rtca_time.hour, rtca_time.min, rtca_time.sys);
+    uart1_tx_str(str_temp, strlen(str_temp));
+
+    if (rtca_time.sys > gps_get_next) {
+        GPS_ENABLE;
+
+        if ((rtca_time.sys > gps_get_next + 2) && (!gps_initialized)) {
+            uart0_tx_str((char *)gps_init, 51);
+            gps_initialized = true;
+        }
+
+        if ((rtca_time.sys > gps_get_next + gps_retry_period) || (gps_fix_shtd_ctr >= gps_fix_shtd)) {
+            GPS_DISABLE;
+            gps_initialized = false;
+            gps_fix_shtd_ctr = 0;
+            gps_get_next += gps_get_period;
+            //sys_messagebus_unregister(&parse_gps);
+        }
+    }
+    
 }
 
 int main(void)
@@ -74,10 +114,12 @@ int main(void)
     uart0_init();
     uart1_init();
 
-    //sys_messagebus_register(&do_smth, SYS_MSG_RTC_SECOND);
+    //GPS_BKP_ENABLE;
+    CHARGE_ENABLE;
 
     // parse GPS output
     sys_messagebus_register(&parse_gps, SYS_MSG_UART0_RX);
+    sys_messagebus_register(&do_smth, SYS_MSG_RTC_SECOND);
 
     while (1) {
         sleep();
@@ -100,37 +142,16 @@ void main_init(void)
 #else
     WDTCTL = WDTPW + WDTHOLD;
 #endif
-    SetVCore(3);
+    //SetVCore(3);
 
-    // select XT1 and XT2 ports
-    // select 12pF, enable both crystals
+    // enable LF crystal
     P5SEL |= BIT5 + BIT4;
-    
-    // hf crystal
-    /*
-    uint16_t timeout = 5000;
-
-    P5SEL |= BIT3 + BIT2;
-    //UCSCTL6 |= XCAP0 | XCAP1;
-    UCSCTL6 &= ~(XT1OFF + XT2OFF);
-    UCSCTL3 = SELREF__XT2CLK;
-    UCSCTL4 = SELA__XT1CLK | SELS__XT2CLK | SELM__XT2CLK;
-    // wait until clocks settle
-    do {
-        UCSCTL7 &= ~(XT2OFFG + XT1LFOFFG + DCOFFG);
-        SFRIFG1 &= ~OFIFG;
-        timeout--;
-    } while ((SFRIFG1 & OFIFG) && timeout);
-    // decrease power
-    //UCSCTL6 &= ~(XT2DRIVE0 + XT1DRIVE0);
-    */
     UCSCTL6 &= ~(XT1OFF | XT1DRIVE0);
 
     P1SEL = 0x0;
-    P1DIR = 0xff;
-    //P1DIR = 0x00;
-    P1OUT = 0x00;
-    P1REN = 0x00;
+    P1DIR = 0xcd;
+    P1OUT = 0x2;
+    P1REN = 0x2;
 
     P2SEL = 0x0;
     P2DIR = 0x1;
@@ -140,41 +161,33 @@ void main_init(void)
     P3DIR = 0x1f;
     P3OUT = 0x0;
 
-    P4SEL = 0x0;
-    P4DIR = 0xff;
-    P4REN = 0x0;
+    //P4SEL = 0x0;
+    P4DIR = 0xc0;
     P4OUT = 0x0;
 
+    PMAPPWD = 0x02D52;
+    // set up UART port mappings
+    P4MAP2 = PM_UCA0TXD;
+    P4MAP3 = PM_UCA0RXD;
+    //P4MAP4 = PM_UCA1TXD;
+    //P4MAP5 = PM_UCA1RXD;
+    //P4SEL |= 0x3c;
+
+    P4MAP1 = PM_UCA1TXD;
+    P4MAP0 = PM_UCA1RXD;
+    P4SEL |= 0x0f;
+    PMAPPWD = 0;
+
     //P5SEL is set above
-    P5DIR = 0x2;
+    P5DIR = 0xf;
     P5OUT = 0x0;
 
-    P6SEL = 0x0;
-    P6DIR = 0x2;
+    P6SEL = 0xc;
+    P6DIR = 0x3;
     P6OUT = 0x2;
 
-    PJOUT = 0x00;
     PJDIR = 0xFF;
-
-#ifdef CALIBRATION
-    // send MCLK to P4.0
-    __disable_interrupt();
-    // get write-access to port mapping registers
-    //PMAPPWD = 0x02D52;
-    PMAPPWD = PMAPKEY;
-    PMAPCTL = PMAPRECFG;
-    // MCLK set out to 4.0
-    P4MAP0 = PM_MCLK;
-    //P4MAP0 = PM_RTCCLK;
-    PMAPPWD = 0;
-    __enable_interrupt();
-    P4DIR |= BIT0;
-    P4SEL |= BIT0;
-
-    // send ACLK to P1.0
-    P1DIR |= BIT0;
-    P1SEL |= BIT0;
-#endif
+    PJOUT = 0x00;
 
     // disable VUSB LDO and SLDO
     USBKEYPID = 0x9628;
@@ -187,13 +200,6 @@ void main_init(void)
 
 void sleep(void)
 {
-    //opt_power_disable();
-    // turn off internal VREF, XT2, i2c power
-    //UCSCTL6 |= XT2OFF;
-    //PMMCTL0_H = 0xA5;
-    //SVSMHCTL &= ~SVMHE;
-    //SVSMLCTL &= ~(SVSLE+SVMLE);
-    //PMMCTL0_H = 0x00;
     _BIS_SR(LPM3_bits + GIE);
     __no_operation();
 }
@@ -223,11 +229,6 @@ void check_events(void)
         msg |= rtca_last_event;
         rtca_last_event = 0;
     }
-    // drivers/timer1a
-    if (timer_a1_last_event) {
-        msg |= timer_a1_last_event << 7;
-        timer_a1_last_event = 0;
-    }
     // drivers/uart0
     if (uart0_last_event == UART0_EV_RX) {
         msg |= BITA;
@@ -246,15 +247,3 @@ void check_events(void)
         p = p->next;
     }
 }
-
-void opt_power_enable()
-{
-    P1OUT &= ~BIT6;
-}
-
-void opt_power_disable()
-{
-    P1OUT |= BIT6;
-    I2C_MASTER_DIR &= ~(I2C_MASTER_SCL + I2C_MASTER_SDA);
-}
-

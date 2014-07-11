@@ -15,9 +15,8 @@
 void timer_a0_init(void)
 {
     __disable_interrupt();
-    TA0CTL |= TASSEL__ACLK + MC__CONTINOUS;
-    TA0R = 0;
-    //TA0CCTL0 |= CCIE;
+    timer_a0_ovf = 0;
+    TA0CTL |= TASSEL__ACLK + MC__CONTINOUS + TACLR + TAIE;
     __enable_interrupt();
 }
 
@@ -78,6 +77,10 @@ void timer0_A1_ISR(void)
         timer_a0_last_event |= TIMER_A0_EVENT_CCR2;
         // return to LPM3 (don't mess with SR bits)
         return;
+    } else if (iv == TA0IV_TA0IFG) {
+        timer_a0_ovf++;
+        timer_a0_last_event |= TIMER_A0_EVENT_IFG;
+        goto exit_lpm3;
     }
 
     return;
