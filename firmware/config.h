@@ -6,8 +6,9 @@
 #define CONFIG_RTC_DST
 #define CONFIG_RTC_DST_ZONE 4
 
+//#define DEBUG_GPS
+#define DEBUG_GPRS
+
 //#define CALIBRATION
-//#define IR_REMOTE
-//#define INTERTECHNO
 
 #endif

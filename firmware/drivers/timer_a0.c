@@ -54,7 +54,9 @@ void timer_a0_delay(uint32_t microseconds)
 
 void timer_a0_delay_noblk(uint32_t microseconds)
 {
-    uint32_t ticks = microseconds / 30.5175;
+    //uint32_t ticks = microseconds / 30.5175;
+    // smaller code (by about 3k!), but slightly less precise
+    uint32_t ticks = microseconds / 31;
     __disable_interrupt();
     TA0CCR2 = TA0R + ticks;
     TA0CCTL2 = 0;

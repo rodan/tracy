@@ -5,6 +5,14 @@
 #include "drivers/nmea_parse.h"
 #include "proj.h"
 
+/// function that parses one full nmea sentence
+/// input
+///   s   - pointer to the beginning of the nmea string
+///   len - size of the string
+/// returns
+///   EXIT_FAILURE - if string is malformed or too short to contain valid fix
+///   EXIT_SUCCESS - if all went well
+/// the only sentence currently decoded is $GPRMC. checksum is ignored
 uint8_t nmea_parse(char *s, const uint8_t len)
 {
     char *p = s;
@@ -16,6 +24,9 @@ uint8_t nmea_parse(char *s, const uint8_t len)
     uint8_t *dst_p, *src_p;
 
     if (strstr(s, "$GPRMC")) {
+        if (len < 68) {
+            return EXIT_FAILURE;
+        }
         // time
         p = strchr(p, ',') + 1;
         np = strchr(p, ',');
@@ -140,7 +151,6 @@ uint8_t nmea_parse(char *s, const uint8_t len)
     } else {
         return EXIT_FAILURE;
     }
-
     return EXIT_SUCCESS;
 }
 
@@ -191,3 +201,4 @@ uint8_t str_to_uint32(char *str, uint32_t * out, const uint8_t seek,
         return EXIT_FAILURE;
     }
 }
+

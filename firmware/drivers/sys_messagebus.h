@@ -18,10 +18,10 @@ enum sys_message {
     SYS_MSG_RTC_DAY = BIT4,     // day event from the hardware RTC
     SYS_MSG_RTC_MONTH = BIT5,   // month event from the hardware RTC
     SYS_MSG_RTC_YEAR = BIT6,    // year event from the hardware RTC
-    // TIMER1A
-    SYS_MSG_TIMER1_CRR0 = BIT7, // infrared remote sequence decoding
-    SYS_MSG_TIMER1_CRR1 = BIT8, // PWM for intertechno OOK module
-    SYS_MSG_TIMER1_CRR2 = BIT9, // unused
+    // TIMER0
+    SYS_MSG_TIMER0_CRR0 = BIT7, // infrared remote sequence decoding
+    SYS_MSG_TIMER0_CRR1 = BIT8, // PWM for intertechno OOK module
+    SYS_MSG_TIMER0_CRR2 = BIT9, // unused
     // UARTs
     SYS_MSG_UART0_RX = BITA,
     SYS_MSG_UART1_RX = BITB,
