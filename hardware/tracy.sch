@@ -11797,17 +11797,17 @@ changed 2011-11-09</description>
 <description>Molex &lt;b&gt;0530470610&lt;/b&gt;</description>
 <pad name="1" x="0" y="0" drill="0.6" diameter="0.8128" shape="long" rot="R90"/>
 <pad name="2" x="1.25" y="0" drill="0.6" diameter="0.8128" shape="long" rot="R90"/>
-<wire x1="7.75" y1="2" x2="7.75" y2="-1.2" width="0.127" layer="21"/>
-<wire x1="-1.5" y1="2" x2="-1.5" y2="-1.2" width="0.127" layer="21"/>
-<wire x1="-1.5" y1="2" x2="7.75" y2="2" width="0.127" layer="21"/>
-<wire x1="-1.5" y1="-1.2" x2="7.75" y2="-1.2" width="0.127" layer="21"/>
-<wire x1="-0.25" y1="3.05" x2="0" y2="2.4" width="0.127" layer="21"/>
-<wire x1="0" y1="2.4" x2="0.25" y2="3.05" width="0.127" layer="21"/>
-<wire x1="-0.25" y1="3.05" x2="0.25" y2="3.05" width="0.127" layer="21"/>
+<wire x1="7.75" y1="1.2" x2="7.75" y2="-2" width="0.127" layer="21"/>
+<wire x1="-1.5" y1="1.2" x2="-1.5" y2="-2" width="0.127" layer="21"/>
+<wire x1="-1.5" y1="1.2" x2="7.75" y2="1.2" width="0.127" layer="21"/>
+<wire x1="-1.5" y1="-2" x2="7.75" y2="-2" width="0.127" layer="21"/>
+<wire x1="-0.25" y1="2.15" x2="0" y2="1.5" width="0.127" layer="21"/>
+<wire x1="0" y1="1.5" x2="0.25" y2="2.15" width="0.127" layer="21"/>
+<wire x1="-0.25" y1="2.15" x2="0.25" y2="2.15" width="0.127" layer="21"/>
 <pad name="4" x="3.75" y="0" drill="0.6" diameter="0.8128" shape="long" rot="R90"/>
 <pad name="3" x="2.5" y="0" drill="0.6" diameter="0.8128" shape="long" rot="R90"/>
-<text x="1.45" y="-2.24" size="1.27" layer="27">&gt;value</text>
-<text x="2.5" y="2.98" size="1.27" layer="26">&gt;name</text>
+<text x="0.85" y="1.66" size="1.27" layer="27">&gt;value</text>
+<text x="0.9" y="-1.52" size="1.27" layer="26">&gt;name</text>
 <pad name="6" x="6.25" y="0" drill="0.6" diameter="0.8128" shape="long" rot="R90"/>
 <pad name="5" x="5" y="0" drill="0.6" diameter="0.8128" shape="long" rot="R90"/>
 </package>
@@ -12837,7 +12837,7 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <part name="U$16" library="Simplex-Power" deviceset="2V8" device=""/>
 <part name="U$2" library="Simplex-rlc" deviceset="RES_ARR" device="" value="470"/>
 <part name="+3V2" library="supply1" deviceset="+3V3" device=""/>
-<part name="D1" library="SparkFun-DiscreteSemi" deviceset="DIODE-SCHOTTKY" device="_"/>
+<part name="D1" library="SparkFun-DiscreteSemi" deviceset="DIODE-SCHOTTKY" device="_" value="15MQ040N"/>
 <part name="R3" library="rcl" deviceset="R-EU_" device="R0805W" value="2M"/>
 <part name="R4" library="rcl" deviceset="R-EU_" device="R0805W" value="1M3"/>
 <part name="C2" library="rcl" deviceset="C-EU" device="C0805" value="100nF"/>
@@ -12855,7 +12855,6 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <part name="IC1" library="Simplex-ICs" deviceset="SIM900" device=""/>
 <part name="U$17" library="Simplex-Connectors" deviceset="MOLEX_4" device="HORIZONTAL" value="5V"/>
 <part name="U$19" library="Simplex-Connectors" deviceset="MOLEX_4" device="HORIZONTAL" value="LiPo"/>
-<part name="U$20" library="Simplex-Connectors" deviceset="MOLEX_6" device="VERTICAL" value="prog"/>
 <part name="R6" library="rcl" deviceset="R-EU_" device="R0805W" value="100k"/>
 <part name="GND36" library="SparkFun" deviceset="GND" device=""/>
 <part name="LED1" library="led" deviceset="LED" device="CHIPLED_0805" value="green"/>
@@ -12880,6 +12879,7 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <part name="R8" library="rcl" deviceset="R-EU_" device="R0805W" value="330"/>
 <part name="T1" library="transistor" deviceset="BC846" device=""/>
 <part name="GND58" library="SparkFun" deviceset="GND" device=""/>
+<part name="X1" library="Simplex-Connectors" deviceset="MOLEX_6" device="VERTICAL"/>
 </parts>
 <sheets>
 <sheet>
@@ -13021,7 +13021,6 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <instance part="IC1" gate="G$1" x="205.74" y="162.56"/>
 <instance part="U$17" gate="G$1" x="231.14" y="25.4"/>
 <instance part="U$19" gate="G$1" x="259.08" y="33.02" rot="MR180"/>
-<instance part="U$20" gate="G$1" x="195.58" y="27.94"/>
 <instance part="R6" gate="G$1" x="111.76" y="93.98" rot="R270"/>
 <instance part="GND36" gate="1" x="111.76" y="83.82"/>
 <instance part="LED1" gate="G$1" x="111.76" y="109.22"/>
@@ -13046,6 +13045,7 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <instance part="R8" gate="G$1" x="358.14" y="271.78" rot="R180"/>
 <instance part="T1" gate="G$1" x="223.52" y="243.84"/>
 <instance part="GND58" gate="1" x="226.06" y="231.14"/>
+<instance part="X1" gate="G$1" x="195.58" y="27.94"/>
 </instances>
 <busses>
 </busses>
@@ -13405,9 +13405,9 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 </segment>
 <segment>
 <wire x1="193.04" y1="33.02" x2="190.5" y2="33.02" width="0.1524" layer="91"/>
-<pinref part="U$20" gate="G$1" pin="1"/>
 <pinref part="GND27" gate="1" pin="GND"/>
 <wire x1="190.5" y1="33.02" x2="190.5" y2="15.24" width="0.1524" layer="91"/>
+<pinref part="X1" gate="G$1" pin="1"/>
 </segment>
 </net>
 <net name="VIN" class="0">
@@ -13482,7 +13482,7 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <segment>
 <wire x1="193.04" y1="20.32" x2="182.88" y2="20.32" width="0.1524" layer="91"/>
 <label x="182.88" y="20.32" size="1.778" layer="95"/>
-<pinref part="U$20" gate="G$1" pin="6"/>
+<pinref part="X1" gate="G$1" pin="6"/>
 </segment>
 </net>
 <net name="N$6" class="0">
@@ -13551,7 +13551,7 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <label x="182.88" y="30.48" size="1.778" layer="95"/>
 <pinref part="R34" gate="G$1" pin="1"/>
 <wire x1="175.26" y1="30.48" x2="193.04" y2="30.48" width="0.1524" layer="91"/>
-<pinref part="U$20" gate="G$1" pin="2"/>
+<pinref part="X1" gate="G$1" pin="2"/>
 </segment>
 </net>
 <net name="TEST" class="0">
@@ -13564,7 +13564,7 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <wire x1="193.04" y1="27.94" x2="177.8" y2="27.94" width="0.1524" layer="91"/>
 <label x="182.88" y="27.94" size="1.778" layer="95"/>
 <pinref part="R35" gate="G$1" pin="1"/>
-<pinref part="U$20" gate="G$1" pin="3"/>
+<pinref part="X1" gate="G$1" pin="3"/>
 </segment>
 </net>
 <net name="P4.0" class="0">
@@ -13576,7 +13576,7 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <segment>
 <wire x1="193.04" y1="22.86" x2="182.88" y2="22.86" width="0.1524" layer="91"/>
 <label x="182.88" y="22.86" size="1.778" layer="95"/>
-<pinref part="U$20" gate="G$1" pin="5"/>
+<pinref part="X1" gate="G$1" pin="5"/>
 </segment>
 </net>
 <net name="N$31" class="0">
@@ -13792,7 +13792,7 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <junction x="132.08" y="175.26"/>
 </segment>
 </net>
-<net name="GPRS_POW" class="0">
+<net name="GPRS_PWRKEY" class="0">
 <segment>
 <pinref part="R20" gate="G$1" pin="2"/>
 <wire x1="116.84" y1="175.26" x2="104.14" y2="175.26" width="0.1524" layer="91"/>
@@ -13895,7 +13895,7 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <pinref part="U$17" gate="G$1" pin="4"/>
 </segment>
 </net>
-<net name="GPRS_EN" class="0">
+<net name="GPRS_VBAT" class="0">
 <segment>
 <pinref part="R23" gate="G$1" pin="1"/>
 <wire x1="208.28" y1="243.84" x2="203.2" y2="243.84" width="0.1524" layer="91"/>
@@ -13980,7 +13980,7 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <wire x1="193.04" y1="25.4" x2="180.34" y2="25.4" width="0.1524" layer="91"/>
 <label x="182.88" y="25.4" size="1.778" layer="95"/>
 <pinref part="U$12" gate="G$1" pin="2V8"/>
-<pinref part="U$20" gate="G$1" pin="4"/>
+<pinref part="X1" gate="G$1" pin="4"/>
 </segment>
 <segment>
 <pinref part="C17" gate="G$1" pin="2"/>
