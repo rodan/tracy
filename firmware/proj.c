@@ -79,10 +79,8 @@ static void parse_gps(enum sys_message msg)
 
 static void parse_gprs(enum sys_message msg)
 {
-    /*
     uart0_tx_str((char *)uart1_rx_buf, uart1_p);
     uart0_tx_str("\r\n", 2);
-    */
 
     uart1_p = 0;
     uart1_rx_enable = true;
@@ -161,7 +159,7 @@ int main(void)
     sys_messagebus_register(&parse_UI, SYS_MSG_UART0_RX);
     sys_messagebus_register(&schedule, SYS_MSG_RTC_SECOND);
 
-    uart0_tx_str("new\r\n", 5);
+    uart0_tx_str("hi\r\n", 4);
 
     while (1) {
         _BIS_SR(LPM3_bits + GIE);
@@ -170,6 +168,9 @@ int main(void)
         // reset watchdog counter
         WDTCTL = (WDTCTL & 0xff) | WDTPW | WDTCNTCL;
 #endif
+        // new messages are sent during the first call, so 
+        // parse the message linked list twice
+        check_events();
         check_events();
     }
 }
@@ -275,11 +276,6 @@ void check_events(void)
         msg |= timer_a0_last_event;
         timer_a0_last_event = 0;
     }
-    // drivers/rtca
-    if (rtca_last_event & RTCA_EV_SECOND) {
-        msg |= BIT5;
-        rtca_last_event = 0;
-    }
     // drivers/uart0
     if (uart0_last_event & UART0_EV_RX) {
         msg |= BITA;
@@ -289,6 +285,11 @@ void check_events(void)
     if (uart1_last_event & UART1_EV_RX) {
         msg |= BITB;
         uart1_last_event = 0;
+    }
+    // drivers/rtca
+    if (rtca_last_event & RTCA_EV_SECOND) {
+        msg |= BITF;
+        rtca_last_event = 0;
     }
     while (p) {
         // notify listener if he registered for any of these messages

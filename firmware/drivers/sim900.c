@@ -49,13 +49,13 @@ static void sim900_state_machine(enum sys_message msg)
 static void sim900_console_timing(enum sys_message msg)
 {
     if (sim900.console == TTY_RX_PENDING) {
-        uart1_last_event |= UART1_EV_RX;
-        uart1_rx_enable = false;
-        sim900.console = TTY_NULL;
-
         // signal that we're not ready to receive
         // should be moved into the isr and also asserted a few bytes before buff end
         SIM900_RTS_HIGH;
+
+        uart1_rx_enable = false;
+        sim900.console = TTY_NULL;
+        uart1_last_event |= UART1_EV_RX;
     }
 }
 

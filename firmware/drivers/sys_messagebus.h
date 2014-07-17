@@ -16,12 +16,12 @@ enum sys_message {
     SYS_MSG_TIMER0_CRR2 = BIT2, // timer_a0_delay_noblk_ccr2
     SYS_MSG_TIMER0_CRR3 = BIT3, // timer_a0_delay_noblk_ccr3
     SYS_MSG_TIMER0_CRR4 = BIT4,
-    // RTC
-    SYS_MSG_RTC_SECOND = BIT5,  // second event from the hardware RTC
     // UARTs
     SYS_MSG_UART0_RX = BITA,
     SYS_MSG_UART1_RX = BITB,
-    SYS_MSG_PYRO_RX = BITC
+    SYS_MSG_PYRO_RX = BITC,
+    // RTC
+    SYS_MSG_RTC_SECOND = BITF,  // second event from the hardware RTC
 };
 
 /*!
