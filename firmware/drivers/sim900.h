@@ -3,14 +3,19 @@
 
 #include "proj.h"
 
-#define SIM900_DTR_HIGH       P1OUT |= BIT3
-#define SIM900_DTR_LOW        P1OUT &= ~BIT3
-#define SIM900_RTS_HIGH       P1OUT |= BIT6
-#define SIM900_RTS_LOW        P1OUT &= ~BIT6
-#define SIM900_PWRKEY_HIGH    P1OUT &= ~BIT7
-#define SIM900_PWRKEY_LOW     P1OUT |= BIT7
-#define SIM900_VBAT_ENABLE    P2OUT |= BIT0
-#define SIM900_VBAT_DISABLE   P2OUT &= ~BIT0
+#define SIM900_DTR_HIGH         P1OUT |= BIT3
+#define SIM900_DTR_LOW          P1OUT &= ~BIT3
+#define SIM900_RTS_HIGH         P1OUT |= BIT6
+#define SIM900_RTS_LOW          P1OUT &= ~BIT6
+#define SIM900_PWRKEY_HIGH      P1OUT &= ~BIT7
+#define SIM900_PWRKEY_LOW       P1OUT |= BIT7
+#define SIM900_VBAT_ENABLE      P2OUT |= BIT0
+#define SIM900_VBAT_DISABLE     P2OUT &= ~BIT0
+
+#define SIM900_CTS              BIT5
+#define SIM900_CTS_IN           P1IN & BIT5
+#define SIM900_UCAIFG           UCA1IFG
+#define SIM900_UCATXBUF         UCA1TXBUF
 
 typedef enum {
     SIM900_ON,
@@ -39,5 +44,7 @@ struct sim900_t {
 struct sim900_t sim900;
 
 void sim900_init(void);
+void sim900_setup(void);
+uint16_t sim900_tx_str(char *str, const uint16_t size);
 
 #endif

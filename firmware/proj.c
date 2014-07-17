@@ -79,7 +79,6 @@ static void parse_gps(enum sys_message msg)
 
 static void parse_gprs(enum sys_message msg)
 {
-
     uart0_tx_str((char *)uart1_rx_buf, uart1_p);
     uart0_tx_str("\r\n", 2);
 
@@ -87,15 +86,22 @@ static void parse_gprs(enum sys_message msg)
     uart1_rx_enable = 1;
 }
 
-
 static void parse_UI(enum sys_message msg)
 {
-    // echo back to user's serial
-    uart0_tx_str((char *)uart0_rx_buf, uart0_p);
-    uart0_tx_str("\r\n", 2);
+    int8_t f = uart0_rx_buf[0];
 
-    uart1_tx_str((char *)uart0_rx_buf, uart0_p);
-    uart1_tx_str("\r\n", 2);
+    if (f == 'S') {
+        sim900_setup();
+    } else if (f == 'h') {
+        SIM900_DTR_HIGH;
+    } else if (f == 'w') {
+        SIM900_DTR_LOW;
+    }
+    
+    else {
+        sim900_tx_str((char *)uart0_rx_buf, uart0_p);
+        sim900_tx_str("\r", 1);
+    }
 
     uart0_p = 0;
     uart0_rx_enable = 1;
@@ -104,10 +110,17 @@ static void parse_UI(enum sys_message msg)
 static void schedule(enum sys_message msg)
 {
     //P1OUT ^= BIT2;
+    /*
     snprintf(str_temp, STR_LEN, "%04d%02d%02d %02d:%02d %ld\r\n",
              rtca_time.year, rtca_time.mon, rtca_time.day,
              rtca_time.hour, rtca_time.min, rtca_time.sys);
-    uart1_tx_str(str_temp, strlen(str_temp));
+    uart0_tx_str(str_temp, strlen(str_temp));
+    */
+
+    /*
+    snprintf(str_temp, STR_LEN, "cmd %d, state %d TA0CTL 0x%x, TA0CCTL2 0x%x, TA0CCR2 0x%x\r\n", sim900.cmd, sim900.next_state, TA0CTL, TA0CCTL2, TA0CCR2);
+    uart0_tx_str(str_temp, strlen(str_temp));
+    */
 
     if (rtca_time.sys > gps_get_next) {
         GPS_ENABLE;
@@ -122,7 +135,6 @@ static void schedule(enum sys_message msg)
             gps_initialized = false;
             gps_fix_shtd_ctr = 0;
             gps_get_next += gps_get_period;
-            //sys_messagebus_unregister(&parse_gps);
         }
     }
     
@@ -131,6 +143,8 @@ static void schedule(enum sys_message msg)
 int main(void)
 {
     main_init();
+    rtca_init();
+    timer_a0_init();
     uart0_init();
     uart1_init();
     sim900_init();
@@ -143,6 +157,8 @@ int main(void)
     sys_messagebus_register(&parse_gprs, SYS_MSG_UART1_RX);
     sys_messagebus_register(&parse_UI, SYS_MSG_UART0_RX);
     sys_messagebus_register(&schedule, SYS_MSG_RTC_SECOND);
+
+    uart0_tx_str("new\r\n", 5);
 
     while (1) {
         _BIS_SR(LPM3_bits + GIE);
@@ -172,20 +188,16 @@ void main_init(void)
 
     P1SEL = 0x0;
     P1DIR = 0xcd;
-    P1OUT = 0x2;
     P1REN = 0x2;
+    P1OUT |= 0x2;
 
     P2SEL = 0x0;
     P2DIR = 0x1;
-    P2OUT = 0x0;
 
     P3SEL = 0x0;
     P3DIR = 0x1f;
-    P3OUT = 0x0;
 
-    //P4SEL = 0x0;
     P4DIR = 0xc0;
-    P4OUT = 0x0;
 
     PMAPPWD = 0x02D52;
     // set up UART port mappings
@@ -215,8 +227,6 @@ void main_init(void)
     P4MAP5 = PM_UCA1RXD;
     P4SEL |= 0x30;
 #endif
-
-
     PMAPPWD = 0;
 
     //P5SEL is set above
@@ -235,8 +245,6 @@ void main_init(void)
     USBPWRCTL &= ~(SLDOEN + VUSBEN);
     USBKEYPID = 0x9600;
 
-    rtca_init();
-    timer_a0_init();
 }
 
 /*
@@ -264,9 +272,9 @@ void check_events(void)
         msg |= rtca_last_event;
         rtca_last_event = 0;
     }
-    // drivers/timer1a
-    if (timer_a0_last_event) {
-        msg |= timer_a0_last_event << 7;
+    // drivers/timer0a
+    if (timer_a0_last_event == TIMER_A0_EVENT_CCR2) {
+        msg |= BIT9;
         timer_a0_last_event = 0;
     }
     // drivers/uart0

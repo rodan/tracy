@@ -8,6 +8,13 @@ void uart1_init(void)
     UCA1BR0 = 0x03;             // 32kHz/9600=3.41
     UCA1BR1 = 0x00;
     UCA1MCTL = UCBRS_3 + UCBRF_0;       // modulation UCBRSx=3, UCBRFx=0
+
+    /*
+    UCA1BR0 = 0x0D;                           // 2400 (see User's Guide)
+    UCA1BR1 = 0x00;                           //
+    UCA1MCTL |= UCBRS_6 + UCBRF_0;            // Modulation UCBRSx=6, UCBRFx=0
+    */
+
     UCA1CTL1 &= ~UCSWRST;       // initialize USCI state machine
     UCA1IE |= UCRXIE;           // enable USCI_A0 RX interrupt
     uart1_p = 0;
@@ -41,11 +48,13 @@ void USCI_A1_ISR(void)
             if (rx == 0x0a) {
                 return;
             } else if (rx == 0x0d) {
-                ev = UART1_EV_RX;
-                //uart1_rx_buf[uart1_p] = 0;
-                uart1_rx_enable = 0;
-                //uart1_rx_err = 0;
-                _BIC_SR_IRQ(LPM3_bits);
+                if (uart1_p > 0) {
+                    ev = UART1_EV_RX;
+                    //uart1_rx_buf[uart1_p] = 0;
+                    uart1_rx_enable = 0;
+                    //uart1_rx_err = 0;
+                    _BIC_SR_IRQ(LPM3_bits);
+                }
             } else {
                 uart1_rx_buf[uart1_p] = rx;
                 uart1_p++;
