@@ -30,15 +30,22 @@ typedef enum {
 } sim900_state_t;
 
 typedef enum {
-    CSIM900_NULL,
-    CSIM900_ON,
-    CSIM900_OFF
+    CMD_NULL,
+    CMD_ON,
+    CMD_OFF
 } sim900_cmd_t;
+
+typedef enum {
+    TTY_NULL,
+    TTY_RX_PENDING,
+    TTY_RX_WAIT
+} sim900_tty_t;
 
 struct sim900_t {
     uint32_t sim900_sc; // timestamp of state change
     sim900_cmd_t cmd;
     sim900_state_t next_state;
+    sim900_tty_t console;
 };
 
 struct sim900_t sim900;

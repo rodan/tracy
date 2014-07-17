@@ -4,44 +4,58 @@
 #include "uart1.h"
 #include "sys_messagebus.h"
 
-static void sim900_sm(enum sys_message msg)
+static void sim900_state_machine(enum sys_message msg)
 {
     switch (sim900.cmd) {
-        case CSIM900_ON:
+        case CMD_ON:
             switch (sim900.next_state) {
                 case SIM900_VBAT_ON:
                     LED_SWITCH; // on
                     SIM900_VBAT_ENABLE;
                     SIM900_PWRKEY_HIGH;
-                    //SIM900_RTS_HIGH;
+                    SIM900_RTS_HIGH;
                     SIM900_DTR_LOW;
                     sim900.next_state = SIM900_PWRKEY_ACT;
-                    //timer_a0_delay_noblk(16384); // 0.5s
-                    timer_a0_delay_noblk(65000);
+                    timer_a0_delay_noblk_ccr2(16384); // 0.5s
+                    //timer_a0_delay_noblk_ccr2(65000);
                 break;
                 case SIM900_PWRKEY_ACT:
                     LED_SWITCH; // off
                     SIM900_PWRKEY_LOW;
                     sim900.next_state = SIM900_ON;
-                    timer_a0_delay_noblk(39321); // 1.2s
+                    timer_a0_delay_noblk_ccr2(39321); // 1.2s
                 break;
                 case SIM900_ON:
                     LED_SWITCH; // on
                     SIM900_PWRKEY_HIGH;
                     sim900.next_state = SIM900_PRE_IDLE;
-                    timer_a0_delay_noblk(62259); // 1.9s
+                    timer_a0_delay_noblk_ccr2(62259); // 1.9s
                 break;
                 case SIM900_PRE_IDLE:
                     LED_SWITCH; // off
-                    sim900.cmd = CSIM900_NULL;
+                    SIM900_RTS_LOW;
+                    sim900.cmd = CMD_NULL;
                     sim900.next_state = SIM900_IDLE;
                 break;
             }
         break;
-        case CSIM900_OFF:
+        case CMD_OFF:
         break;
-        case CSIM900_NULL:
+        case CMD_NULL:
         break;
+    }
+}
+
+static void sim900_console_timing(enum sys_message msg)
+{
+    if (sim900.console == TTY_RX_PENDING) {
+        uart1_last_event |= UART1_EV_RX;
+        uart1_rx_enable = false;
+        sim900.console = TTY_NULL;
+
+        // signal that we're not ready to receive
+        // should be moved into the isr and also asserted a few bytes before buff end
+        SIM900_RTS_HIGH;
     }
 }
 
@@ -64,10 +78,11 @@ uint16_t sim900_tx_str(char *str, const uint16_t size)
 // call only ONCE
 void sim900_init(void)
 {
-    sim900.cmd = CSIM900_ON;
-    sys_messagebus_register(&sim900_sm, SYS_MSG_TIMER0_CRR2);
+    sim900.cmd = CMD_ON;
+    sys_messagebus_register(&sim900_state_machine, SYS_MSG_TIMER0_CRR2);
+    sys_messagebus_register(&sim900_console_timing, SYS_MSG_TIMER0_CRR3);
     sim900.next_state = SIM900_VBAT_ON;
-    timer_a0_delay_noblk(16384); // 0.5s
+    timer_a0_delay_noblk_ccr2(16384); // 0.5s
 
     /*
     // IRQ triggers on high-to-low edge
@@ -78,6 +93,7 @@ void sim900_init(void)
 
 }
 
+/*
 void sim900_setup(void)
 {
     uint8_t i;
@@ -92,6 +108,7 @@ void sim900_setup(void)
     timer_a0_delay(7000);
     sim900_tx_str("AT&W\r", 6);
 }
+*/
 
 /*
 #pragma vector=PORT1_VECTOR

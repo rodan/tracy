@@ -1,5 +1,7 @@
 
 #include "uart1.h"
+#include "timer_a0.h"
+#include "sim900.h"
 
 void uart1_init(void)
 {
@@ -18,8 +20,7 @@ void uart1_init(void)
     UCA1CTL1 &= ~UCSWRST;       // initialize USCI state machine
     UCA1IE |= UCRXIE;           // enable USCI_A0 RX interrupt
     uart1_p = 0;
-    uart1_rx_enable = 1;
-    uart1_rx_err = 0;
+    uart1_rx_enable = true;
 }
 
 uint16_t uart1_tx_str(char *str, const uint16_t size)
@@ -44,27 +45,16 @@ void USCI_A1_ISR(void)
     switch (iv) {
     case 2:
         rx = UCA1RXBUF;
-        if (uart1_rx_enable && !uart1_rx_err && (uart1_p < UART1_RXBUF_SZ-2)) {
-            if (rx == 0x0a) {
-                return;
-            } else if (rx == 0x0d) {
-                if (uart1_p > 0) {
-                    ev = UART1_EV_RX;
-                    //uart1_rx_buf[uart1_p] = 0;
-                    uart1_rx_enable = 0;
-                    //uart1_rx_err = 0;
-                    _BIC_SR_IRQ(LPM3_bits);
+        if (uart1_rx_enable && (uart1_p < UART1_RXBUF_SZ-2)) {
+                if (uart1_p == 0) {
+                    sim900.console = TTY_RX_PENDING;
+                    // set up timer that will end the buffer
+                    timer_a0_delay_noblk_ccr3(RXBUF_TMOUT);
                 }
-            } else {
                 uart1_rx_buf[uart1_p] = rx;
                 uart1_p++;
-            }
         } else {
-            uart1_rx_err++;
-            if ((rx == 0x0d) || (rx == 0x0a)) {
-                uart1_rx_err = 0;
-                uart1_p = 0;
-            }
+            // send partial buffer
         }
         break;
     case 4:

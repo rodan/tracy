@@ -10,16 +10,14 @@
 /* WARNING: the enum values are optimized to work with some drivers.
 	If you need to add a new entry, append it to the end! */
 enum sys_message {
-    // RTC
-    SYS_MSG_RTC_ALARM = BIT0,   // alarm event from the hardware RTC
-    SYS_MSG_RTC_SECOND = BIT1,  // second event from the hardware RTC
-    SYS_MSG_RTC_MINUTE = BIT2,  // minute event from the hardware RTC
-    SYS_MSG_RTC_HOUR = BIT3,    // hour event from the hardware RTC
-    SYS_MSG_RTC_DAY = BIT4,     // day event from the hardware RTC
-    SYS_MSG_RTC_MONTH = BIT5,   // month event from the hardware RTC
-    SYS_MSG_RTC_YEAR = BIT6,    // year event from the hardware RTC
     // TIMER0
-    SYS_MSG_TIMER0_CRR2 = BIT9, // timer_a0_delay_noblk
+    SYS_MSG_TIMER0_CRR0 = BIT0,
+    SYS_MSG_TIMER0_CRR1 = BIT1,
+    SYS_MSG_TIMER0_CRR2 = BIT2, // timer_a0_delay_noblk_ccr2
+    SYS_MSG_TIMER0_CRR3 = BIT3, // timer_a0_delay_noblk_ccr3
+    SYS_MSG_TIMER0_CRR4 = BIT4,
+    // RTC
+    SYS_MSG_RTC_SECOND = BIT5,  // second event from the hardware RTC
     // UARTs
     SYS_MSG_UART0_RX = BITA,
     SYS_MSG_UART1_RX = BITB,

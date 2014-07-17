@@ -79,11 +79,15 @@ static void parse_gps(enum sys_message msg)
 
 static void parse_gprs(enum sys_message msg)
 {
+    /*
     uart0_tx_str((char *)uart1_rx_buf, uart1_p);
     uart0_tx_str("\r\n", 2);
+    */
 
     uart1_p = 0;
-    uart1_rx_enable = 1;
+    uart1_rx_enable = true;
+    // signal that we are ready to receive more
+    SIM900_RTS_LOW;
 }
 
 static void parse_UI(enum sys_message msg)
@@ -91,7 +95,7 @@ static void parse_UI(enum sys_message msg)
     int8_t f = uart0_rx_buf[0];
 
     if (f == 'S') {
-        sim900_setup();
+        //sim900_setup();
     } else if (f == 'h') {
         SIM900_DTR_HIGH;
     } else if (f == 'w') {
@@ -152,7 +156,6 @@ int main(void)
     //GPS_BKP_ENABLE;
     CHARGE_ENABLE;
 
-    // parse GPS output
     //sys_messagebus_register(&parse_gps, SYS_MSG_UART0_RX);
     sys_messagebus_register(&parse_gprs, SYS_MSG_UART1_RX);
     sys_messagebus_register(&parse_UI, SYS_MSG_UART0_RX);
@@ -267,23 +270,23 @@ void check_events(void)
     struct sys_messagebus *p = messagebus;
     enum sys_message msg = 0;
 
-    // drivers/rtca
-    if (rtca_last_event) {
-        msg |= rtca_last_event;
-        rtca_last_event = 0;
-    }
     // drivers/timer0a
-    if (timer_a0_last_event == TIMER_A0_EVENT_CCR2) {
-        msg |= BIT9;
+    if (timer_a0_last_event) {
+        msg |= timer_a0_last_event;
         timer_a0_last_event = 0;
     }
+    // drivers/rtca
+    if (rtca_last_event & RTCA_EV_SECOND) {
+        msg |= BIT5;
+        rtca_last_event = 0;
+    }
     // drivers/uart0
-    if (uart0_last_event == UART0_EV_RX) {
+    if (uart0_last_event & UART0_EV_RX) {
         msg |= BITA;
         uart0_last_event = 0;
     }
     // drivers/uart1
-    if (uart1_last_event == UART1_EV_RX) {
+    if (uart1_last_event & UART1_EV_RX) {
         msg |= BITB;
         uart1_last_event = 0;
     }

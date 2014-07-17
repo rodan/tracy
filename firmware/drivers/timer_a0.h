@@ -17,7 +17,8 @@ volatile uint16_t timer_a0_ovf;
 
 void timer_a0_init(void);
 void timer_a0_halt(void);
-void timer_a0_delay(uint16_t ticks);
-void timer_a0_delay_noblk(uint16_t ticks);
+void timer_a0_delay_noblk_ccr2(uint16_t ticks);
+void timer_a0_delay_noblk_ccr3(uint16_t ticks);
+void timer_a0_delay_ccr4(uint16_t ticks);
 
 #endif
