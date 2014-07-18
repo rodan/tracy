@@ -61,7 +61,8 @@ typedef enum {
 } sim900_tty_t;
 
 struct sim900_t {
-    uint32_t sim900_sc; // timestamp of state change
+    uint8_t checks;
+    uint8_t rdy;
     sim900_cmd_t cmd;
     sim900_cmd_type_t cmd_type;
     sim900_rc_t  rc;

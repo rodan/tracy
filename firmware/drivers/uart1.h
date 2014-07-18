@@ -9,8 +9,8 @@ enum uart1_tevent {
 };
 
 #define UART1_RXBUF_SZ     64
-#define RXBUF_TMOUT        3200 // ~50ms in ticks
-#define REPLY_TMOUT        3200 // ~100ms in ticks
+#define RXBUF_TMOUT        3260  // ~100ms in ticks
+#define REPLY_TMOUT        32600 // ~1s in ticks
 
 volatile char uart1_rx_buf[UART1_RXBUF_SZ];
 volatile uint8_t uart1_p;

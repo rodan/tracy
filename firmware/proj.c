@@ -83,29 +83,12 @@ static void parse_gprs(enum sys_message msg)
     uart0_tx_str("\r\n", 2);
 
     sim900_parse_rx((char *)uart1_rx_buf, uart1_p);
-
-    uart1_p = 0;
-    uart1_rx_enable = true;
-    // signal that we are ready to receive more
-    SIM900_RTS_LOW;
 }
 
 static void parse_UI(enum sys_message msg)
 {
-    int8_t f = uart0_rx_buf[0];
-
-    if (f == 'S') {
-        sim900_first_pwron();
-    } else if (f == 'h') {
-        SIM900_DTR_HIGH;
-    } else if (f == 'w') {
-        SIM900_DTR_LOW;
-    }
-    
-    else {
-        sim900_tx_str((char *)uart0_rx_buf, uart0_p);
-        sim900_tx_str("\r", 1);
-    }
+    sim900_tx_str((char *)uart0_rx_buf, uart0_p);
+    sim900_tx_str("\r", 1);
 
     uart0_p = 0;
     uart0_rx_enable = 1;
@@ -126,6 +109,7 @@ static void schedule(enum sys_message msg)
     uart0_tx_str(str_temp, strlen(str_temp));
     */
 
+    // gps related
     if (rtca_time.sys > gps_get_next) {
         GPS_ENABLE;
 
@@ -141,7 +125,17 @@ static void schedule(enum sys_message msg)
             gps_get_next += gps_get_period;
         }
     }
-    
+
+    // sim900 related
+    if ((rtca_time.sys > 5) && ((sim900.checks & BIT0) == 0)) {
+        sim900.checks |= BIT0;
+        if (!sim900.rdy) {
+            // if RDY was not received in the first 5 seconds
+            // then this sim900 has the default 
+            // baudrate autodetection activated
+            sim900_first_pwron();
+        }
+    }
 }
 
 int main(void)
@@ -157,8 +151,8 @@ int main(void)
     //GPS_BKP_ENABLE;
     CHARGE_ENABLE;
 
-    //sys_messagebus_register(&parse_gps, SYS_MSG_UART0_RX);
     sys_messagebus_register(&parse_gprs, SYS_MSG_UART1_RX);
+    //sys_messagebus_register(&parse_gps, SYS_MSG_UART0_RX);
     sys_messagebus_register(&parse_UI, SYS_MSG_UART0_RX);
     sys_messagebus_register(&schedule, SYS_MSG_RTC_SECOND);
 
@@ -171,8 +165,9 @@ int main(void)
         // reset watchdog counter
         WDTCTL = (WDTCTL & 0xff) | WDTPW | WDTCNTCL;
 #endif
-        // new messages are sent during the first call, so 
-        // parse the message linked list twice
+        // new messages can be sent from within a check_events() call, so 
+        // parse the message linked list multiple times
+        check_events();
         check_events();
         check_events();
     }

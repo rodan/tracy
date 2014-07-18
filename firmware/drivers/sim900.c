@@ -6,6 +6,10 @@
 #include "uart1.h"
 #include "sys_messagebus.h"
 
+// XXX
+#include <stdio.h>
+#include "uart0.h"
+
 uint8_t sm_c; // state machine internal counter
 #define SM_DELAY 6500
 
@@ -22,7 +26,6 @@ static void sim900_state_machine(enum sys_message msg)
                     SIM900_DTR_LOW;
                     sim900.next_state = SIM900_PWRKEY_ACT;
                     timer_a0_delay_noblk_ccr2(16384); // 0.5s
-                    //timer_a0_delay_noblk_ccr2(65000);
                 break;
                 case SIM900_PWRKEY_ACT:
                     LED_SWITCH; // off
@@ -50,7 +53,7 @@ static void sim900_state_machine(enum sys_message msg)
                     sim900.next_state = SIM900_AT;
                     sim900.rc = RC_NULL;
                     sm_c = 0;
-                    timer_a0_delay_noblk_ccr2(62259); // 1.9s
+                    timer_a0_delay_noblk_ccr2(32000); // ~1s
                 break;
                 case SIM900_AT:
                     if (sim900.rc == RC_OK) {
@@ -58,8 +61,8 @@ static void sim900_state_machine(enum sys_message msg)
                         sim900.next_state = SIM900_WAITREPLY;
                         timer_a0_delay_noblk_ccr2(SM_DELAY);
                     } else {
-                        sim900_tx_cmd("AT\r",3);
                         sm_c++;
+                        sim900_tx_cmd("AT\r",3);
                     }
                     if (sm_c > 15) {
                         // something terribly wrong, stop sim900
@@ -69,6 +72,8 @@ static void sim900_state_machine(enum sys_message msg)
                 break;
                 case SIM900_WAITREPLY:
                     if (sim900.rc == RC_OK) {
+                        // use the wrong password, thus trigger a reset
+                        WDTCTL = WDTHOLD; 
                         sim900.cmd = CMD_NULL;
                         sim900.next_state = SIM900_IDLE;
                     } else {
@@ -144,10 +149,6 @@ uint8_t sim900_tx_cmd(char *str, const uint16_t size)
 
 uint8_t sim900_parse_rx(char *s, const uint16_t size)
 {
-    // debug
-    SIM900_RTS_LOW;
-    SIM900_RTS_HIGH;
-
     if (sim900.cmd_type == CMD_SOLICITED) {
         if (strstr(s, "OK")) {
             sim900.rc = RC_OK;
@@ -158,9 +159,22 @@ uint8_t sim900_parse_rx(char *s, const uint16_t size)
             sim900.rc = RC_NULL;
         }
     } else {
-        // ignore unsolicited messages for now
+        // unsolicited messages
+        if (strstr(s, "RDY")) {
+            sim900.rdy = true;
+        }
         sim900.rc = RC_NULL;
     }
+
+    // XXX
+    //snprintf(str_temp, STR_LEN, "prx %d %d\r\n", sim900.cmd_type, sim900.rc);
+    //uart0_tx_str(str_temp, strlen(str_temp));
+
+    // signal that we are ready to receive more
+    SIM900_RTS_LOW;
+
+    uart1_p = 0;
+    uart1_rx_enable = true;  
 
     sim900.cmd_type = CMD_UNSOLICITED;
     return EXIT_SUCCESS;
@@ -168,6 +182,8 @@ uint8_t sim900_parse_rx(char *s, const uint16_t size)
 
 void sim900_init(void)
 {
+    sim900.checks = 0;
+    sim900.rdy = false;
     sim900.cmd_type = CMD_UNSOLICITED;
     sim900.cmd = CMD_ON;
     sim900.next_state = SIM900_VBAT_ON;
@@ -187,7 +203,7 @@ void sim900_first_pwron(void)
 
     sim900.cmd = CMD_FIRST_PWRON;
     sim900.next_state = SIM900_IDLE;
-    timer_a0_delay_noblk_ccr2(32000); // ~1s
+    timer_a0_delay_noblk_ccr2(SM_DELAY);
 }
 
 
