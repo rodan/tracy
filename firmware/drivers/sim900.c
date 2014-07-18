@@ -1,8 +1,13 @@
 
+#include <string.h>
+
 #include "sim900.h"
 #include "timer_a0.h"
 #include "uart1.h"
 #include "sys_messagebus.h"
+
+uint8_t sm_c; // state machine internal counter
+#define SM_DELAY 6500
 
 static void sim900_state_machine(enum sys_message msg)
 {
@@ -39,6 +44,40 @@ static void sim900_state_machine(enum sys_message msg)
                 break;
             }
         break;
+        case CMD_FIRST_PWRON:
+            switch (sim900.next_state) {
+                case SIM900_IDLE:
+                    sim900.next_state = SIM900_AT;
+                    sim900.rc = RC_NULL;
+                    sm_c = 0;
+                    timer_a0_delay_noblk_ccr2(62259); // 1.9s
+                break;
+                case SIM900_AT:
+                    if (sim900.rc == RC_OK) {
+                        sim900_tx_cmd("AT+IPR=9600;E0&W\r", 17);
+                        sim900.next_state = SIM900_WAITREPLY;
+                        timer_a0_delay_noblk_ccr2(SM_DELAY);
+                    } else {
+                        sim900_tx_cmd("AT\r",3);
+                        sm_c++;
+                    }
+                    if (sm_c > 15) {
+                        // something terribly wrong, stop sim900
+                        sim900.cmd = CMD_OFF;
+                    }
+                    timer_a0_delay_noblk_ccr2(32000); // ~1s
+                break;
+                case SIM900_WAITREPLY:
+                    if (sim900.rc == RC_OK) {
+                        sim900.cmd = CMD_NULL;
+                        sim900.next_state = SIM900_IDLE;
+                    } else {
+                        sim900.cmd = CMD_OFF;
+                        timer_a0_delay_noblk_ccr2(SM_DELAY);
+                    }
+                break;
+            }
+        break;
         case CMD_OFF:
         break;
         case CMD_NULL:
@@ -48,7 +87,14 @@ static void sim900_state_machine(enum sys_message msg)
 
 static void sim900_console_timing(enum sys_message msg)
 {
-    if (sim900.console == TTY_RX_PENDING) {
+    if (sim900.console == TTY_RX_WAIT) {
+        // this point is reached REPLY_TMOUT ticks after a command was sent
+        // it also means SIM900 failed to reply in that time period
+        sim900.rc = RC_TMOUT;
+        sim900.console = TTY_NULL;
+    } else if (sim900.console == TTY_RX_PENDING) {
+        // this point is reached RXBUF_TMOUT ticks after the first reply byte is received
+
         // signal that we're not ready to receive
         // should be moved into the isr and also asserted a few bytes before buff end
         SIM900_RTS_HIGH;
@@ -62,7 +108,6 @@ static void sim900_console_timing(enum sys_message msg)
 uint16_t sim900_tx_str(char *str, const uint16_t size)
 {
     uint16_t p = 0;
-    //SIM900_RTS_LOW;
     while (p < size) {
         while (!(SIM900_UCAIFG & UCTXIFG)) ;  // TX buffer ready?
         if (!(SIM900_CTS_IN)) {
@@ -70,45 +115,81 @@ uint16_t sim900_tx_str(char *str, const uint16_t size)
             p++;
         }
     }
-    //SIM900_RTS_HIGH;
     return p;
 }
 
-
-// call only ONCE
-void sim900_init(void)
+uint8_t sim900_tx_cmd(char *str, const uint16_t size)
 {
-    sim900.cmd = CMD_ON;
-    sys_messagebus_register(&sim900_state_machine, SYS_MSG_TIMER0_CRR2);
-    sys_messagebus_register(&sim900_console_timing, SYS_MSG_TIMER0_CRR3);
-    sim900.next_state = SIM900_VBAT_ON;
-    timer_a0_delay_noblk_ccr2(16384); // 0.5s
+    uint16_t p = 0;
 
-    /*
-    // IRQ triggers on high-to-low edge
-    P1IES |= SIM900_CTS;
-    P1IFG &= ~SIM900_CTS;
-    P1IE |= SIM900_CTS;
-    */
-
-}
-
-/*
-void sim900_setup(void)
-{
-    uint8_t i;
-    for (i=0;i<10;i++) {
-        sim900_tx_str("AT\r", 4);
-        timer_a0_delay(32000);
+    if (sim900.console != TTY_NULL) {
+        return EXIT_FAILURE;
     }
 
-    sim900_tx_str("AT+IPR=9600\r", 13);
-    timer_a0_delay(7000);
-    sim900_tx_str("ATE0\r", 13);
-    timer_a0_delay(7000);
-    sim900_tx_str("AT&W\r", 6);
+    sim900.cmd_type = CMD_SOLICITED;
+    sim900.console = TTY_RX_WAIT;
+    // set up timer that will end the wait for a reply
+    timer_a0_delay_noblk_ccr3(REPLY_TMOUT);
+
+    while (p < size) {
+        while (!(SIM900_UCAIFG & UCTXIFG)) ;  // TX buffer ready?
+        if (!(SIM900_CTS_IN)) {
+            SIM900_UCATXBUF = str[p];
+            p++;
+        }
+    }
+
+    return EXIT_SUCCESS;
 }
-*/
+
+uint8_t sim900_parse_rx(char *s, const uint16_t size)
+{
+    // debug
+    SIM900_RTS_LOW;
+    SIM900_RTS_HIGH;
+
+    if (sim900.cmd_type == CMD_SOLICITED) {
+        if (strstr(s, "OK")) {
+            sim900.rc = RC_OK;
+        } else if (strstr(s, "ERROR")) {
+            sim900.rc = RC_ERROR;
+        } else {
+            // here be dragons
+            sim900.rc = RC_NULL;
+        }
+    } else {
+        // ignore unsolicited messages for now
+        sim900.rc = RC_NULL;
+    }
+
+    sim900.cmd_type = CMD_UNSOLICITED;
+    return EXIT_SUCCESS;
+}
+
+void sim900_init(void)
+{
+    sim900.cmd_type = CMD_UNSOLICITED;
+    sim900.cmd = CMD_ON;
+    sim900.next_state = SIM900_VBAT_ON;
+    timer_a0_delay_noblk_ccr2(16384); // 0.5s
+}
+
+void sim900_init_messagebus(void)
+{
+    sys_messagebus_register(&sim900_state_machine, SYS_MSG_TIMER0_CRR2);
+    sys_messagebus_register(&sim900_console_timing, SYS_MSG_TIMER0_CRR3);
+}
+
+void sim900_first_pwron(void)
+{
+    // 2400bps is better detected by sim900's autobauding
+    uart1_init(2400);
+
+    sim900.cmd = CMD_FIRST_PWRON;
+    sim900.next_state = SIM900_IDLE;
+    timer_a0_delay_noblk_ccr2(32000); // ~1s
+}
+
 
 /*
 #pragma vector=PORT1_VECTOR

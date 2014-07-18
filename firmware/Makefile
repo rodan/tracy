@@ -12,7 +12,7 @@ CC_DMACH	= -D__MSP430F5510__
 # are used for dead code elimination, see:
 # http://gcc.gnu.org/ml/gcc-help/2003-08/msg00128.html
 #
-CFLAGS		+= $(CC_CMACH) $(CC_DMACH) -Wall
+CFLAGS		+= $(CC_CMACH) $(CC_DMACH) -Wall -Wno-switch
 CFLAGS		+= -fno-force-addr -finline-limit=1 -fno-schedule-insns
 CFLAGS		+= -fshort-enums -Wl,-Map=output.map
 LDFLAGS		=

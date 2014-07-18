@@ -82,6 +82,8 @@ static void parse_gprs(enum sys_message msg)
     uart0_tx_str((char *)uart1_rx_buf, uart1_p);
     uart0_tx_str("\r\n", 2);
 
+    sim900_parse_rx((char *)uart1_rx_buf, uart1_p);
+
     uart1_p = 0;
     uart1_rx_enable = true;
     // signal that we are ready to receive more
@@ -93,7 +95,7 @@ static void parse_UI(enum sys_message msg)
     int8_t f = uart0_rx_buf[0];
 
     if (f == 'S') {
-        //sim900_setup();
+        sim900_first_pwron();
     } else if (f == 'h') {
         SIM900_DTR_HIGH;
     } else if (f == 'w') {
@@ -148,8 +150,9 @@ int main(void)
     rtca_init();
     timer_a0_init();
     uart0_init();
-    uart1_init();
+    uart1_init(9600);
     sim900_init();
+    sim900_init_messagebus();
 
     //GPS_BKP_ENABLE;
     CHARGE_ENABLE;

@@ -3,19 +3,20 @@
 #include "timer_a0.h"
 #include "sim900.h"
 
-void uart1_init(void)
+void uart1_init(uint16_t speed)
 {
     UCA1CTL1 |= UCSWRST;        // put state machine in reset
     UCA1CTL1 |= UCSSEL_1;       // use ACLK
-    UCA1BR0 = 0x03;             // 32kHz/9600=3.41
-    UCA1BR1 = 0x00;
-    UCA1MCTL = UCBRS_3 + UCBRF_0;       // modulation UCBRSx=3, UCBRFx=0
 
-    /*
-    UCA1BR0 = 0x0D;                           // 2400 (see User's Guide)
-    UCA1BR1 = 0x00;                           //
-    UCA1MCTL |= UCBRS_6 + UCBRF_0;            // Modulation UCBRSx=6, UCBRFx=0
-    */
+    if (speed == 9600) {
+        UCA1BR0 = 0x03;
+        UCA1BR1 = 0x00;
+        UCA1MCTL = UCBRS_3 + UCBRF_0;       // modulation UCBRSx=3, UCBRFx=0
+    } else if (speed == 2400) {
+        UCA1BR0 = 0x0D;
+        UCA1BR1 = 0x00;
+        UCA1MCTL |= UCBRS_6 + UCBRF_0;            // Modulation UCBRSx=6, UCBRFx=0
+    }
 
     UCA1CTL1 &= ~UCSWRST;       // initialize USCI state machine
     UCA1IE |= UCRXIE;           // enable USCI_A0 RX interrupt
