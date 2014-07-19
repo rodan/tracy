@@ -86,6 +86,12 @@ static void parse_gprs(enum sys_message msg)
 
 static void parse_UI(enum sys_message msg)
 {
+    char f = uart0_rx_buf[0];
+
+    if (f == 'h') {
+        sim900_halt();
+    }
+
     sim900_tx_str((char *)uart0_rx_buf, uart0_p);
     sim900_tx_str("\r", 1);
 
@@ -126,7 +132,7 @@ static void schedule(enum sys_message msg)
     }
 
     // sim900 related
-    if ((rtca_time.sys > 6) && ((sim900.checks & BIT0) == 0)) {
+    if ((rtca_time.sys > 6) && ((sim900.checks & BIT0) == 0) && (sim900.next_state != SIM900_OFF )) {
         sim900.checks |= BIT0;
         if (!sim900.rdy) {
             // if RDY was not received in the first 5 seconds

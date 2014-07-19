@@ -26,10 +26,10 @@ typedef enum {
     SIM900_PRE_IDLE,
     SIM900_IDLE,
     SIM900_AT,
-    SIM900_WAITREPLY
+    SIM900_WAITREPLY,
+    SIM900_VBAT_OFF
 //    SIM900_SLEEP,
 //    SIM900_WAKEUP,
-//    SIM900_VBAT_OFF
 } sim900_state_t;
 
 // commands that are compatible with the state machine
@@ -75,6 +75,8 @@ struct sim900_t sim900;
 void sim900_init(void);
 void sim900_init_messagebus(void);
 void sim900_first_pwron(void);
+void sim900_halt(void);
+
 uint16_t sim900_tx_str(char *str, const uint16_t size);
 uint8_t sim900_tx_cmd(char *str, const uint16_t size);
 uint8_t sim900_parse_rx(char *str, const uint16_t size);

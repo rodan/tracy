@@ -47,6 +47,7 @@ static void sim900_state_machine(enum sys_message msg)
                 break;
             }
         break;
+
         case CMD_FIRST_PWRON:
             switch (sim900.next_state) {
                 case SIM900_IDLE:
@@ -83,9 +84,26 @@ static void sim900_state_machine(enum sys_message msg)
                 break;
             }
         break;
+
         case CMD_OFF:
-        break;
-        case CMD_NULL:
+            switch (sim900.next_state) {
+                case SIM900_IDLE:
+                    sim900.next_state = SIM900_VBAT_OFF;
+                    sim900_tx_cmd("AT+CPOWD=1\r", 11);
+                    timer_a0_delay_noblk_ccr2(32000); // ~1s
+                break;
+                case SIM900_VBAT_OFF:
+                    sim900.next_state = SIM900_OFF;
+                    sim900.rdy = 0;
+                    sim900.checks = 0;
+                    sim900.cmd = CMD_NULL;
+                    P1DIR &= 0xb7; // make RTS, DTR inputs
+                    P4SEL &= 0xcf; // make both gprs RX and TX inputs
+                    P4DIR &= 0xcf;
+                    SIM900_VBAT_DISABLE;
+                    SIM900_PWRKEY_HIGH;
+                break;
+            }
         break;
     }
 }
@@ -99,7 +117,6 @@ static void sim900_console_timing(enum sys_message msg)
         sim900.console = TTY_NULL;
     } else if (sim900.console == TTY_RX_PENDING) {
         // this point is reached RXBUF_TMOUT ticks after the first reply byte is received
-
         uart1_rx_enable = false;
         sim900.console = TTY_NULL;
         uart1_last_event |= UART1_EV_RX;
@@ -134,7 +151,7 @@ uint8_t sim900_tx_cmd(char *str, const uint16_t size)
 
     while (p < size) {
         while (!(SIM900_UCAIFG & UCTXIFG)) ;  // TX buffer ready?
-        if (!(SIM900_CTS_IN)) {
+        if (!(SIM900_CTS_IN)) { // hw flow control allows TX?
             SIM900_UCATXBUF = str[p];
             p++;
         }
@@ -201,6 +218,14 @@ void sim900_first_pwron(void)
     sim900.next_state = SIM900_IDLE;
     timer_a0_delay_noblk_ccr2(SM_DELAY);
 }
+
+void sim900_halt(void)
+{
+    sim900.cmd = CMD_OFF;
+    //sim900.next_state = SIM900_IDLE;
+    timer_a0_delay_noblk_ccr2(SM_DELAY);
+}
+
 
 
 /*
