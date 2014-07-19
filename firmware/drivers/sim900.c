@@ -57,7 +57,7 @@ static void sim900_state_machine(enum sys_message msg)
                 break;
                 case SIM900_AT:
                     if (sim900.rc == RC_OK) {
-                        sim900_tx_cmd("AT+IPR=9600;E0&W\r", 17);
+                        sim900_tx_cmd("AT+IPR=9600;+IFC=2,2;E0&W\r", 26);
                         sim900.next_state = SIM900_WAITREPLY;
                         timer_a0_delay_noblk_ccr2(SM_DELAY);
                     } else {
@@ -99,10 +99,6 @@ static void sim900_console_timing(enum sys_message msg)
         sim900.console = TTY_NULL;
     } else if (sim900.console == TTY_RX_PENDING) {
         // this point is reached RXBUF_TMOUT ticks after the first reply byte is received
-
-        // signal that we're not ready to receive
-        // should be moved into the isr and also asserted a few bytes before buff end
-        SIM900_RTS_HIGH;
 
         uart1_rx_enable = false;
         sim900.console = TTY_NULL;

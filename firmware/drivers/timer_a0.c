@@ -11,6 +11,7 @@
 //   license:         GNU GPLv3
 
 #include "timer_a0.h"
+#include "sim900.h"
 
 void timer_a0_init(void)
 {
@@ -62,6 +63,9 @@ void timer0_A1_ISR(void)
         // disable interrupt
         TA0CCTL3 &= ~CCIE;
         TA0CCTL3 = 0;
+        // use hardware flow control to stop the remote equipment
+        // from sending more data
+        SIM900_RTS_HIGH;
         timer_a0_last_event |= TIMER_A0_EVENT_CCR3;
         _BIC_SR_IRQ(LPM3_bits);
     } else if (iv == TA0IV_TA0IFG) {

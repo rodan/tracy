@@ -46,7 +46,12 @@ void USCI_A1_ISR(void)
     switch (iv) {
     case 2:
         rx = UCA1RXBUF;
-        if (uart1_rx_enable && (uart1_p < UART1_RXBUF_SZ-2)) {
+        if (uart1_rx_enable && (uart1_p < UART1_RXBUF_SZ-1)) {
+                if (uart1_p > UART1_RXBUF_SZ-5) {
+                    // use hardware flow control to stop the remote equipment
+                    // from sending more data
+                    SIM900_RTS_HIGH;
+                }
                 if (uart1_p == 0) {
                     sim900.console = TTY_RX_PENDING;
                     // set up timer that will end the buffer
@@ -55,7 +60,9 @@ void USCI_A1_ISR(void)
                 uart1_rx_buf[uart1_p] = rx;
                 uart1_p++;
         } else {
-            // send partial buffer
+            // use hardware flow control to stop the remote equipment
+            // from sending more data
+            SIM900_RTS_HIGH;
         }
         break;
     case 4:
