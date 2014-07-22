@@ -59,11 +59,7 @@ void USCI_A1_ISR(void)
                 }
                 uart1_rx_buf[uart1_p] = rx;
                 uart1_p++;
-        } else {
-            // use hardware flow control to stop the remote equipment
-            // from sending more data
-            SIM900_RTS_HIGH;
-        }
+        } 
         break;
     case 4:
         ev = UART1_EV_TX;

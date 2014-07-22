@@ -19,6 +19,7 @@
 #include "drivers/adc.h"
 #include "drivers/nmea_parse.h"
 #include "drivers/sim900.h"
+#include "drivers/flash.h"
 #include "drivers/adc.h"
 #include "calib.h"
 
@@ -92,11 +93,13 @@ static void parse_UI(enum sys_message msg)
 {
     char f = uart0_rx_buf[0];
 
-    if (f == 'h') {
+    if (f == 'H') {
         sim900_halt();
-    } else if (f == 'o') {
+    } else if (f == 'O') {
         sim900_init_time = rtca_time.sys + 6;
         sim900_init();
+    } else if (f == 'S') {
+        sim900_send_fix_sms();
     } else {
         sim900_tx_str((char *)uart0_rx_buf, uart0_p);
         sim900_tx_str("\r", 1);
@@ -180,6 +183,8 @@ int main(void)
 
     //GPS_BKP_ENABLE;
     CHARGE_ENABLE;
+
+    settings_init(FLASH_ADDR);
 
     sys_messagebus_register(&parse_gprs, SYS_MSG_UART1_RX);
     //sys_messagebus_register(&parse_gps, SYS_MSG_UART0_RX);
@@ -318,3 +323,19 @@ void check_events(void)
         p = p->next;
     }
 }
+
+void settings_init(uint8_t * addr)
+{
+    uint8_t *src_p, *dst_p;
+    uint8_t i;
+
+    src_p = addr;
+    dst_p = (uint8_t *) & s;
+    if ((*src_p) != VERSION) {
+        src_p = (uint8_t *) & defaults;
+    }
+    for (i = 0; i < sizeof(s); i++) {
+        *dst_p++ = *src_p++;
+    }
+}
+

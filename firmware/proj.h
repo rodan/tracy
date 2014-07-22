@@ -23,19 +23,23 @@
 #define STR_LEN 64
 char str_temp[STR_LEN];
 
+#define VERSION             1   // must be incremented if struct settings_t changes
+#define FLASH_ADDR          SEGMENT_B
+
 void main_init(void);
-
-void sleep(void);
-void wake_up(void);
 void check_events(void);
+void settings_init(uint8_t * addr);
 
-void opt_power_enable(void);
-void opt_power_disable(void);
-void charge_enable(void);
-void charge_disable(void);
-void sw_enable(void);
-void sw_disable(void);
+struct tracy_settings_t {
+    uint8_t ver;                // firmware version
+    char phone_num[12];
+};
 
-uint8_t read_ps(void);
+struct tracy_settings_t s;
+
+static const struct tracy_settings_t defaults = {
+    VERSION,                    // ver
+    "+40721580040"
+};
 
 #endif

@@ -27,7 +27,10 @@ typedef enum {
     SIM900_IDLE,
     SIM900_AT,
     SIM900_WAITREPLY,
-    SIM900_VBAT_OFF
+    SIM900_VBAT_OFF,
+    SIM900_SET1,
+    SIM900_TEXT_INPUT,
+    SIM900_TEXT_RCVD
 //    SIM900_SLEEP,
 //    SIM900_WAKEUP,
 } sim900_state_t;
@@ -37,7 +40,8 @@ typedef enum {
     CMD_NULL,
     CMD_ON,
     CMD_OFF,
-    CMD_FIRST_PWRON
+    CMD_FIRST_PWRON,
+    CMD_SEND_SMS
 } sim900_cmd_t;
 
 // command type
@@ -51,7 +55,9 @@ typedef enum {
     RC_NULL,
     RC_OK,
     RC_ERROR,
-    RC_TMOUT
+    RC_TMOUT,
+    RC_TEXT_INPUT,
+    RC_CMGS
 } sim900_rc_t;
 
 typedef enum {
@@ -59,6 +65,9 @@ typedef enum {
     TTY_RX_PENDING,
     TTY_RX_WAIT
 } sim900_tty_t;
+
+#define RDY         BIT0
+#define CALL_RDY    BIT1
 
 struct sim900_t {
     uint8_t checks;
@@ -76,6 +85,7 @@ void sim900_init(void);
 void sim900_init_messagebus(void);
 void sim900_first_pwron(void);
 void sim900_halt(void);
+void sim900_send_fix_sms(void);
 
 uint16_t sim900_tx_str(char *str, const uint16_t size);
 uint8_t sim900_tx_cmd(char *str, const uint16_t size);
