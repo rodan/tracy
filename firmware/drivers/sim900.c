@@ -16,10 +16,12 @@ uint8_t sm_c; // state machine internal counter
 static void sim900_state_machine(enum sys_message msg)
 {
     switch (sim900.cmd) {
+
+        // poweron sequence
         case CMD_ON:
             switch (sim900.next_state) {
                 case SIM900_VBAT_ON:
-                    LED_SWITCH; // on
+                    LED_ON;
                     SIM900_VBAT_ENABLE;
                     SIM900_PWRKEY_HIGH;
                     SIM900_RTS_HIGH;
@@ -28,19 +30,19 @@ static void sim900_state_machine(enum sys_message msg)
                     timer_a0_delay_noblk_ccr2(16384); // 0.5s
                 break;
                 case SIM900_PWRKEY_ACT:
-                    LED_SWITCH; // off
+                    LED_OFF;
                     SIM900_PWRKEY_LOW;
                     sim900.next_state = SIM900_ON;
                     timer_a0_delay_noblk_ccr2(39321); // 1.2s
                 break;
                 case SIM900_ON:
-                    LED_SWITCH; // on
+                    LED_ON;
                     SIM900_PWRKEY_HIGH;
                     sim900.next_state = SIM900_PRE_IDLE;
                     timer_a0_delay_noblk_ccr2(62259); // 1.9s
                 break;
                 case SIM900_PRE_IDLE:
-                    LED_SWITCH; // off
+                    LED_OFF;
                     SIM900_RTS_LOW;
                     sim900.cmd = CMD_NULL;
                     sim900.next_state = SIM900_IDLE;
@@ -48,6 +50,7 @@ static void sim900_state_machine(enum sys_message msg)
             }
         break;
 
+        // initial setup of the sim900
         case CMD_FIRST_PWRON:
             switch (sim900.next_state) {
                 case SIM900_IDLE:
@@ -85,6 +88,7 @@ static void sim900_state_machine(enum sys_message msg)
             }
         break;
 
+        // poweroff of the sim900
         case CMD_OFF:
             switch (sim900.next_state) {
                 case SIM900_IDLE:
@@ -105,6 +109,7 @@ static void sim900_state_machine(enum sys_message msg)
                 break;
             }
         break;
+
     }
 }
 
@@ -200,6 +205,14 @@ void sim900_init(void)
     sim900.cmd_type = CMD_UNSOLICITED;
     sim900.cmd = CMD_ON;
     sim900.next_state = SIM900_VBAT_ON;
+
+    PMAPPWD = 0x02D52;
+    P4MAP4 = PM_UCA1TXD;
+    P4MAP5 = PM_UCA1RXD;
+    P4SEL |= 0x30;
+    PMAPPWD = 0;
+    P1DIR |= 0x48;
+    uart1_init(9600);
     timer_a0_delay_noblk_ccr2(16384); // 0.5s
 }
 
@@ -222,7 +235,6 @@ void sim900_first_pwron(void)
 void sim900_halt(void)
 {
     sim900.cmd = CMD_OFF;
-    //sim900.next_state = SIM900_IDLE;
     timer_a0_delay_noblk_ccr2(SM_DELAY);
 }
 

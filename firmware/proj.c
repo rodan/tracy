@@ -19,6 +19,8 @@
 #include "drivers/adc.h"
 #include "drivers/nmea_parse.h"
 #include "drivers/sim900.h"
+#include "drivers/adc.h"
+#include "calib.h"
 
 #define GPSMAX 255
 
@@ -42,6 +44,8 @@ uint16_t gps_retry_period = 300;
 uint32_t gps_get_next = 2;
 uint8_t gps_fix_shtd_ctr = 0;
 uint8_t gps_initialized = false;
+
+uint32_t sim900_init_time = 6;
 
 #ifndef DEBUG_GPRS
 static void parse_gps(enum sys_message msg)
@@ -90,10 +94,13 @@ static void parse_UI(enum sys_message msg)
 
     if (f == 'h') {
         sim900_halt();
+    } else if (f == 'o') {
+        sim900_init_time = rtca_time.sys + 6;
+        sim900_init();
+    } else {
+        sim900_tx_str((char *)uart0_rx_buf, uart0_p);
+        sim900_tx_str("\r", 1);
     }
-
-    sim900_tx_str((char *)uart0_rx_buf, uart0_p);
-    sim900_tx_str("\r", 1);
 
     uart0_p = 0;
     uart0_rx_enable = 1;
@@ -101,6 +108,20 @@ static void parse_UI(enum sys_message msg)
 
 static void schedule(enum sys_message msg)
 {
+    uint16_t q_bat = 0;//, q_raw = 0;
+    //uint32_t v_raw;
+
+    //adc10_read(2, &q_raw, REFVSEL_1);
+    //v_raw = (uint32_t) q_raw * VREF_2_0_6_2 * DIV_RAW;
+
+//    snprintf(str_temp, STR_LEN, "v_bat  %d %01d.%03d\r\n", q_v_bat, (uint16_t) v_bat / 1000, (uint16_t) v_bat % 1000);
+//    snprintf(str_temp, STR_LEN, "v_bat  %d\r\n", q_v_bat);
+//    uart0_tx_str(str_temp, strlen(str_temp));
+
+//    snprintf(str_temp, STR_LEN, "v_raw  %d %ld %01ld.%01ld\r\n", q_raw, v_raw, v_raw / 1000000, (v_raw % 1000000)/100000);
+//    uart0_tx_str(str_temp, strlen(str_temp));
+
+
     //P1OUT ^= BIT2;
     /*
     snprintf(str_temp, STR_LEN, "%04d%02d%02d %02d:%02d %ld\r\n",
@@ -132,13 +153,17 @@ static void schedule(enum sys_message msg)
     }
 
     // sim900 related
-    if ((rtca_time.sys > 6) && ((sim900.checks & BIT0) == 0) && (sim900.next_state != SIM900_OFF )) {
-        sim900.checks |= BIT0;
-        if (!sim900.rdy) {
-            // if RDY was not received in the first 5 seconds
-            // then this sim900 has the default 
-            // baudrate autodetection activated
-            sim900_first_pwron();
+    if ((rtca_time.sys > sim900_init_time) && ((sim900.checks & BIT0) == 0) && (sim900.next_state != SIM900_OFF )) {
+        adc10_read(3, &q_bat, REFVSEL_1);
+        if (q_bat > 700) {
+            // 700 is the equivalent of ~3.4v
+            sim900.checks |= BIT0;
+            if (!sim900.rdy) {
+                // if RDY was not received in the first 5 seconds
+                // then this sim900 has the default 
+                // baudrate autodetection activated
+                sim900_first_pwron();
+            }
         }
     }
 }
@@ -149,9 +174,9 @@ int main(void)
     rtca_init();
     timer_a0_init();
     uart0_init();
-    uart1_init(9600);
     sim900_init();
     sim900_init_messagebus();
+    //uart1_init(9600); // XXX
 
     //GPS_BKP_ENABLE;
     CHARGE_ENABLE;
@@ -194,17 +219,20 @@ void main_init(void)
     UCSCTL6 &= ~(XT1OFF | XT1DRIVE0);
 
     P1SEL = 0x0;
-    P1DIR = 0xcd;
+    P1DIR = 0x85;
     P1REN = 0x2;
-    P1OUT |= 0x2;
+    P1OUT = 0x2;
 
     P2SEL = 0x0;
     P2DIR = 0x1;
+    P2OUT = 0x0;
 
     P3SEL = 0x0;
     P3DIR = 0x1f;
+    P3OUT = 0x0;
 
     P4DIR = 0xc0;
+    P4OUT = 0x0;
 
     PMAPPWD = 0x02D52;
     // set up UART port mappings
@@ -221,18 +249,6 @@ void main_init(void)
     P4MAP2 = PM_UCA0TXD;
     P4MAP3 = PM_UCA0RXD;
     P4SEL |= 0xc;
-#endif
-
-#ifdef DEBUG_GPS
-    // debug interface
-    P4MAP1 = PM_UCA1TXD;
-    P4MAP0 = PM_UCA1RXD;
-    P4SEL |= 0x3;
-#else
-    // GPRS module
-    P4MAP4 = PM_UCA1TXD;
-    P4MAP5 = PM_UCA1RXD;
-    P4SEL |= 0x30;
 #endif
     PMAPPWD = 0;
 

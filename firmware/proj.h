@@ -17,6 +17,8 @@
 #define false           0
 
 #define LED_SWITCH      P1OUT ^= BIT2
+#define LED_ON          P1OUT |= BIT2
+#define LED_OFF         P1OUT &= ~BIT2
 
 #define STR_LEN 64
 char str_temp[STR_LEN];
