@@ -93,13 +93,13 @@ static void parse_UI(enum sys_message msg)
 {
     char f = uart0_rx_buf[0];
 
-    if (f == 'H') {
+    if (f == '>') {
         sim900_halt();
-    } else if (f == 'O') {
+    } else if (f == '|') {
         sim900_init_time = rtca_time.sys + 6;
         sim900_init();
-    } else if (f == 'S') {
-        sim900_send_fix_sms();
+    } else if (f == '?') {
+        sim900_send_fix_gprs();
     } else {
         sim900_tx_str((char *)uart0_rx_buf, uart0_p);
         sim900_tx_str("\r", 1);

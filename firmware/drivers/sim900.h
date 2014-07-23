@@ -30,9 +30,17 @@ typedef enum {
     SIM900_VBAT_OFF,
     SIM900_SET1,
     SIM900_TEXT_INPUT,
-    SIM900_TEXT_RCVD
-//    SIM900_SLEEP,
-//    SIM900_WAKEUP,
+    SIM900_TEXT_RCVD,
+    SIM900_IP_INITIAL,
+    SIM900_IP_START,
+    SIM900_IP_GPRSACT,
+    SIM900_IP_STATUS,
+    SIM900_IP_CONNECT,
+    SIM900_IP_CONNECT_OK,
+    SIM900_IP_SEND,
+    SIM900_IP_PUT,
+    SIM900_IP_CLOSE,
+    SIM900_IP_SHUT
 } sim900_state_t;
 
 // commands that are compatible with the state machine
@@ -41,7 +49,8 @@ typedef enum {
     CMD_ON,
     CMD_OFF,
     CMD_FIRST_PWRON,
-    CMD_SEND_SMS
+    CMD_SEND_SMS,
+    CMD_SEND_GPRS
 } sim900_cmd_t;
 
 // command type
@@ -57,7 +66,13 @@ typedef enum {
     RC_ERROR,
     RC_TMOUT,
     RC_TEXT_INPUT,
-    RC_CMGS
+    RC_CMGS,
+    RC_STATE_IP_INITIAL,
+    RC_STATE_IP_START,
+    RC_STATE_IP_GPRSACT,
+    RC_STATE_IP_STATUS,
+    RC_STATE_IP_CONNECT,
+    RC_STATE_IP_SHUT
 } sim900_rc_t;
 
 typedef enum {
@@ -65,6 +80,7 @@ typedef enum {
     TTY_RX_PENDING,
     TTY_RX_WAIT
 } sim900_tty_t;
+
 
 #define RDY         BIT0
 #define CALL_RDY    BIT1
@@ -86,6 +102,7 @@ void sim900_init_messagebus(void);
 void sim900_first_pwron(void);
 void sim900_halt(void);
 void sim900_send_fix_sms(void);
+void sim900_send_fix_gprs(void);
 
 uint16_t sim900_tx_str(char *str, const uint16_t size);
 uint8_t sim900_tx_cmd(char *str, const uint16_t size, const uint16_t reply_tmout);

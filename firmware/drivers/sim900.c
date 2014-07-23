@@ -93,7 +93,11 @@ static void sim900_state_machine(enum sys_message msg)
             }
         break;
 
+        ///////////////////////////////////
+        //
         // poweroff of the sim900
+        //
+
         case CMD_OFF:
             switch (sim900.next_state) {
                 case SIM900_IDLE:
@@ -115,7 +119,95 @@ static void sim900_state_machine(enum sys_message msg)
             }
         break;
 
+        ///////////////////////////////////
+        //
+        // send location via GPRS
+        //
+        
+        case CMD_SEND_GPRS:
+            switch (sim900.next_state) {
+                case SIM900_IP_INITIAL:
+                    sim900.next_state = SIM900_IP_START;
+                    sim900_tx_cmd("AT+CGDCONT=1,\"IP\",\"live.vodafone.com\";+CIPSTATUS\r", 49, REPLY_TMOUT);
+                    timer_a0_delay_noblk_ccr2(SM_R_DELAY);
+                break;
+                case SIM900_IP_START:
+                    if (sim900.rc == RC_STATE_IP_INITIAL) {
+                        sim900.next_state = SIM900_IP_GPRSACT;
+                        sim900_tx_cmd("AT+CSTT=\"live.vodafone.com\",\"live\",\"vodafone\";+CIPSTATUS\r", 57, REPLY_TMOUT);
+                        timer_a0_delay_noblk_ccr2(SM_R_DELAY);
+                    }
+                break;
+                case SIM900_IP_GPRSACT:
+                    if (sim900.rc == RC_STATE_IP_START) {
+                        sim900.next_state = SIM900_IP_STATUS;
+                        sim900_tx_cmd("AT+CIICR;+CIPSTATUS\r", 20, REPLY_TMOUT);
+                        timer_a0_delay_noblk_ccr2(SM_R_DELAY);
+                    }
+                break;
+                case SIM900_IP_STATUS:
+                    if (sim900.rc == RC_STATE_IP_GPRSACT) {
+                        sim900.next_state = SIM900_IP_CONNECT;
+                        sim900_tx_cmd("AT+CIFSR;+CIPHEAD=1;+CIPSTATUS\r", 31, 12288); // ~3s
+                        timer_a0_delay_noblk_ccr2(12388);
+                    }
+                break;
+                case SIM900_IP_CONNECT:
+                    if (sim900.rc == RC_STATE_IP_STATUS) {
+                        sim900.next_state = SIM900_IP_CONNECT_OK;
+                        sim900_tx_cmd("AT+CIPSTART=\"TCP\",\"www.simplex.ro\",\"80\"\r", 40, REPLY_TMOUT);
+                        timer_a0_delay_noblk_ccr2(SM_R_DELAY);
+                    }
+                break;
+                case SIM900_IP_CONNECT_OK:
+                    if (sim900.rc == RC_OK) {
+                        // CIPSTART sends a quick OK and then a CONNECT OK a couple seconds later
+                        sim900.next_state = SIM900_IP_SEND;
+                        
+                        sim900.cmd_type = CMD_SOLICITED;
+                        sim900.rc = RC_NULL;
+                        sim900.console = TTY_RX_WAIT;
+                        timer_a0_delay_noblk_ccr3(12288); // ~3s
+                        timer_a0_delay_noblk_ccr2(12388); // ~>3s
+                    }
+                break;
+                case SIM900_IP_SEND:
+                    if (sim900.rc == RC_STATE_IP_CONNECT) {
+                        sim900.next_state = SIM900_IP_PUT;
+                        sim900_tx_cmd("AT+CIPSEND\r", 11, REPLY_TMOUT);
+                        timer_a0_delay_noblk_ccr2(SM_R_DELAY);
+                    }
+                break;
+                case SIM900_IP_PUT:
+                    if (sim900.rc == RC_TEXT_INPUT) {
+                        sim900.next_state = SIM900_IP_CLOSE;
+                        sim900_tx_str("PUT /test/foo HTTP/1.1\r\n\r\n", 26);
+                        sim900_tx_cmd(eom, 2, 20480);
+                        timer_a0_delay_noblk_ccr2(20580);
+                    }
+                break;
+                case SIM900_IP_CLOSE:
+                    if (sim900.rc == RC_OK) { // XXX
+                        sim900.next_state = SIM900_IP_SHUT;
+                        sim900_tx_cmd("AT+CIPCLOSE\r", 12, REPLY_TMOUT);
+                        timer_a0_delay_noblk_ccr2(SM_R_DELAY);
+                    }
+                break;
+                case SIM900_IP_SHUT:
+                    if (sim900.rc == RC_OK) { // XXX
+                        sim900.next_state = SIM900_IDLE;
+                        sim900_tx_cmd("AT+CIPSHUT\r", 11, REPLY_TMOUT);
+                        timer_a0_delay_noblk_ccr2(SM_R_DELAY);
+                    }
+                break;
+            }
+        break;
+
+        ///////////////////////////////////
+        //
         // send SMS
+        //
+
         case CMD_SEND_SMS:
             switch (sim900.next_state) {
                 case SIM900_IDLE:
@@ -236,6 +328,24 @@ uint8_t sim900_parse_rx(char *s, const uint16_t size)
             // '\r\n+CMGS: 5\r\n\r\nOK\r\n'
             // we want to catch the +CMGS part, so parse before 'else if == "OK"'
             sim900.rc = RC_CMGS;
+        } else if (strstr(s, "INITIAL")) {
+            // '\r\nOK\r\n\r\nSTATE: IP INITIAL\r\n'
+            sim900.rc = RC_STATE_IP_INITIAL;
+        } else if (strstr(s, "START")) {
+            // '\r\nOK\r\n\r\nSTATE: IP START\r\n'
+            sim900.rc = RC_STATE_IP_START;
+        } else if (strstr(s, "GPRSACT")) {
+            // '\r\nOK\r\n\r\nOK\r\n\r\nSTATE: IP GPRSACT\r\n
+            sim900.rc = RC_STATE_IP_GPRSACT;
+        } else if (strstr(s, "STATUS")) {
+            // '\r\nAAA.BBB.CCC.DDD\r\n\r\nOK\r\nSTATE: IP STATUS\r\n
+            sim900.rc = RC_STATE_IP_STATUS;
+        } else if (strstr(s, "CONNECT")) {
+            // CONNECT OK
+            sim900.rc = RC_STATE_IP_CONNECT;
+        } else if (strstr(s, "SHUT")) {
+            // SHUT OK
+            sim900.rc = RC_STATE_IP_SHUT;
         } else if (strstr(s, "OK")) {
             // '\r\nOK\r\n'
             sim900.rc = RC_OK;
@@ -254,16 +364,20 @@ uint8_t sim900_parse_rx(char *s, const uint16_t size)
     } else {
         // unsolicited messages
         if (strstr(s, "RDY")) {
+            // '\r\nRDY\r\n'
             sim900.rdy |= RDY;
         } else if (strstr(s, "Call Ready")) {
+            // '\r\nCall Ready\r\n'
             sim900.rdy |= CALL_RDY;
         }
         sim900.rc = RC_NULL;
     }
 
+    memset(s, 0, UART1_RXBUF_SZ);
+
     // XXX
-    //snprintf(str_temp, STR_LEN, "prx %d %d\r\n", sim900.cmd_type, sim900.rc);
-    //uart0_tx_str(str_temp, strlen(str_temp));
+    snprintf(str_temp, STR_LEN, "prx %d %d\r\n", sim900.cmd_type, sim900.rc);
+    uart0_tx_str(str_temp, strlen(str_temp));
 
     // signal that we are ready to receive more
     SIM900_RTS_LOW;
@@ -320,6 +434,14 @@ void sim900_send_fix_sms(void)
     sim900.cmd = CMD_SEND_SMS;
     timer_a0_delay_noblk_ccr2(SM_DELAY);
 }
+
+void sim900_send_fix_gprs(void)
+{
+    sim900.cmd = CMD_SEND_GPRS;
+    sim900.next_state = SIM900_IP_INITIAL;
+    timer_a0_delay_noblk_ccr2(SM_DELAY);
+}
+
 
 
 
