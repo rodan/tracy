@@ -18,25 +18,25 @@ void timer_a0_init(void)
     __disable_interrupt();
     timer_a0_ovf = 0;
 
-    TA0CTL |= TASSEL__ACLK + MC__CONTINOUS + TACLR;// + TAIE;
+    TA0CTL |= TASSEL__ACLK + MC__CONTINOUS + TACLR + ID__8;
     __enable_interrupt();
 }
 
 
-// ticks = microseconds / 30.5175
+// ticks = microseconds / 30.5175 if no input divider
+// ticks = microseconds / 244.14  if ID__8 is used
 void timer_a0_delay_noblk_ccr2(uint16_t ticks)
 {
-    //uint32_t ticks = microseconds / 30.5175;
     TA0CCTL2 &= ~CCIE;
     TA0CCTL2 = 0;
     TA0CCR2 = TA0R + ticks;
     TA0CCTL2 = CCIE;
 }
 
-// ticks = microseconds / 30.5175
+// ticks = microseconds / 30.5175 if no input divider
+// ticks = microseconds / 244.14 if ID__8 is used
 void timer_a0_delay_noblk_ccr3(uint16_t ticks)
 {
-    //uint32_t ticks = microseconds / 30.5175;
     TA0CCTL3 &= ~CCIE;
     TA0CCTL3 = 0;
     TA0CCR3 = TA0R + ticks;

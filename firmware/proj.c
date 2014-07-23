@@ -177,8 +177,8 @@ int main(void)
     rtca_init();
     timer_a0_init();
     uart0_init();
-    sim900_init();
     sim900_init_messagebus();
+    sim900.next_state = SIM900_OFF;
     //uart1_init(9600); // XXX
 
     //GPS_BKP_ENABLE;

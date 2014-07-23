@@ -88,7 +88,7 @@ void sim900_halt(void);
 void sim900_send_fix_sms(void);
 
 uint16_t sim900_tx_str(char *str, const uint16_t size);
-uint8_t sim900_tx_cmd(char *str, const uint16_t size);
+uint8_t sim900_tx_cmd(char *str, const uint16_t size, const uint16_t reply_tmout);
 uint8_t sim900_parse_rx(char *str, const uint16_t size);
 
 #endif

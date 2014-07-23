@@ -13,7 +13,8 @@
 #include "rtc.h"
 
 uint8_t sm_c; // state machine internal counter
-#define SM_DELAY 6500
+#define SM_DELAY 819 // ~200ms
+#define SM_R_DELAY 4700 // REPLY_TMOUT + RXBUF_TMOUT + ~100
 
 char eom[2] = { 0x1a, 0x0 };
 
@@ -31,19 +32,19 @@ static void sim900_state_machine(enum sys_message msg)
                     SIM900_RTS_HIGH;
                     SIM900_DTR_LOW;
                     sim900.next_state = SIM900_PWRKEY_ACT;
-                    timer_a0_delay_noblk_ccr2(16384); // 0.5s
+                    timer_a0_delay_noblk_ccr2(2048); // 0.5s
                 break;
                 case SIM900_PWRKEY_ACT:
                     LED_OFF;
                     SIM900_PWRKEY_LOW;
                     sim900.next_state = SIM900_ON;
-                    timer_a0_delay_noblk_ccr2(39321); // 1.2s
+                    timer_a0_delay_noblk_ccr2(4915); // 1.2s
                 break;
                 case SIM900_ON:
                     LED_ON;
                     SIM900_PWRKEY_HIGH;
                     sim900.next_state = SIM900_PRE_IDLE;
-                    timer_a0_delay_noblk_ccr2(62259); // 1.9s
+                    timer_a0_delay_noblk_ccr2(7782); // 1.9s
                 break;
                 case SIM900_PRE_IDLE:
                     LED_OFF;
@@ -61,22 +62,22 @@ static void sim900_state_machine(enum sys_message msg)
                     sim900.next_state = SIM900_AT;
                     sim900.rc = RC_NULL;
                     sm_c = 0;
-                    timer_a0_delay_noblk_ccr2(32000); // ~1s
+                    timer_a0_delay_noblk_ccr2(4096); // ~1s
                 break;
                 case SIM900_AT:
                     if (sim900.rc == RC_OK) {
-                        sim900_tx_cmd("AT+IPR=9600;+IFC=2,2;E0&W\r", 26);
+                        sim900_tx_cmd("AT+IPR=9600;+IFC=2,2;E0&W\r", 26, REPLY_TMOUT);
                         sim900.next_state = SIM900_WAITREPLY;
-                        timer_a0_delay_noblk_ccr2(SM_DELAY);
+                        timer_a0_delay_noblk_ccr2(SM_R_DELAY);
                     } else {
                         sm_c++;
-                        sim900_tx_cmd("AT\r",3);
+                        sim900_tx_cmd("AT\r", 3, REPLY_TMOUT);
                     }
                     if (sm_c > 15) {
                         // something terribly wrong, stop sim900
                         sim900.cmd = CMD_OFF;
                     }
-                    timer_a0_delay_noblk_ccr2(32000); // ~1s
+                    timer_a0_delay_noblk_ccr2(SM_R_DELAY);
                 break;
                 case SIM900_WAITREPLY:
                     if (sim900.rc == RC_OK) {
@@ -97,8 +98,8 @@ static void sim900_state_machine(enum sys_message msg)
             switch (sim900.next_state) {
                 case SIM900_IDLE:
                     sim900.next_state = SIM900_VBAT_OFF;
-                    sim900_tx_cmd("AT+CPOWD=1\r", 11);
-                    timer_a0_delay_noblk_ccr2(32000); // ~1s
+                    sim900_tx_cmd("AT+CPOWD=1\r", 11, REPLY_TMOUT);
+                    timer_a0_delay_noblk_ccr2(SM_R_DELAY);
                 break;
                 case SIM900_VBAT_OFF:
                     sim900.next_state = SIM900_OFF;
@@ -119,8 +120,8 @@ static void sim900_state_machine(enum sys_message msg)
             switch (sim900.next_state) {
                 case SIM900_IDLE:
                     sim900.next_state = SIM900_SET1;
-                    sim900_tx_cmd("AT+CMGF=1\r", 10);
-                    timer_a0_delay_noblk_ccr2(32000); // ~1s
+                    sim900_tx_cmd("AT+CMGF=1\r", 10, REPLY_TMOUT);
+                    timer_a0_delay_noblk_ccr2(SM_R_DELAY);
                 break;
                 case SIM900_SET1:
                     if (sim900.rc == RC_OK) {
@@ -129,8 +130,8 @@ static void sim900_state_machine(enum sys_message msg)
                         sim900.next_state = SIM900_TEXT_INPUT;
                         sim900_tx_str("AT+CMGS=\"", 9);
                         sim900_tx_str(s.phone_num, 12);
-                        sim900_tx_cmd("\"\r", 2);
-                        timer_a0_delay_noblk_ccr2(32000); // ~1s
+                        sim900_tx_cmd("\"\r", 2, REPLY_TMOUT);
+                        timer_a0_delay_noblk_ccr2(SM_R_DELAY);
                     } else {
                         // XXX
                         sim900.next_state = SIM900_IDLE;
@@ -144,13 +145,13 @@ static void sim900_state_machine(enum sys_message msg)
                             mc_f.lat_deg, mc_f.lat_min, mc_f.lat_fr, mc_f.lat_suffix,
                             mc_f.lon_deg, mc_f.lon_min, mc_f.lon_fr, mc_f.lon_suffix,
                             rtca_time.sys - mc_f.fixtime, eom);
-                            sim900_tx_cmd(str_temp, strlen(str_temp));
+                            sim900_tx_cmd(str_temp, strlen(str_temp), 20480); // wait max ~5s for reply
                         } else {
                             sim900_tx_str("no fix", 6);
-                            sim900_tx_cmd(eom, 2);
+                            sim900_tx_cmd(eom, 2, 20480);
                         }
                         sim900.next_state = SIM900_TEXT_RCVD;
-                        timer_a0_delay_noblk_ccr2(65535);
+                        timer_a0_delay_noblk_ccr2(24576); // ~6s
                     } else {
                         // XXX
                         sim900.next_state = SIM900_IDLE;
@@ -158,10 +159,11 @@ static void sim900_state_machine(enum sys_message msg)
                     }
                 break;
                 case SIM900_TEXT_RCVD:
-                    // actually this can take more than 3 seconds
                     if (sim900.rc == RC_CMGS) {
                         sim900.next_state = SIM900_IDLE;
                         sim900.cmd = CMD_NULL;
+                        // XXX
+                        uart0_tx_str("y\r\n", 3);
                     } else {
                         // XXX
                         sim900.next_state = SIM900_IDLE;
@@ -202,7 +204,7 @@ uint16_t sim900_tx_str(char *str, const uint16_t size)
     return p;
 }
 
-uint8_t sim900_tx_cmd(char *str, const uint16_t size)
+uint8_t sim900_tx_cmd(char *str, const uint16_t size, const uint16_t reply_tmout)
 {
     uint16_t p = 0;
 
@@ -214,7 +216,7 @@ uint8_t sim900_tx_cmd(char *str, const uint16_t size)
     sim900.rc = RC_NULL;
     sim900.console = TTY_RX_WAIT;
     // set up timer that will end the wait for a reply
-    timer_a0_delay_noblk_ccr3(REPLY_TMOUT);
+    timer_a0_delay_noblk_ccr3(reply_tmout);
 
     while (p < size) {
         while (!(SIM900_UCAIFG & UCTXIFG)) ;  // TX buffer ready?
@@ -230,21 +232,25 @@ uint8_t sim900_tx_cmd(char *str, const uint16_t size)
 uint8_t sim900_parse_rx(char *s, const uint16_t size)
 {
     if (sim900.cmd_type == CMD_SOLICITED) {
-        if (strstr(s, "OK")) {
+        if (strstr(s, "+CMGS:")) {
+            // '\r\n+CMGS: 5\r\n\r\nOK\r\n'
+            // we want to catch the +CMGS part, so parse before 'else if == "OK"'
+            sim900.rc = RC_CMGS;
+        } else if (strstr(s, "OK")) {
+            // '\r\nOK\r\n'
             sim900.rc = RC_OK;
         } else if (strstr(s, "ERROR")) {
             sim900.rc = RC_ERROR;
         } else if (strstr(s, "> ")) {
+            // '\r\n> '
             sim900.rc = RC_TEXT_INPUT;
-        } else if (strstr(s, "+CMGS:")) {
-            sim900.rc = RC_CMGS;
         } else {
-            // here be dragons
+            // unknown solicited? reply
             sim900.rc = RC_NULL;
         }
 
         // shorten the state machine delay
-        timer_a0_delay_noblk_ccr2(1000);
+        timer_a0_delay_noblk_ccr2(81); // ~20ms
     } else {
         // unsolicited messages
         if (strstr(s, "RDY")) {
@@ -284,7 +290,7 @@ void sim900_init(void)
     PMAPPWD = 0;
     P1DIR |= 0x48;
     uart1_init(9600);
-    timer_a0_delay_noblk_ccr2(16384); // 0.5s
+    timer_a0_delay_noblk_ccr2(2048); // 0.5s
 }
 
 void sim900_init_messagebus(void)
