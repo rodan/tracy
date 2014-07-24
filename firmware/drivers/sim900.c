@@ -13,8 +13,6 @@
 #include "rtc.h"
 
 uint8_t sm_c; // state machine internal counter
-#define SM_DELAY 819 // ~200ms
-#define SM_R_DELAY 4700 // REPLY_TMOUT + RXBUF_TMOUT + ~100
 
 char eom[2] = { 0x1a, 0x0 };
 
@@ -22,7 +20,11 @@ static void sim900_state_machine(enum sys_message msg)
 {
     switch (sim900.cmd) {
 
+        ///////////////////////////////////
+        //
         // poweron sequence
+        //
+
         case CMD_ON:
             switch (sim900.next_state) {
                 case SIM900_VBAT_ON:
@@ -55,7 +57,31 @@ static void sim900_state_machine(enum sys_message msg)
             }
         break;
 
+        ///////////////////////////////////
+        //
+        // get modem IMEI
+        //
+
+        case CMD_GET_IMEI:
+            switch (sim900.next_state) {
+                case SIM900_IDLE:
+                    sim900.next_state = SIM900_GET_IMEI;
+                    sim900_tx_cmd("AT+GSN\r", 7, REPLY_TMOUT);
+                    sim900.cmd_type = CMD_SOLICITED_GSN;
+                    timer_a0_delay_noblk_ccr2(SM_R_DELAY);
+                break;
+                case SIM900_GET_IMEI:
+                    sim900.next_state = SIM900_IDLE;
+                    sim900.cmd = CMD_NULL;
+                break;
+            }
+        break;
+
+        ///////////////////////////////////
+        //
         // initial setup of the sim900
+        //
+
         case CMD_FIRST_PWRON:
             switch (sim900.next_state) {
                 case SIM900_IDLE:
@@ -181,7 +207,19 @@ static void sim900_state_machine(enum sys_message msg)
                 case SIM900_IP_PUT:
                     if (sim900.rc == RC_TEXT_INPUT) {
                         sim900.next_state = SIM900_IP_CLOSE;
-                        sim900_tx_str("PUT /test/foo HTTP/1.1\r\n\r\n", 26);
+                        sim900_tx_str("GET /scripts/t?i=", 17);
+                        sim900_tx_str(sim900.imei, 15);
+                        sim900_tx_str("&l=", 3);
+                        if (mc_f.fix) {
+                            snprintf(str_temp, STR_LEN, "%d %d.%04d%c %d %d.%04d%c&f=%ld",
+                            mc_f.lat_deg, mc_f.lat_min, mc_f.lat_fr, mc_f.lat_suffix,
+                            mc_f.lon_deg, mc_f.lon_min, mc_f.lon_fr, mc_f.lon_suffix,
+                            rtca_time.sys - mc_f.fixtime);
+                            sim900_tx_str(str_temp, strlen(str_temp));
+                        } else {
+                            sim900_tx_str("no_fix", 6);
+                        }
+                        sim900_tx_str(" HTTP/1.1\r\n\r\n", 13);
                         sim900_tx_cmd(eom, 2, 20480);
                         timer_a0_delay_noblk_ccr2(20580);
                     }
@@ -323,6 +361,10 @@ uint8_t sim900_tx_cmd(char *str, const uint16_t size, const uint16_t reply_tmout
 
 uint8_t sim900_parse_rx(char *s, const uint16_t size)
 {
+    uint8_t i;
+
+    s[size] = 0;
+
     if (sim900.cmd_type == CMD_SOLICITED) {
         if (strstr(s, "+CMGS:")) {
             // '\r\n+CMGS: 5\r\n\r\nOK\r\n'
@@ -361,6 +403,10 @@ uint8_t sim900_parse_rx(char *s, const uint16_t size)
 
         // shorten the state machine delay
         timer_a0_delay_noblk_ccr2(81); // ~20ms
+    } else if ((sim900.cmd_type == CMD_SOLICITED_GSN) && (size == 25)) {
+        for (i=2; i<17; i++) {
+            sim900.imei[i-2] = s[i];
+        }
     } else {
         // unsolicited messages
         if (strstr(s, "RDY")) {
@@ -373,7 +419,7 @@ uint8_t sim900_parse_rx(char *s, const uint16_t size)
         sim900.rc = RC_NULL;
     }
 
-    memset(s, 0, UART1_RXBUF_SZ);
+    //memset(s, 0, UART1_RXBUF_SZ);
 
     // XXX
     snprintf(str_temp, STR_LEN, "prx %d %d\r\n", sim900.cmd_type, sim900.rc);
@@ -426,6 +472,12 @@ void sim900_first_pwron(void)
 void sim900_halt(void)
 {
     sim900.cmd = CMD_OFF;
+    timer_a0_delay_noblk_ccr2(SM_DELAY);
+}
+
+void sim900_get_imei(void)
+{
+    sim900.cmd = CMD_GET_IMEI;
     timer_a0_delay_noblk_ccr2(SM_DELAY);
 }
 

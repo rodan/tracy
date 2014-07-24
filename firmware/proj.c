@@ -100,6 +100,8 @@ static void parse_UI(enum sys_message msg)
         sim900_init();
     } else if (f == '?') {
         sim900_send_fix_gprs();
+    } else if (f == '~') {
+        sim900_get_imei();
     } else {
         sim900_tx_str((char *)uart0_rx_buf, uart0_p);
         sim900_tx_str("\r", 1);
@@ -169,6 +171,7 @@ static void schedule(enum sys_message msg)
             }
         }
     }
+
 }
 
 int main(void)

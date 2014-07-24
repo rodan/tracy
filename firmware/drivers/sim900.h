@@ -17,6 +17,10 @@
 #define SIM900_UCAIFG           UCA1IFG
 #define SIM900_UCATXBUF         UCA1TXBUF
 
+// state machine timeouts
+#define SM_DELAY 819 // ~200ms
+#define SM_R_DELAY 4700 // REPLY_TMOUT + RXBUF_TMOUT + ~100
+
 // states that can be reached by the state machine
 typedef enum {
     SIM900_ON,
@@ -29,6 +33,7 @@ typedef enum {
     SIM900_WAITREPLY,
     SIM900_VBAT_OFF,
     SIM900_SET1,
+    SIM900_GET_IMEI,
     SIM900_TEXT_INPUT,
     SIM900_TEXT_RCVD,
     SIM900_IP_INITIAL,
@@ -49,6 +54,7 @@ typedef enum {
     CMD_ON,
     CMD_OFF,
     CMD_FIRST_PWRON,
+    CMD_GET_IMEI,
     CMD_SEND_SMS,
     CMD_SEND_GPRS
 } sim900_cmd_t;
@@ -57,6 +63,7 @@ typedef enum {
 typedef enum {
     CMD_UNSOLICITED,
     CMD_SOLICITED,
+    CMD_SOLICITED_GSN
 } sim900_cmd_type_t;
 
 // return codes
@@ -88,6 +95,7 @@ typedef enum {
 struct sim900_t {
     uint8_t checks;
     uint8_t rdy;
+    char imei[16];
     sim900_cmd_t cmd;
     sim900_cmd_type_t cmd_type;
     sim900_rc_t  rc;
@@ -101,6 +109,7 @@ void sim900_init(void);
 void sim900_init_messagebus(void);
 void sim900_first_pwron(void);
 void sim900_halt(void);
+void sim900_get_imei(void);
 void sim900_send_fix_sms(void);
 void sim900_send_fix_gprs(void);
 

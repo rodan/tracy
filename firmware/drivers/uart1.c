@@ -51,7 +51,7 @@ void USCI_A1_ISR(void)
                     // use hardware flow control to stop the remote equipment
                     // from sending more data
                     SIM900_RTS_HIGH;
-                    uart1_rx_buf[uart1_p + 1] = 0;
+                    uart1_rx_buf[uart1_p + 1] = 0; // not really working
                 }
                 if (uart1_p == 0) {
                     sim900.console = TTY_RX_PENDING;

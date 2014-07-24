@@ -43,6 +43,7 @@ void USCI_A0_ISR(void)
                 return;
             } else if (rx == 0x0d) {
                 ev = UART0_EV_RX;
+                uart0_rx_buf[uart0_p] = 0;
                 uart0_rx_enable = 0;
                 //uart0_rx_err = 0;
                 _BIC_SR_IRQ(LPM3_bits);
