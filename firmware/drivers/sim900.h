@@ -45,7 +45,9 @@ typedef enum {
     SIM900_IP_SEND,
     SIM900_IP_PUT,
     SIM900_IP_CLOSE,
-    SIM900_IP_SHUT
+    SIM900_IP_SHUT,
+    SIM900_SEND_OK,
+    SIM900_HTTP_REPLY
 } sim900_state_t;
 
 // commands that are compatible with the state machine
@@ -79,7 +81,9 @@ typedef enum {
     RC_STATE_IP_GPRSACT,
     RC_STATE_IP_STATUS,
     RC_STATE_IP_CONNECT,
-    RC_STATE_IP_SHUT
+    RC_STATE_IP_SHUT,
+    RC_SEND_OK,
+    RC_200_OK
 } sim900_rc_t;
 
 typedef enum {

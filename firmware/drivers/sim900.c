@@ -206,7 +206,7 @@ static void sim900_state_machine(enum sys_message msg)
                 break;
                 case SIM900_IP_PUT:
                     if (sim900.rc == RC_TEXT_INPUT) {
-                        sim900.next_state = SIM900_IP_CLOSE;
+                        sim900.next_state = SIM900_SEND_OK;
                         sim900_tx_str("GET /scripts/t?i=", 17);
                         sim900_tx_str(sim900.imei, 15);
                         sim900_tx_str("&l=", 3);
@@ -224,19 +224,32 @@ static void sim900_state_machine(enum sys_message msg)
                         timer_a0_delay_noblk_ccr2(20580);
                     }
                 break;
-                case SIM900_IP_CLOSE:
-                    if (sim900.rc == RC_OK) { // XXX
-                        sim900.next_state = SIM900_IP_SHUT;
-                        sim900_tx_cmd("AT+CIPCLOSE\r", 12, REPLY_TMOUT);
-                        timer_a0_delay_noblk_ccr2(SM_R_DELAY);
+                case SIM900_SEND_OK:
+                    if (sim900.rc == RC_SEND_OK) {
+                        sim900.next_state = SIM900_HTTP_REPLY;
+                        
+                        sim900.cmd_type = CMD_SOLICITED;
+                        sim900.rc = RC_NULL;
+                        sim900.console = TTY_RX_WAIT;
+                        timer_a0_delay_noblk_ccr3(12288); // ~3s
+                        timer_a0_delay_noblk_ccr2(12388); // ~>3s
                     }
                 break;
-                case SIM900_IP_SHUT:
-                    if (sim900.rc == RC_OK) { // XXX
-                        sim900.next_state = SIM900_IDLE;
-                        sim900_tx_cmd("AT+CIPSHUT\r", 11, REPLY_TMOUT);
-                        timer_a0_delay_noblk_ccr2(SM_R_DELAY);
+                case SIM900_HTTP_REPLY:
+                    if (sim900.rc == RC_200_OK) {
+                        sim900.next_state = SIM900_IP_CLOSE;
+                        timer_a0_delay_noblk_ccr2(SM_DELAY);
                     }
+                break;
+                case SIM900_IP_CLOSE:
+                    sim900.next_state = SIM900_IP_SHUT;
+                    sim900_tx_cmd("AT+CIPCLOSE\r", 12, REPLY_TMOUT);
+                    timer_a0_delay_noblk_ccr2(SM_R_DELAY);
+                break;
+                case SIM900_IP_SHUT:
+                    sim900.next_state = SIM900_IDLE;
+                    sim900_tx_cmd("AT+CIPSHUT\r", 11, REPLY_TMOUT);
+                    timer_a0_delay_noblk_ccr2(SM_R_DELAY);
                 break;
             }
         break;
@@ -277,7 +290,7 @@ static void sim900_state_machine(enum sys_message msg)
                             rtca_time.sys - mc_f.fixtime, eom);
                             sim900_tx_cmd(str_temp, strlen(str_temp), 20480); // wait max ~5s for reply
                         } else {
-                            sim900_tx_str("no fix", 6);
+                            sim900_tx_str("no_fix", 6);
                             sim900_tx_cmd(eom, 2, 20480);
                         }
                         sim900.next_state = SIM900_TEXT_RCVD;
@@ -385,6 +398,12 @@ uint8_t sim900_parse_rx(char *s, const uint16_t size)
         } else if (strstr(s, "CONNECT")) {
             // CONNECT OK
             sim900.rc = RC_STATE_IP_CONNECT;
+        } else if (strstr(s, "SEND OK")) {
+            // '\r\nSEND OK\r\n'
+            sim900.rc = RC_SEND_OK;
+        } else if (strstr(s, "200 OK")) {
+            // '\r\n+IPD,141:HTTP/1.1 200 OK\r\n'
+            sim900.rc = RC_200_OK;
         } else if (strstr(s, "SHUT")) {
             // SHUT OK
             sim900.rc = RC_STATE_IP_SHUT;
