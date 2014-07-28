@@ -12,7 +12,7 @@
 enum sys_message {
     // TIMER0
     SYS_MSG_TIMER0_CRR0 = BIT0,
-    SYS_MSG_TIMER0_CRR1 = BIT1,
+    SYS_MSG_TIMER0_CRR1 = BIT1, // timer_a0_delay_noblk_ccr1
     SYS_MSG_TIMER0_CRR2 = BIT2, // timer_a0_delay_noblk_ccr2
     SYS_MSG_TIMER0_CRR3 = BIT3, // timer_a0_delay_noblk_ccr3
     SYS_MSG_TIMER0_CRR4 = BIT4,

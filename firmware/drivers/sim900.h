@@ -17,9 +17,15 @@
 #define SIM900_UCAIFG           UCA1IFG
 #define SIM900_UCATXBUF         UCA1TXBUF
 
+#define ERR_SIM_MISSING         BIT0
+#define ERR_IMEI_UNKNOWN        BIT1
+
 // state machine timeouts
-#define SM_DELAY 819 // ~200ms
-#define SM_R_DELAY 4700 // REPLY_TMOUT + RXBUF_TMOUT + ~100
+#define SM_STEP_DELAY   81 // ~20ms
+#define SM_DELAY        819 // ~200ms
+#define SM_R_DELAY      4700 // REPLY_TMOUT + RXBUF_TMOUT + ~100
+
+#define TASK_TMOUT 65500 // ~16s
 
 // states that can be reached by the state machine
 typedef enum {
@@ -28,6 +34,7 @@ typedef enum {
     SIM900_PWRKEY_ACT,
     SIM900_VBAT_ON,
     SIM900_PRE_IDLE,
+    SIM900_WAIT_FOR_RDY,
     SIM900_IDLE,
     SIM900_AT,
     SIM900_WAITREPLY,
@@ -56,10 +63,36 @@ typedef enum {
     CMD_ON,
     CMD_OFF,
     CMD_FIRST_PWRON,
+    CMD_GET_READY,
     CMD_GET_IMEI,
     CMD_SEND_SMS,
     CMD_SEND_GPRS
 } sim900_cmd_t;
+
+// highest level tasks for commanding a sim900
+typedef enum {
+    TASK_NULL,
+    TASK_SEND_FIX_SMS,
+    TASK_SEND_FIX_GPRS
+} sim900_task_t;
+
+// return values for subtasks
+typedef enum {
+    SUBTASK_NULL,
+    SUBTASK_GET_IMEI_OK,
+    SUBTASK_SEND_FIX_GPRS_OK,
+    SUBTASK_SEND_FIX_SMS_OK
+} sim900_task_rv_t;
+
+// discrete states within a task
+typedef enum {
+    SUBTASK_ON,
+    SUBTASK_WAIT_FOR_RDY,
+    SUBTASK_GET_IMEI,
+    SUBTASK_SEND_FIX_GPRS,
+    SUBTASK_SEND_FIX_SMS,
+    SUBTASK_PWROFF
+} sim900_task_state_t;
 
 // command type
 typedef enum {
@@ -76,6 +109,7 @@ typedef enum {
     RC_TMOUT,
     RC_TEXT_INPUT,
     RC_CMGS,
+    RC_IMEI_RCVD,
     RC_STATE_IP_INITIAL,
     RC_STATE_IP_START,
     RC_STATE_IP_GPRSACT,
@@ -83,7 +117,7 @@ typedef enum {
     RC_STATE_IP_CONNECT,
     RC_STATE_IP_SHUT,
     RC_SEND_OK,
-    RC_200_OK
+    RC_200_OK,
 } sim900_rc_t;
 
 typedef enum {
@@ -96,10 +130,20 @@ typedef enum {
 #define RDY         BIT0
 #define CALL_RDY    BIT1
 
+#define TASK_IDLE       BIT0
+#define TASK_ONGOING    BIT1
+
+#define TASK_MAX_RETRIES   3
+
 struct sim900_t {
     uint8_t checks;
     uint8_t rdy;
+    uint8_t task_counter;
+    uint16_t err;
     char imei[16];
+    sim900_task_t task;
+    sim900_task_state_t task_next_state;
+    sim900_task_rv_t task_rv;
     sim900_cmd_t cmd;
     sim900_cmd_type_t cmd_type;
     sim900_rc_t  rc;

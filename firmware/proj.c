@@ -93,15 +93,8 @@ static void parse_UI(enum sys_message msg)
 {
     char f = uart0_rx_buf[0];
 
-    if (f == '>') {
-        sim900_halt();
-    } else if (f == '|') {
-        sim900_init_time = rtca_time.sys + 6;
-        sim900_init();
-    } else if (f == '?') {
+    if (f == '?') {
         sim900_send_fix_gprs();
-    } else if (f == '~') {
-        sim900_get_imei();
     } else {
         sim900_tx_str((char *)uart0_rx_buf, uart0_p);
         sim900_tx_str("\r", 1);
@@ -163,12 +156,14 @@ static void schedule(enum sys_message msg)
         if (q_bat > 700) {
             // 700 is the equivalent of ~3.4v
             sim900.checks |= BIT0;
+            /*
             if (!sim900.rdy) {
                 // if RDY was not received in the first 5 seconds
                 // then this sim900 has the default 
                 // baudrate autodetection activated
                 sim900_first_pwron();
             }
+            */
         }
     }
 

@@ -22,6 +22,15 @@ void timer_a0_init(void)
     __enable_interrupt();
 }
 
+// ticks = microseconds / 30.5175 if no input divider
+// ticks = microseconds / 244.14  if ID__8 is used
+void timer_a0_delay_noblk_ccr1(uint16_t ticks)
+{
+    TA0CCTL1 &= ~CCIE;
+    TA0CCTL1 = 0;
+    TA0CCR1 = TA0R + ticks;
+    TA0CCTL1 = CCIE;
+}
 
 // ticks = microseconds / 30.5175 if no input divider
 // ticks = microseconds / 244.14  if ID__8 is used
@@ -51,8 +60,15 @@ void timer0_A1_ISR(void)
         // timer used by timer_a0_delay()
         timer_a0_last_event |= TIMER_A0_EVENT_CCR4;
         _BIC_SR_IRQ(LPM3_bits);
+    } else if (iv == TA0IV_TA0CCR1) {
+        // timer used by timer_a0_delay_noblk_ccr1()
+        // disable interrupt
+        TA0CCTL1 &= ~CCIE;
+        TA0CCTL1 = 0;
+        timer_a0_last_event |= TIMER_A0_EVENT_CCR1;
+        _BIC_SR_IRQ(LPM3_bits);
     } else if (iv == TA0IV_TA0CCR2) {
-        // timer used by timer_a0_delay_noblk()
+        // timer used by timer_a0_delay_noblk_ccr2()
         // disable interrupt
         TA0CCTL2 &= ~CCIE;
         TA0CCTL2 = 0;
