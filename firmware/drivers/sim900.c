@@ -78,7 +78,7 @@ static void sim900_tasks(enum sys_message msg)
                         sim900.task_next_state = SUBTASK_PWROFF;
                         timer_a0_delay_noblk_ccr1(SM_STEP_DELAY);
                     } else if (sim900.task_counter == TASK_MAX_RETRIES) {
-                        sim900.err |= ERR_IMEI_UNKNOWN;
+                        sim900.err |= ERR_SEND_FIX_GPRS;
                     }
                 break;
                 case SUBTASK_PWROFF:
@@ -276,13 +276,21 @@ static void sim900_state_machine(enum sys_message msg)
             switch (sim900.next_state) {
                 case SIM900_IP_INITIAL:
                     sim900.next_state = SIM900_IP_START;
-                    sim900_tx_cmd("AT+CGDCONT=1,\"IP\",\"live.vodafone.com\";+CIPSTATUS\r", 49, REPLY_TMOUT);
+                    sim900_tx_str("AT+CGDCONT=1,\"IP\",\"", 19);
+                    sim900_tx_str(s.apn, s.apn_len);
+                    sim900_tx_cmd("\";+CIPSTATUS\r", 13, REPLY_TMOUT);
                     timer_a0_delay_noblk_ccr2(SM_R_DELAY);
                 break;
                 case SIM900_IP_START:
                     if (sim900.rc == RC_STATE_IP_INITIAL) {
                         sim900.next_state = SIM900_IP_GPRSACT;
-                        sim900_tx_cmd("AT+CSTT=\"live.vodafone.com\",\"live\",\"vodafone\";+CIPSTATUS\r", 57, REPLY_TMOUT);
+                        sim900_tx_str("AT+CSTT=\"", 9);
+                        sim900_tx_str(s.apn, s.apn_len);
+                        sim900_tx_str("\",\"", 3);
+                        sim900_tx_str(s.user, s.user_len);
+                        sim900_tx_str("\",\"", 3);
+                        sim900_tx_str(s.pass, s.pass_len);
+                        sim900_tx_cmd("\";+CIPSTATUS\r", 13, REPLY_TMOUT);
                         timer_a0_delay_noblk_ccr2(SM_R_DELAY);
                     }
                 break;
@@ -303,7 +311,11 @@ static void sim900_state_machine(enum sys_message msg)
                 case SIM900_IP_CONNECT:
                     if (sim900.rc == RC_STATE_IP_STATUS) {
                         sim900.next_state = SIM900_IP_CONNECT_OK;
-                        sim900_tx_cmd("AT+CIPSTART=\"TCP\",\"www.simplex.ro\",\"80\"\r", 40, REPLY_TMOUT);
+                        sim900_tx_str("AT+CIPSTART=\"TCP\",\"", 19);
+                        sim900_tx_str(s.server, s.server_len);
+                        sim900_tx_str("\",\"", 3);
+                        sim900_tx_str(s.port, s.port_len);
+                        sim900_tx_cmd("\"\r", 2, REPLY_TMOUT);
                         timer_a0_delay_noblk_ccr2(SM_R_DELAY);
                     }
                 break;
@@ -395,13 +407,9 @@ static void sim900_state_machine(enum sys_message msg)
                         //sim900_tx_cmd(str_temp, strlen(str_temp));
                         sim900.next_state = SIM900_TEXT_INPUT;
                         sim900_tx_str("AT+CMGS=\"", 9);
-                        sim900_tx_str(s.phone_num, 12);
+                        sim900_tx_str(s.ctrl_phone, s.ctrl_phone_len);
                         sim900_tx_cmd("\"\r", 2, REPLY_TMOUT);
                         timer_a0_delay_noblk_ccr2(SM_R_DELAY);
-                    } else {
-                        // XXX
-                        sim900.next_state = SIM900_IDLE;
-                        sim900.cmd = CMD_NULL;
                     }
                 break;
                 case SIM900_TEXT_INPUT:
@@ -418,22 +426,14 @@ static void sim900_state_machine(enum sys_message msg)
                         }
                         sim900.next_state = SIM900_TEXT_RCVD;
                         timer_a0_delay_noblk_ccr2(24576); // ~6s
-                    } else {
-                        // XXX
-                        sim900.next_state = SIM900_IDLE;
-                        sim900.cmd = CMD_NULL;
                     }
                 break;
                 case SIM900_TEXT_RCVD:
                     if (sim900.rc == RC_CMGS) {
                         sim900.next_state = SIM900_IDLE;
                         sim900.cmd = CMD_NULL;
-                        // XXX
-                        uart0_tx_str("y\r\n", 3);
-                    } else {
-                        // XXX
-                        sim900.next_state = SIM900_IDLE;
-                        sim900.cmd = CMD_NULL;
+                        sim900.task_rv = SUBTASK_SEND_FIX_SMS_OK;
+                        timer_a0_delay_noblk_ccr1(SM_R_DELAY); // signal high level sm
                     }
                 break;
             }
@@ -568,11 +568,9 @@ uint8_t sim900_parse_rx(char *s, const uint16_t size)
         sim900.rc = RC_NULL;
     }
 
-    //memset(s, 0, UART1_RXBUF_SZ);
-
     // XXX
-    snprintf(str_temp, STR_LEN, "prx %d %d\r\n", sim900.cmd_type, sim900.rc);
-    uart0_tx_str(str_temp, strlen(str_temp));
+    //snprintf(str_temp, STR_LEN, "prx %d %d\r\n", sim900.cmd_type, sim900.rc);
+    //uart0_tx_str(str_temp, strlen(str_temp));
 
     // signal that we are ready to receive more
     SIM900_RTS_LOW;
@@ -621,6 +619,13 @@ void sim900_first_pwron(void)
     timer_a0_delay_noblk_ccr2(SM_DELAY);
 }
 
+void sim900_start(void)
+{
+    sim900.cmd = CMD_ON;
+    sim900.next_state = SIM900_VBAT_ON;
+    timer_a0_delay_noblk_ccr2(SM_STEP_DELAY);
+}
+
 void sim900_halt(void)
 {
     sim900.cmd = CMD_OFF;
@@ -629,8 +634,9 @@ void sim900_halt(void)
 
 void sim900_send_fix_sms(void)
 {
-    sim900.cmd = CMD_SEND_SMS;
-    timer_a0_delay_noblk_ccr2(SM_DELAY);
+    sim900.task = TASK_SEND_FIX_SMS;
+    sim900.task_next_state = SUBTASK_ON;
+    timer_a0_delay_noblk_ccr1(SM_STEP_DELAY);
 }
 
 void sim900_send_fix_gprs(void)
@@ -639,26 +645,4 @@ void sim900_send_fix_gprs(void)
     sim900.task_next_state = SUBTASK_ON;
     timer_a0_delay_noblk_ccr1(SM_STEP_DELAY);
 }
-
-
-
-
-/*
-#pragma vector=PORT1_VECTOR
-__interrupt void Port_1(void)
-{
-    uint16_t iv = P1IV;
-
-    if (iv == P1IV_P1IFG5) {
-        if (P1IFG & SIM900_CTS) {
-            P1IFG &= ~SIM900_CTS;
-            if ((SIM900_CTS_IN) == 0) {
-                SIM900_RTS_LOW;
-            } else {
-                SIM900_RTS_HIGH;
-            }
-        }
-    }
-}
-*/
 

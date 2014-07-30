@@ -8,8 +8,16 @@ enum uart1_tevent {
     UART1_EV_TX = BIT1
 };
 
-#define UART1_RXBUF_SZ     64
-#define RXBUF_TMOUT        409   // ~100ms in ticks
+// SMSs are 160bytes + ~60bytes header + 10 cr|lf
+#define UART1_RXBUF_SZ     255
+
+// if after the last char received INTRCHAR_TMOUT elapses 
+// without any more communication then we end the buffer and
+// send it to be parsed
+
+#define INTRCHAR_TMOUT     40 // ~10ms in ticks
+
+//#define RXBUF_TMOUT        409   // ~100ms in ticks
 #define REPLY_TMOUT        4096  // ~1s in ticks
 
 volatile char uart1_rx_buf[UART1_RXBUF_SZ];

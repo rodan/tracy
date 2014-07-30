@@ -19,11 +19,14 @@
 
 #define ERR_SIM_MISSING         BIT0
 #define ERR_IMEI_UNKNOWN        BIT1
+#define ERR_SEND_FIX_GPRS       BIT2
+#define ERR_SEND_FIX_SMS        BIT3
 
 // state machine timeouts
 #define SM_STEP_DELAY   81 // ~20ms
 #define SM_DELAY        819 // ~200ms
-#define SM_R_DELAY      4700 // REPLY_TMOUT + RXBUF_TMOUT + ~100
+//#define SM_R_DELAY      4700 // REPLY_TMOUT + RXBUF_TMOUT + ~100
+#define SM_R_DELAY      5424 // REPLY_TMOUT + RXBUF_TMOUT + ~100
 
 #define TASK_TMOUT 65500 // ~16s
 
@@ -156,6 +159,7 @@ struct sim900_t sim900;
 void sim900_init(void);
 void sim900_init_messagebus(void);
 void sim900_first_pwron(void);
+void sim900_start(void);
 void sim900_halt(void);
 void sim900_get_imei(void);
 void sim900_send_fix_sms(void);

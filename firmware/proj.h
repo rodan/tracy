@@ -32,14 +32,36 @@ void settings_init(uint8_t * addr);
 
 struct tracy_settings_t {
     uint8_t ver;                // firmware version
-    char phone_num[12];
+    uint8_t ctrl_phone_len;
+    char ctrl_phone[16];
+    uint8_t apn_len;
+    char apn[20];
+    uint8_t user_len;
+    char user[20];
+    uint8_t pass_len;
+    char pass[20];
+    uint8_t server_len;
+    char server[20];
+    uint8_t port_len;
+    char port[5];
 };
 
 struct tracy_settings_t s;
 
 static const struct tracy_settings_t defaults = {
     VERSION,                    // ver
-    "+40721580040"
+    12,
+    "+40721580040",
+    17,
+    "live.vodafone.com",
+    4,
+    "live",
+    8,
+    "vodafone",
+    14,
+    "www.simplex.ro",
+    2,
+    "80"
 };
 
 #endif

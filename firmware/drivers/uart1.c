@@ -56,10 +56,11 @@ void USCI_A1_ISR(void)
                 if (uart1_p == 0) {
                     sim900.console = TTY_RX_PENDING;
                     // set up timer that will end the buffer
-                    timer_a0_delay_noblk_ccr3(RXBUF_TMOUT);
+                    //timer_a0_delay_noblk_ccr3(RXBUF_TMOUT);
                 }
                 uart1_rx_buf[uart1_p] = rx;
                 uart1_p++;
+                timer_a0_delay_noblk_ccr3(INTRCHAR_TMOUT);
         } 
         break;
     case 4:

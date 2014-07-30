@@ -95,6 +95,12 @@ static void parse_UI(enum sys_message msg)
 
     if (f == '?') {
         sim900_send_fix_gprs();
+#ifdef CONFIG_DEBUG
+    } else if (f == '!') {
+        sim900_start();
+    } else if (f == ')') {
+        sim900_halt();
+#endif
     } else {
         sim900_tx_str((char *)uart0_rx_buf, uart0_p);
         sim900_tx_str("\r", 1);
