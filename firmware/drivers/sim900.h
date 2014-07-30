@@ -75,13 +75,12 @@ typedef enum {
 // highest level tasks for commanding a sim900
 typedef enum {
     TASK_NULL,
-    TASK_SEND_FIX_SMS,
-    TASK_SEND_FIX_GPRS
+    TASK_DEFAULT,
 } sim900_task_t;
 
 // return values for subtasks
 typedef enum {
-    SUBTASK_NULL,
+    SUBTASK_NO_REPLY,
     SUBTASK_GET_IMEI_OK,
     SUBTASK_SEND_FIX_GPRS_OK,
     SUBTASK_SEND_FIX_SMS_OK
@@ -89,19 +88,23 @@ typedef enum {
 
 // discrete states within a task
 typedef enum {
+    SUBTASK_NULL,
     SUBTASK_ON,
     SUBTASK_WAIT_FOR_RDY,
     SUBTASK_GET_IMEI,
     SUBTASK_SEND_FIX_GPRS,
     SUBTASK_SEND_FIX_SMS,
-    SUBTASK_PWROFF
+    SUBTASK_PWROFF,
+    SUBTASK_PARSE_NEXT_SMS,
+    SUBTASK_SWITCHER
 } sim900_task_state_t;
 
 // command type
 typedef enum {
     CMD_UNSOLICITED,
     CMD_SOLICITED,
-    CMD_SOLICITED_GSN
+    CMD_SOLICITED_GSN,
+    CMD_IGNORE
 } sim900_cmd_type_t;
 
 // return codes
@@ -142,8 +145,11 @@ struct sim900_t {
     uint8_t checks;
     uint8_t rdy;
     uint8_t task_counter;
+    uint8_t current_q;
+    sim900_task_state_t queue[5];
     uint16_t err;
     char imei[16];
+    char sms_id[3];
     sim900_task_t task;
     sim900_task_state_t task_next_state;
     sim900_task_rv_t task_rv;
