@@ -52,17 +52,16 @@ uint32_t sim900_init_time = 6;
 static void parse_gps(enum sys_message msg)
 {
 
-    //uart1_tx_str((char *)uart0_rx_buf, uart0_p);
-    //uart1_tx_str("\r\n", 2);
-
     if ((nmea_parse((char *)uart0_rx_buf, uart0_p) == EXIT_SUCCESS) && (mc_f.fix)) {
         gps_fix_shtd_ctr++;
 
-        //snprintf(str_temp, STR_LEN, "%d %d.%04d%c %d %d.%04d%c  %lds\r\n",
-        //         mc_f.lat_deg, mc_f.lat_min, mc_f.lat_fr, mc_f.lat_suffix,
-        //         mc_f.lon_deg, mc_f.lon_min, mc_f.lon_fr, mc_f.lon_suffix,
-        //         rtca_time.sys - mc_f.fixtime);
-        //uart1_tx_str(str_temp, strlen(str_temp));
+#ifdef NEVER
+        snprintf(str_temp, STR_LEN, "%d %d.%04d%c %d %d.%04d%c  %lds\r\n",
+                 mc_f.lat_deg, mc_f.lat_min, mc_f.lat_fr, mc_f.lat_suffix,
+                 mc_f.lon_deg, mc_f.lon_min, mc_f.lon_fr, mc_f.lon_suffix,
+                 rtca_time.sys - mc_f.fixtime);
+        uart1_tx_str(str_temp, strlen(str_temp));
+#endif
 
         if ((rtca_time.sys > rtca_set_next) || (rtca_time.min != mc_f.minute)) {
             rtca_time.year = mc_f.year;
@@ -84,7 +83,7 @@ static void parse_gps(enum sys_message msg)
 
 static void parse_gprs(enum sys_message msg)
 {
-    uart0_tx_str((char *)uart1_rx_buf, uart1_p);
+    //uart0_tx_str((char *)uart1_rx_buf, uart1_p);
 
     sim900_parse_rx((char *)uart1_rx_buf, uart1_p);
 }
@@ -94,13 +93,11 @@ static void parse_UI(enum sys_message msg)
     char f = uart0_rx_buf[0];
 
     if (f == '?') {
-        sim900_send_fix_gprs();
-#ifdef CONFIG_DEBUG
+        sim900_exec_default_task();
     } else if (f == '!') {
         sim900_start();
     } else if (f == ')') {
         sim900_halt();
-#endif
     } else {
         sim900_tx_str((char *)uart0_rx_buf, uart0_p);
         sim900_tx_str("\r", 1);
@@ -113,31 +110,6 @@ static void parse_UI(enum sys_message msg)
 static void schedule(enum sys_message msg)
 {
     uint16_t q_bat = 0;//, q_raw = 0;
-    //uint32_t v_raw;
-
-    //adc10_read(2, &q_raw, REFVSEL_1);
-    //v_raw = (uint32_t) q_raw * VREF_2_0_6_2 * DIV_RAW;
-
-//    snprintf(str_temp, STR_LEN, "v_bat  %d %01d.%03d\r\n", q_v_bat, (uint16_t) v_bat / 1000, (uint16_t) v_bat % 1000);
-//    snprintf(str_temp, STR_LEN, "v_bat  %d\r\n", q_v_bat);
-//    uart0_tx_str(str_temp, strlen(str_temp));
-
-//    snprintf(str_temp, STR_LEN, "v_raw  %d %ld %01ld.%01ld\r\n", q_raw, v_raw, v_raw / 1000000, (v_raw % 1000000)/100000);
-//    uart0_tx_str(str_temp, strlen(str_temp));
-
-
-    //P1OUT ^= BIT2;
-    /*
-    snprintf(str_temp, STR_LEN, "%04d%02d%02d %02d:%02d %ld\r\n",
-             rtca_time.year, rtca_time.mon, rtca_time.day,
-             rtca_time.hour, rtca_time.min, rtca_time.sys);
-    uart0_tx_str(str_temp, strlen(str_temp));
-    */
-
-    /*
-    snprintf(str_temp, STR_LEN, "cmd %d, state %d TA0CTL 0x%x, TA0CCTL2 0x%x, TA0CCR2 0x%x\r\n", sim900.cmd, sim900.next_state, TA0CTL, TA0CCTL2, TA0CCR2);
-    uart0_tx_str(str_temp, strlen(str_temp));
-    */
 
     // gps related
     if (rtca_time.sys > gps_get_next) {
@@ -188,7 +160,7 @@ int main(void)
     //GPS_BKP_ENABLE;
     CHARGE_ENABLE;
 
-    settings_init(FLASH_ADDR);
+    settings_init(SEGMENT_B);
 
     sys_messagebus_register(&parse_gprs, SYS_MSG_UART1_RX);
     //sys_messagebus_register(&parse_gps, SYS_MSG_UART0_RX);
@@ -278,21 +250,6 @@ void main_init(void)
     USBKEYPID = 0x9600;
 
 }
-
-/*
-void wake_up(void)
-{
-    uint16_t timeout = 5000;
-    UCSCTL6 &= ~XT2OFF;
-    // wait until clocks settle
-    do {
-        //UCSCTL7 &= ~(XT2OFFG + XT1LFOFFG + DCOFFG);
-        UCSCTL7 &= ~(XT1LFOFFG + DCOFFG);
-        SFRIFG1 &= ~OFIFG;
-        timeout--;
-    } while ((SFRIFG1 & OFIFG) && timeout);
-}
-*/
 
 void check_events(void)
 {

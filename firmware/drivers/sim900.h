@@ -21,6 +21,7 @@
 #define ERR_IMEI_UNKNOWN        BIT1
 #define ERR_SEND_FIX_GPRS       BIT2
 #define ERR_SEND_FIX_SMS        BIT3
+#define ERR_PARSE_SMS           BIT4
 
 // state machine timeouts
 #define SM_STEP_DELAY   81 // ~20ms
@@ -44,8 +45,9 @@ typedef enum {
     SIM900_VBAT_OFF,
     SIM900_SET1,
     SIM900_GET_IMEI,
-    SIM900_GET_SMSID,
-    SIM900_PARSE_FIRST_SMS,
+    SIM900_PARSE_SMS,
+    SIM900_DEL_SMS,
+    SIM900_CLOSE_SMS,
     SIM900_TEXT_INPUT,
     SIM900_TEXT_RCVD,
     SIM900_IP_INITIAL,
@@ -72,7 +74,7 @@ typedef enum {
     CMD_GET_IMEI,
     CMD_SEND_SMS,
     CMD_SEND_GPRS,
-    CMD_PARSE_FIRST_SMS,
+    CMD_PARSE_SMS,
 } sim900_cmd_t;
 
 // highest level tasks for commanding a sim900
@@ -87,7 +89,7 @@ typedef enum {
     SUBTASK_GET_IMEI_OK,
     SUBTASK_SEND_FIX_GPRS_OK,
     SUBTASK_SEND_FIX_SMS_OK,
-    SUBTASK_PARSE_FIRST_SMS_OK
+    SUBTASK_PARSE_SMS_OK
 } sim900_task_rv_t;
 
 // discrete states within a task
@@ -99,7 +101,7 @@ typedef enum {
     SUBTASK_SEND_FIX_GPRS,
     SUBTASK_SEND_FIX_SMS,
     SUBTASK_PWROFF,
-    SUBTASK_PARSE_FIRST_SMS,
+    SUBTASK_PARSE_SMS,
     SUBTASK_SWITCHER
 } sim900_task_state_t;
 
@@ -119,6 +121,8 @@ typedef enum {
     RC_TMOUT,
     RC_TEXT_INPUT,
     RC_CMGS,
+    RC_CMGL,
+    RC_CMGR,
     RC_IMEI_RCVD,
     RC_STATE_IP_INITIAL,
     RC_STATE_IP_START,
@@ -144,13 +148,14 @@ typedef enum {
 #define TASK_ONGOING    BIT1
 
 #define TASK_MAX_RETRIES   3
+#define TASK_QUEUE_SIZE    5
 
 struct sim900_t {
     uint8_t checks;
     uint8_t rdy;
     uint8_t task_counter;
     uint8_t current_q;
-    sim900_task_state_t queue[5];
+    sim900_task_state_t queue[TASK_QUEUE_SIZE];
     uint16_t err;
     char imei[16];
     char sms_id[3];
@@ -172,9 +177,7 @@ void sim900_init_messagebus(void);
 void sim900_first_pwron(void);
 void sim900_start(void);
 void sim900_halt(void);
-void sim900_get_imei(void);
-void sim900_send_fix_sms(void);
-void sim900_send_fix_gprs(void);
+void sim900_exec_default_task(void);
 
 uint16_t sim900_tx_str(char *str, const uint16_t size);
 uint8_t sim900_tx_cmd(char *str, const uint16_t size, const uint16_t reply_tmout);

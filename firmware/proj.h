@@ -31,11 +31,15 @@ void check_events(void);
 void settings_init(uint8_t * addr);
 
 #define MAX_PHONE_LEN   16
-#define MAX_APN_LEN    20
+#define MAX_APN_LEN     20
 #define MAX_USER_LEN    20
 #define MAX_PASS_LEN    20
 #define MAX_SERVER_LEN  20
 #define MAX_PORT_LEN     5
+
+// this struct will end up written into an information flash segment
+// so it better not exceed 128bytes
+// tracy_settings_t ver1 is 108bytes long
 
 struct tracy_settings_t {
     uint8_t ver;                // firmware version
@@ -55,10 +59,28 @@ struct tracy_settings_t {
 
 struct tracy_settings_t s;
 
+/*
 static const struct tracy_settings_t defaults = {
     VERSION,                    // ver
     12,
     "+40721580040",
+    17,
+    "live.vodafone.com",
+    4,
+    "live",
+    8,
+    "vodafone",
+    14,
+    "www.simplex.ro",
+    2,
+    "80"
+};
+*/
+
+static const struct tracy_settings_t defaults = {
+    VERSION,                    // ver
+    0,
+    "",
     17,
     "live.vodafone.com",
     4,
