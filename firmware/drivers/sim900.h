@@ -44,6 +44,8 @@ typedef enum {
     SIM900_VBAT_OFF,
     SIM900_SET1,
     SIM900_GET_IMEI,
+    SIM900_GET_SMSID,
+    SIM900_PARSE_FIRST_SMS,
     SIM900_TEXT_INPUT,
     SIM900_TEXT_RCVD,
     SIM900_IP_INITIAL,
@@ -69,7 +71,8 @@ typedef enum {
     CMD_GET_READY,
     CMD_GET_IMEI,
     CMD_SEND_SMS,
-    CMD_SEND_GPRS
+    CMD_SEND_GPRS,
+    CMD_PARSE_FIRST_SMS,
 } sim900_cmd_t;
 
 // highest level tasks for commanding a sim900
@@ -83,7 +86,8 @@ typedef enum {
     SUBTASK_NO_REPLY,
     SUBTASK_GET_IMEI_OK,
     SUBTASK_SEND_FIX_GPRS_OK,
-    SUBTASK_SEND_FIX_SMS_OK
+    SUBTASK_SEND_FIX_SMS_OK,
+    SUBTASK_PARSE_FIRST_SMS_OK
 } sim900_task_rv_t;
 
 // discrete states within a task
@@ -95,7 +99,7 @@ typedef enum {
     SUBTASK_SEND_FIX_GPRS,
     SUBTASK_SEND_FIX_SMS,
     SUBTASK_PWROFF,
-    SUBTASK_PARSE_NEXT_SMS,
+    SUBTASK_PARSE_FIRST_SMS,
     SUBTASK_SWITCHER
 } sim900_task_state_t;
 
@@ -150,6 +154,7 @@ struct sim900_t {
     uint16_t err;
     char imei[16];
     char sms_id[3];
+    uint8_t sms_id_len;
     sim900_task_t task;
     sim900_task_state_t task_next_state;
     sim900_task_rv_t task_rv;
@@ -174,5 +179,7 @@ void sim900_send_fix_gprs(void);
 uint16_t sim900_tx_str(char *str, const uint16_t size);
 uint8_t sim900_tx_cmd(char *str, const uint16_t size, const uint16_t reply_tmout);
 uint8_t sim900_parse_rx(char *str, const uint16_t size);
+uint8_t sim900_parse_sms(char *str, const uint16_t size);
+void extract_str(const char *haystack, const char *needle, char *str, uint8_t *len, const uint8_t maxlen);
 
 #endif

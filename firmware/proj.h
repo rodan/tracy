@@ -30,20 +30,27 @@ void main_init(void);
 void check_events(void);
 void settings_init(uint8_t * addr);
 
+#define MAX_PHONE_LEN   16
+#define MAX_APN_LEN    20
+#define MAX_USER_LEN    20
+#define MAX_PASS_LEN    20
+#define MAX_SERVER_LEN  20
+#define MAX_PORT_LEN     5
+
 struct tracy_settings_t {
     uint8_t ver;                // firmware version
     uint8_t ctrl_phone_len;
-    char ctrl_phone[16];
+    char ctrl_phone[MAX_PHONE_LEN];
     uint8_t apn_len;
-    char apn[20];
+    char apn[MAX_APN_LEN];
     uint8_t user_len;
-    char user[20];
+    char user[MAX_USER_LEN];
     uint8_t pass_len;
-    char pass[20];
+    char pass[MAX_PASS_LEN];
     uint8_t server_len;
-    char server[20];
+    char server[MAX_SERVER_LEN];
     uint8_t port_len;
-    char port[5];
+    char port[MAX_PORT_LEN];
 };
 
 struct tracy_settings_t s;
