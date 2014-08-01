@@ -1,5 +1,8 @@
 #!/usr/bin/perl
 
+# perl script that saves incoming GET requests that 
+# contain tracking information into an sqlite database 
+
 use strict;
 use CGI;
 use CGI qw(:standard);
@@ -8,10 +11,12 @@ use DBI;
 print "Content-Type: text/html\n\n";
 
 my $WF = new CGI;
-my $imei = $WF->param('imei');
-my $loc = $WF->param('loc');
+my $imei = sprintf "%015d", $WF->param('i');
+my $loc = $WF->param('l');
+my $fixtime = sprintf "%01d", $WF->param('f');
 my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = gmtime(time);
 my $timestamp = sprintf "%4d-%02d-%02d %02d:%02d:%02d", 1900+$year,$mon+1,$mday,$hour,$min,$sec;
+#my $timestamp = exec "date -u -d '-$fixtime seconds' +'%Y-%m-%d %H:%M:%S'";
 
 my $database = "/var/lib/tracking/$imei.db";
 my $dsn = "DBI:SQLite:database=$database";
@@ -21,7 +26,6 @@ my $dbh = DBI->connect($dsn, $username, $password, { RaiseError => 1 });
 
 if ( -z "$database" ) {
     $dbh->do("CREATE TABLE live (row_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                 imei VARCHAR(20) NOT NULL,
                                  date DATE NOT NULL,
                                  loc VARCHAR(20) NOT NULL,
                                  fixtime INTEGER
@@ -29,12 +33,11 @@ if ( -z "$database" ) {
 }
 
 
-my $stmt = qq(INSERT INTO live (imei, date, loc)
-      VALUES ("$imei", "$timestamp", "$loc" ));
+my $stmt = qq(INSERT INTO live (date, loc, fixtime)
+      VALUES ("$timestamp", "$loc", "$fixtime" ));
 my $rv = $dbh->do($stmt) or die $DBI::errstr;
 
 $dbh->disconnect();
 
 print "SAVED\r\n";
-
 

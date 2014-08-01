@@ -83,7 +83,7 @@ static void parse_gps(enum sys_message msg)
 
 static void parse_gprs(enum sys_message msg)
 {
-    //uart0_tx_str((char *)uart1_rx_buf, uart1_p);
+    uart0_tx_str((char *)uart1_rx_buf, uart1_p);
 
     sim900_parse_rx((char *)uart1_rx_buf, uart1_p);
 }

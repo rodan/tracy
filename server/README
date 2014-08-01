@@ -1,0 +1,54 @@
+
+'t' is a CGI script that runs on a webserver. it records it's calling arguments into a sqlite3 database.
+
+ source:       https://github.com/rodan/tracy 
+ author:       Petre Rodan <petre.rodan@simplex.ro>
+ license:      GNU GPLv3
+
+the tracking device sends a HTTP GET request that looks like this:
+
+GET /scripts/t?i=1234567890123&l=no_fix&f=16
+
+parameters:
+ i      - sim900 IMEI code (15 byte)
+ l      - location - either 
+            'no_fix' - in case there there is no satellite reception
+            '%d %d.%04d%c %d %d.%04d%c' - lat degrees, lat minutes, lat fractional, lat suffix
+                                          lon degrees, lon minutes, lon fractional, lon suffix
+ f      - time (in seconds) since when that location fix was received
+
+
+so this script has to be placed into '$document_root/scripts/' and inside 'scripts' the webserver must be allowed to execute.
+
+when nginx with fastcgi is used, this is the recommended config snippet:
+
+
+        location ~ ^/scripts/.*$ {
+            fastcgi_pass unix:/var/run/fcgiwrap.sock;
+            fastcgi_param DOCUMENT_ROOT    /local/web/www.foo.com/scripts/;
+            fastcgi_param SCRIPT_FILENAME  /local/web/www.foo.com$fastcgi_script_name;
+            fastcgi_param QUERY_STRING     $query_string;
+            fastcgi_param REQUEST_METHOD   $request_method;
+            fastcgi_param CONTENT_TYPE     $content_type;
+            fastcgi_param CONTENT_LENGTH   $content_length;
+            fastcgi_param GATEWAY_INTERFACE  CGI/1.1;
+            fastcgi_param SERVER_SOFTWARE    nginx;
+            fastcgi_param SCRIPT_NAME        $fastcgi_script_name;
+            fastcgi_param REQUEST_URI        $request_uri;
+            fastcgi_param DOCUMENT_URI       $document_uri;
+            fastcgi_param DOCUMENT_ROOT      $document_root;
+            fastcgi_param SERVER_PROTOCOL    $server_protocol;
+            fastcgi_param REMOTE_ADDR        $remote_addr;
+            fastcgi_param REMOTE_PORT        $remote_port;
+            fastcgi_param SERVER_ADDR        $server_addr;
+            fastcgi_param SERVER_PORT        $server_port;
+            fastcgi_param SERVER_NAME        $server_name;
+
+            more_clear_headers 'Server';
+            more_clear_headers 'Date';
+            more_clear_headers 'Content-Type';
+            more_clear_headers 'Transfer-Encoding';
+            more_clear_headers 'Connection';
+        }
+
+
