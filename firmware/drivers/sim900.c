@@ -92,9 +92,11 @@ static void sim900_tasks(enum sys_message msg)
                 break;
                 case SUBTASK_SWITCHER:
                     sim900.task_rv = SUBTASK_NO_REPLY;
-                    if (sim900.queue[sim900.current_q] != SUBTASK_NULL) {
+                    if (sim900.current_q < sim900.last_q) {
                         sim900.task_next_state = sim900.queue[sim900.current_q];
                         sim900.current_q++;
+                    } else {
+                        sim900.task_next_state = SUBTASK_PWROFF;
                     }
                     sim900.task_counter = 0;
                     timer_a0_delay_noblk_ccr1(SM_STEP_DELAY);
@@ -126,12 +128,29 @@ static void sim900_tasks(enum sys_message msg)
                         sim900.task_next_state = SUBTASK_SWITCHER;
                         timer_a0_delay_noblk_ccr1(SM_STEP_DELAY);
                     } else if (sim900.task_counter == TASK_MAX_RETRIES) {
-                        sim900.err |= ERR_PARSE_SMS;
+                        sim900.err |= ERR_SEND_SMS;
                         // continue with the next task
                         sim900.task_next_state = SUBTASK_SWITCHER;
                         timer_a0_delay_noblk_ccr1(SM_STEP_DELAY);
                     }
                 break;
+                case SUBTASK_SEND_SMS:
+                    if ((sim900.task_counter < TASK_MAX_RETRIES) && sim900.task_rv != SUBTASK_SEND_SMS_OK ) {
+                        sim900.cmd = CMD_SEND_SMS;
+                        sim900.task_counter++;
+                        timer_a0_delay_noblk_ccr2(SM_STEP_DELAY);
+                        timer_a0_delay_noblk_ccr1(57400); // timeout in 14s+
+                    } else if (sim900.task_rv == SUBTASK_SEND_SMS_OK) {
+                        sim900.task_next_state = SUBTASK_SWITCHER;
+                        timer_a0_delay_noblk_ccr1(SM_STEP_DELAY);
+                    } else if (sim900.task_counter == TASK_MAX_RETRIES) {
+                        sim900.err |= ERR_SEND_FIX_GPRS;
+                        // continue with the next task
+                        sim900.task_next_state = SUBTASK_SWITCHER;
+                        timer_a0_delay_noblk_ccr1(SM_STEP_DELAY);
+                    }
+                break;
+
                 case SUBTASK_PWROFF:
                     sim900.task = TASK_NULL;
                     sim900.cmd = CMD_OFF;
@@ -436,10 +455,16 @@ static void sim900_state_machine(enum sys_message msg)
                     timer_a0_delay_noblk_ccr2(SM_R_DELAY);
                 break;
                 case SIM900_IP_SHUT:
-                    sim900.next_state = SIM900_IDLE;
+                    sim900.next_state = SIM900_GPRS_END;
                     sim900_tx_cmd("AT+CIPSHUT\r", 11, REPLY_TMOUT);
+                    timer_a0_delay_noblk_ccr2(SM_R_DELAY);
+                break;
+                case SIM900_GPRS_END:
+                    sim900.next_state = SIM900_IDLE;
                     sim900.task_rv = SUBTASK_SEND_FIX_GPRS_OK;
                     timer_a0_delay_noblk_ccr1(SM_R_DELAY); // signal high level sm
+                break;
+                default:
                 break;
             }
         break;
@@ -451,7 +476,7 @@ static void sim900_state_machine(enum sys_message msg)
 
         case CMD_SEND_SMS:
             switch (sim900.next_state) {
-                case SIM900_IDLE:
+                default:
                     sim900.next_state = SIM900_SET1;
                     sim900_tx_cmd("AT+CMGF=1\r", 10, REPLY_TMOUT);
                     timer_a0_delay_noblk_ccr2(SM_R_DELAY);
@@ -487,7 +512,7 @@ static void sim900_state_machine(enum sys_message msg)
                     if (sim900.rc == RC_CMGS) {
                         sim900.next_state = SIM900_IDLE;
                         sim900.cmd = CMD_NULL;
-                        sim900.task_rv = SUBTASK_SEND_FIX_SMS_OK;
+                        sim900.task_rv = SUBTASK_SEND_SMS_OK;
                         timer_a0_delay_noblk_ccr1(SM_R_DELAY); // signal high level sm
                     }
                 break;
@@ -509,7 +534,7 @@ static void sim900_state_machine(enum sys_message msg)
                 case SIM900_PARSE_SMS:
                     if (sim900.rc == RC_CMGL) {
                         sim900_tx_str("AT+CMGR=", 8);
-                        sim900_tx_str(sim900.sms_id, sim900.sms_id_len);
+                        sim900_tx_str(sim900.rcvd_sms_id, sim900.rcvd_sms_id_len);
                         sim900_tx_cmd(",1\r", 3, REPLY_TMOUT);
                         sim900.next_state = SIM900_DEL_SMS;
                         timer_a0_delay_noblk_ccr2(SM_R_DELAY);
@@ -524,7 +549,7 @@ static void sim900_state_machine(enum sys_message msg)
                 case SIM900_DEL_SMS:
                     if (sim900.rc == RC_CMGR) {
                         sim900_tx_str("AT+CMGD=", 8);
-                        sim900_tx_str(sim900.sms_id, sim900.sms_id_len);
+                        sim900_tx_str(sim900.rcvd_sms_id, sim900.rcvd_sms_id_len);
                         sim900_tx_cmd(",0\r", 3, 20480); // ~5s because delete can take 3s
                         sim900.next_state = SIM900_CLOSE_SMS;
                         timer_a0_delay_noblk_ccr2(20580);
@@ -574,7 +599,7 @@ uint16_t sim900_tx_str(char *str, const uint16_t size)
     return p;
 }
 
-uint8_t sim900_tx_cmd(char *str, const uint16_t size, const uint16_t reply_tmout)
+uint16_t sim900_tx_cmd(char *str, const uint16_t size, const uint16_t reply_tmout)
 {
     uint16_t p = 0;
 
@@ -616,10 +641,10 @@ uint8_t sim900_parse_rx(char *str, const uint16_t size)
             found = strstr(str, "+CMGL:");
             i = 0;
             while ((found[i+7] != ',') && (i<3)) {
-                sim900.sms_id[i] = found[i+7];
+                sim900.rcvd_sms_id[i] = found[i+7];
                 i++;
             }
-            sim900.sms_id_len = i;
+            sim900.rcvd_sms_id_len = i;
             sim900.rc = RC_CMGL;
             sim900.cmd_type = CMD_IGNORE;
         } else if (strstr(str, "+CMGR:")) {
@@ -832,14 +857,25 @@ void sim900_halt(void)
     timer_a0_delay_noblk_ccr2(SM_DELAY);
 }
 
+uint8_t sim900_add_subtask(sim900_task_state_t subtask, sim900_sms_subj_t sms_subj)
+{
+    if (sim900.last_q < TASK_QUEUE_SIZE) {
+        sim900.queue[sim900.last_q] = subtask;
+        sim900.last_q++;
+        return EXIT_SUCCESS;
+    } else {
+        return EXIT_FAILURE;
+    }
+}
+
 void sim900_exec_default_task(void)
 {
     sim900.task = TASK_DEFAULT;
     sim900.task_next_state = SUBTASK_ON;
     sim900.current_q = 0;
-    sim900.queue[0] = SUBTASK_PARSE_SMS;
-    sim900.queue[1] = SUBTASK_SEND_FIX_GPRS;
-    sim900.queue[2] = SUBTASK_PWROFF;
+    sim900.last_q = 0;
+    sim900_add_subtask(SUBTASK_PARSE_SMS, SMS_NULL);
+    sim900_add_subtask(SUBTASK_SEND_FIX_GPRS, SMS_NULL);
     timer_a0_delay_noblk_ccr1(SM_STEP_DELAY);
 }
 

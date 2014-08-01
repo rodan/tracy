@@ -23,7 +23,8 @@
 #define ERR_SEND_FIX_GPRS       0x8
 #define ERR_SEND_FIX_SMS        0x10
 #define ERR_PARSE_SMS           0x20
-#define ERR_GPRS_NO_IP_START    0x40
+#define ERR_SEND_SMS            0x40
+#define ERR_GPRS_NO_IP_START    0x80
 
 // state machine timeouts
 #define SM_STEP_DELAY   81 // ~20ms
@@ -33,7 +34,7 @@
 
 #define TASK_TMOUT 65500 // ~16s
 
-// states that can be reached by the state machine
+// states that can be reached by the low level state machine
 typedef enum {
     SIM900_ON,
     SIM900_OFF,
@@ -62,11 +63,12 @@ typedef enum {
     SIM900_IP_PUT,
     SIM900_IP_CLOSE,
     SIM900_IP_SHUT,
+    SIM900_GPRS_END,
     SIM900_SEND_OK,
     SIM900_HTTP_REPLY
 } sim900_state_t;
 
-// commands that are compatible with the state machine
+// commands that are compatible with the low level state machine
 typedef enum {
     CMD_NULL,
     CMD_ON,
@@ -85,27 +87,28 @@ typedef enum {
     TASK_DEFAULT,
 } sim900_task_t;
 
-// return values for subtasks
-typedef enum {
-    SUBTASK_NO_REPLY,
-    SUBTASK_GET_IMEI_OK,
-    SUBTASK_SEND_FIX_GPRS_OK,
-    SUBTASK_SEND_FIX_SMS_OK,
-    SUBTASK_PARSE_SMS_OK
-} sim900_task_rv_t;
-
-// discrete states within a task
+// discrete states for the high level state machine
 typedef enum {
     SUBTASK_NULL,
     SUBTASK_ON,
     SUBTASK_WAIT_FOR_RDY,
     SUBTASK_GET_IMEI,
     SUBTASK_SEND_FIX_GPRS,
-    SUBTASK_SEND_FIX_SMS,
+    SUBTASK_SEND_SMS,
     SUBTASK_PWROFF,
     SUBTASK_PARSE_SMS,
     SUBTASK_SWITCHER
 } sim900_task_state_t;
+
+
+// return values for subtasks in the high level sm
+typedef enum {
+    SUBTASK_NO_REPLY,
+    SUBTASK_GET_IMEI_OK,
+    SUBTASK_SEND_FIX_GPRS_OK,
+    SUBTASK_SEND_SMS_OK,
+    SUBTASK_PARSE_SMS_OK
+} sim900_task_rv_t;
 
 // command type
 typedef enum {
@@ -142,6 +145,12 @@ typedef enum {
     TTY_RX_WAIT
 } sim900_tty_t;
 
+typedef enum {
+    SMS_NULL,
+    SMS_FIX,
+    SMS_CONFIG,
+    SMS_ERRORS
+} sim900_sms_subj_t;
 
 #define RDY             BIT0
 #define PIN_RDY         BIT1
@@ -152,25 +161,30 @@ typedef enum {
 
 #define TASK_MAX_RETRIES   3
 #define TASK_QUEUE_SIZE    5
+#define SMS_QUEUE_SIZE     4
 
 struct sim900_t {
-    uint8_t checks;
-    uint8_t rdy;
-    uint8_t task_counter;
-    uint8_t current_q;
-    sim900_task_state_t queue[TASK_QUEUE_SIZE];
-    uint16_t err;
-    char imei[16];
-    char sms_id[3];
-    uint8_t sms_id_len;
-    sim900_task_t task;
-    sim900_task_state_t task_next_state;
-    sim900_task_rv_t task_rv;
-    sim900_cmd_t cmd;
-    sim900_cmd_type_t cmd_type;
-    sim900_rc_t  rc;
-    sim900_state_t next_state;
-    sim900_tty_t console;
+    uint8_t checks;         // status register  - maybe remove?
+    uint8_t rdy;            // ready status register {RDY, PIN_RDY ... }
+    uint8_t task_counter;   // task retry counter [0 - TASK_MAX_RETRIES-1]
+    uint8_t current_q;      // current task in the task queue [0 - TASK_QUEUE_SIZE-1]
+    uint8_t last_q;         // number of entries in the task queue [0 - TASK_QUEUE_SIZE-1]
+    sim900_task_state_t queue[TASK_QUEUE_SIZE]; // the task queue
+    uint8_t current_s;      // current sms in the sms queue [0 - SMS_QUEUE_SIZE-1]
+    uint8_t last_sms;       // number of entries in the sms queue
+    sim900_sms_subj_t   sms_queue[SMS_QUEUE_SIZE];
+    uint16_t err;           // error register {ERR_PIN_RDY, ERR_CALL_RDY ... }
+    char imei[16];          // equipment IMEI
+    char rcvd_sms_id[3];    // id of received SMS - as returned by the SIM card
+    uint8_t rcvd_sms_id_len;    // length of received SMS string
+    sim900_task_t task;     // high level sm {TASK_DEFAULT}
+    sim900_task_state_t task_next_state;    // high sm state {SUBTASK_ON, SUBTASK_WAIT_FOR_RDY ... }
+    sim900_task_rv_t task_rv;   // task state return value {SUBTASK_GET_IMEI_OK, SUBTASK_SEND_FIX_GPRS_OK ... }
+    sim900_cmd_t cmd;       // low level command {CMD_ON, CMD_OFF ... }
+    sim900_cmd_type_t cmd_type; // type of reply {CMD_UNSOLICITED, CMD_SOLICITED ... }
+    sim900_rc_t  rc;        // return codes - obtained by parsing the reply {RC_OK, RC_ERROR ... }
+    sim900_state_t next_state;  // low level sm state {SIM900_IP_START, SIM900_IP_GPRSACT ... }
+    sim900_tty_t console;   // status of the console after a command is sent 
 };
 
 struct sim900_t sim900;
@@ -182,9 +196,11 @@ void sim900_halt(void);
 void sim900_exec_default_task(void);
 
 uint16_t sim900_tx_str(char *str, const uint16_t size);
-uint8_t sim900_tx_cmd(char *str, const uint16_t size, const uint16_t reply_tmout);
+uint16_t sim900_tx_cmd(char *str, const uint16_t size, const uint16_t reply_tmout);
 uint8_t sim900_parse_rx(char *str, const uint16_t size);
 uint8_t sim900_parse_sms(char *str, const uint16_t size);
 void extract_str(const char *haystack, const char *needle, char *str, uint8_t *len, const uint8_t maxlen);
+
+uint8_t sim900_add_subtask(sim900_task_state_t subtask, sim900_sms_subj_t sms_subj);
 
 #endif

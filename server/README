@@ -11,12 +11,12 @@ the tracking device sends a HTTP GET request that looks like this:
 GET /scripts/t?i=123456789012345&l=no_fix&f=12
 
 parameters:
- i      - sim900 IMEI code (15 byte)
+ i      - sim900 IMEI code (15 bytes)
  l      - location - either 
-            'no_fix' - in case there there is no satellite reception
+            'no_fix' - in case there there is no satellite reception or
             '%d %d.%04d%c %d %d.%04d%c' - lat degrees, lat minutes, lat fractional, lat suffix
                                           lon degrees, lon minutes, lon fractional, lon suffix
- f      - time (in seconds) since when that location fix was received
+ f      - time elapsed (in seconds) since when that location fix was received
 
 
 so this script has to be placed into '$document_root/scripts/' and inside 'scripts' the webserver must be allowed to execute.
