@@ -17,11 +17,13 @@
 #define SIM900_UCAIFG           UCA1IFG
 #define SIM900_UCATXBUF         UCA1TXBUF
 
-#define ERR_SIM_MISSING         BIT0
-#define ERR_IMEI_UNKNOWN        BIT1
-#define ERR_SEND_FIX_GPRS       BIT2
-#define ERR_SEND_FIX_SMS        BIT3
-#define ERR_PARSE_SMS           BIT4
+#define ERR_PIN_RDY             0x1
+#define ERR_CALL_RDY            0x2
+#define ERR_IMEI_UNKNOWN        0x4
+#define ERR_SEND_FIX_GPRS       0x8
+#define ERR_SEND_FIX_SMS        0x10
+#define ERR_PARSE_SMS           0x20
+#define ERR_GPRS_NO_IP_START    0x40
 
 // state machine timeouts
 #define SM_STEP_DELAY   81 // ~20ms
@@ -141,8 +143,9 @@ typedef enum {
 } sim900_tty_t;
 
 
-#define RDY         BIT0
-#define CALL_RDY    BIT1
+#define RDY             BIT0
+#define PIN_RDY         BIT1
+#define CALL_RDY        BIT2
 
 #define TASK_IDLE       BIT0
 #define TASK_ONGOING    BIT1
@@ -174,7 +177,6 @@ struct sim900_t sim900;
 
 void sim900_init(void);
 void sim900_init_messagebus(void);
-void sim900_first_pwron(void);
 void sim900_start(void);
 void sim900_halt(void);
 void sim900_exec_default_task(void);

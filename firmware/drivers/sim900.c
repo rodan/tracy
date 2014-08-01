@@ -54,10 +54,25 @@ static void sim900_tasks(enum sys_message msg)
                         if ((sim900.rdy & RDY) == 0) {
                             // we did not get the unsolicited 'RDY' message
                             // so probably the sim900 is not set up yet
-                            //sim900_first_pwron();
-                            uart0_tx_str("first\r\n", 7); // XXX
+
+                            // 2400bps is better detected by sim900's autobauding
+                            uart1_init(2400);
+                            sim900.cmd = CMD_FIRST_PWRON;
+                            sim900.next_state = SIM900_IDLE;
+                            timer_a0_delay_noblk_ccr2(SM_DELAY);
+                            // uC will be reset by the low level sm
+                        } else if ((sim900.rdy & PIN_RDY) == 0) {
+                            // '+CPIN: READY' was not received
+                            sim900.err |= ERR_PIN_RDY;
+                            // pin error or card not inserted
+                            // either way go to sleep
+                            sim900.task_next_state = SUBTASK_PWROFF;
+                            timer_a0_delay_noblk_ccr1(SM_STEP_DELAY);
                         } else if ((sim900.rdy & CALL_RDY) == 0) {
-                            sim900.err |= ERR_SIM_MISSING;
+                            // 'Call Ready' was not received
+                            sim900.err |= ERR_CALL_RDY;
+                            sim900.task_next_state = SUBTASK_PWROFF;
+                            timer_a0_delay_noblk_ccr1(SM_STEP_DELAY);
                         }
                     }
                 break;
@@ -96,6 +111,9 @@ static void sim900_tasks(enum sys_message msg)
                         timer_a0_delay_noblk_ccr1(SM_STEP_DELAY);
                     } else if (sim900.task_counter == TASK_MAX_RETRIES) {
                         sim900.err |= ERR_SEND_FIX_GPRS;
+                        // continue with the next task
+                        sim900.task_next_state = SUBTASK_SWITCHER;
+                        timer_a0_delay_noblk_ccr1(SM_STEP_DELAY);
                     }
                 break;
                 case SUBTASK_PARSE_SMS:
@@ -109,11 +127,15 @@ static void sim900_tasks(enum sys_message msg)
                         timer_a0_delay_noblk_ccr1(SM_STEP_DELAY);
                     } else if (sim900.task_counter == TASK_MAX_RETRIES) {
                         sim900.err |= ERR_PARSE_SMS;
+                        // continue with the next task
+                        sim900.task_next_state = SUBTASK_SWITCHER;
+                        timer_a0_delay_noblk_ccr1(SM_STEP_DELAY);
                     }
                 break;
                 case SUBTASK_PWROFF:
                     sim900.task = TASK_NULL;
                     sim900.cmd = CMD_OFF;
+                    //sim900.next_state = SIM900_IDLE; // force IDLE since the sm can be in any other state
                     timer_a0_delay_noblk_ccr2(SM_DELAY);
                 break;
                 default:
@@ -278,7 +300,7 @@ static void sim900_state_machine(enum sys_message msg)
 
         case CMD_OFF:
             switch (sim900.next_state) {
-                case SIM900_IDLE:
+                default:
                     sim900.next_state = SIM900_VBAT_OFF;
                     sim900_tx_cmd("AT+CPOWD=1\r", 11, 12288); // ~3s
                     timer_a0_delay_noblk_ccr2(12388);
@@ -329,6 +351,9 @@ static void sim900_state_machine(enum sys_message msg)
                         sim900.next_state = SIM900_IP_STATUS;
                         sim900_tx_cmd("AT+CIICR;+CIPSTATUS\r", 20, 12288);
                         timer_a0_delay_noblk_ccr2(12388);
+                    } else {
+                        sim900.err |= ERR_GPRS_NO_IP_START;
+                        timer_a0_delay_noblk_ccr1(SM_STEP_DELAY);
                     }
                 break;
                 case SIM900_IP_STATUS:
@@ -654,6 +679,10 @@ uint8_t sim900_parse_rx(char *str, const uint16_t size)
         if (strstr(str, "RDY")) {
             // '\r\nRDY\r\n'
             sim900.rdy |= RDY;
+        } else if (strstr(str, "+CPIN:")) {
+            if (strstr(str, "READY")) {
+                sim900.rdy |= PIN_RDY;
+            }
         } else if (strstr(str, "Call Ready")) {
             // '\r\nCall Ready\r\n'
             sim900.rdy |= CALL_RDY;
@@ -788,16 +817,6 @@ void sim900_init_messagebus(void)
     sys_messagebus_register(&sim900_tasks, SYS_MSG_TIMER0_CRR1);
     sys_messagebus_register(&sim900_state_machine, SYS_MSG_TIMER0_CRR2);
     sys_messagebus_register(&sim900_console_timing, SYS_MSG_TIMER0_CRR3);
-}
-
-void sim900_first_pwron(void)
-{
-    // 2400bps is better detected by sim900's autobauding
-    uart1_init(2400);
-
-    sim900.cmd = CMD_FIRST_PWRON;
-    sim900.next_state = SIM900_IDLE;
-    timer_a0_delay_noblk_ccr2(SM_DELAY);
 }
 
 void sim900_start(void)

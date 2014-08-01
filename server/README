@@ -1,5 +1,6 @@
 
-'t' is a CGI script that runs on a webserver. it records it's calling arguments into a sqlite3 database.
+'t' is a CGI script that runs on a webserver.
+it records it's calling arguments into an sqlite3 database.
 
  source:       https://github.com/rodan/tracy 
  author:       Petre Rodan <petre.rodan@simplex.ro>
@@ -7,7 +8,7 @@
 
 the tracking device sends a HTTP GET request that looks like this:
 
-GET /scripts/t?i=1234567890123&l=no_fix&f=16
+GET /scripts/t?i=123456789012345&l=no_fix&f=12
 
 parameters:
  i      - sim900 IMEI code (15 byte)
