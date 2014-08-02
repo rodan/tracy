@@ -148,7 +148,8 @@ typedef enum {
 typedef enum {
     SMS_NULL,
     SMS_FIX,
-    SMS_CONFIG,
+    SMS_SETUP,
+    SMS_GPRS_SETUP,
     SMS_ERRORS
 } sim900_sms_subj_t;
 
@@ -167,8 +168,8 @@ struct sim900_t {
     uint8_t checks;         // status register  - maybe remove?
     uint8_t rdy;            // ready status register {RDY, PIN_RDY ... }
     uint8_t task_counter;   // task retry counter [0 - TASK_MAX_RETRIES-1]
-    uint8_t current_q;      // current task in the task queue [0 - TASK_QUEUE_SIZE-1]
-    uint8_t last_q;         // number of entries in the task queue [0 - TASK_QUEUE_SIZE-1]
+    uint8_t current_t;      // current task in the task queue [0 - TASK_QUEUE_SIZE-1]
+    uint8_t last_t;         // number of entries in the task queue [0 - TASK_QUEUE_SIZE-1]
     sim900_task_state_t queue[TASK_QUEUE_SIZE]; // the task queue
     uint8_t current_s;      // current sms in the sms queue [0 - SMS_QUEUE_SIZE-1]
     uint8_t last_sms;       // number of entries in the sms queue
