@@ -20,7 +20,7 @@ LDFLAGS		=
 CFLAGS_REL	+= -Os -fdata-sections -ffunction-sections -fomit-frame-pointer
 LDFLAGS_REL	+= -Wl,--gc-sections -Wl,-s
 
-CFLAGS_DBG	+= -O1 -ggdb
+CFLAGS_DBG	+= -O1 -g
 LDFLAGS_DBG	+= -Wl,--gc-sections
 
 # linker flags and include directories

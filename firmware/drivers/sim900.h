@@ -150,7 +150,8 @@ typedef enum {
     SMS_FIX,
     SMS_SETUP,
     SMS_GPRS_SETUP,
-    SMS_ERRORS
+    SMS_ERRORS,
+    SMS_CODE_OK
 } sim900_sms_subj_t;
 
 #define RDY             BIT0

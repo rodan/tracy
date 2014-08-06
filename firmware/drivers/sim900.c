@@ -287,18 +287,19 @@ static void sim900_state_machine(enum sys_message msg)
                 break;
                 case SIM900_AT:
                     if (sim900.rc == RC_OK) {
+                        timer_a0_delay_noblk_ccr2(SM_R_DELAY);
                         sim900_tx_cmd("AT+IPR=9600;+IFC=2,2;E0&W\r", 26, REPLY_TMOUT);
                         sim900.next_state = SIM900_WAITREPLY;
-                        timer_a0_delay_noblk_ccr2(SM_R_DELAY);
                     } else {
                         sm_c++;
+                        timer_a0_delay_noblk_ccr2(SM_R_DELAY);
                         sim900_tx_cmd("AT\r", 3, REPLY_TMOUT);
                     }
                     if (sm_c > 15) {
                         // something terribly wrong, stop sim900
                         sim900.cmd = CMD_OFF;
+                        timer_a0_delay_noblk_ccr2(SM_STEP_DELAY);
                     }
-                    timer_a0_delay_noblk_ccr2(SM_R_DELAY);
                 break;
                 case SIM900_WAITREPLY:
                     if (sim900.rc == RC_OK) {
@@ -323,8 +324,8 @@ static void sim900_state_machine(enum sys_message msg)
             switch (sim900.next_state) {
                 default:
                     sim900.next_state = SIM900_VBAT_OFF;
-                    sim900_tx_cmd("AT+CPOWD=1\r", 11, 12288); // ~3s
                     timer_a0_delay_noblk_ccr2(12388);
+                    sim900_tx_cmd("AT+CPOWD=1\r", 11, 12288); // ~3s
                 break;
                 case SIM900_VBAT_OFF:
                     sim900.next_state = SIM900_OFF;
@@ -529,6 +530,9 @@ static void sim900_state_machine(enum sys_message msg)
                                     sim900_tx_str("no errors\r", 10);
                                 }
                             break;
+                            case SMS_CODE_OK:
+                                sim900_tx_str("code ok\r", 8);
+                            break;
                         }
 
                         sim900_tx_cmd(eom, 2, 20480);
@@ -556,6 +560,11 @@ static void sim900_state_machine(enum sys_message msg)
         case CMD_PARSE_SMS:
             switch (sim900.next_state) {
                 case SIM900_IDLE:
+                    sim900.next_state = SIM900_SET1;
+                    sim900_tx_cmd("AT+CMGF=1\r", 10, REPLY_TMOUT);
+                    timer_a0_delay_noblk_ccr2(SM_R_DELAY);
+                break;
+                case SIM900_SET1:
                     sim900.next_state = SIM900_PARSE_SMS;
                     sim900_tx_cmd("AT+CMGL=\"ALL\",\r", 15, 20480); // ~5s
                     timer_a0_delay_noblk_ccr2(20580);
@@ -618,6 +627,9 @@ static void sim900_console_timing(enum sys_message msg)
 uint16_t sim900_tx_str(char *str, const uint16_t size)
 {
     uint16_t p = 0;
+
+    uart0_tx_str(str, size);
+
     while (p < size) {
         while (!(SIM900_UCAIFG & UCTXIFG)) ;  // TX buffer ready?
         if (!(SIM900_CTS_IN)) {
@@ -635,6 +647,8 @@ uint16_t sim900_tx_cmd(char *str, const uint16_t size, const uint16_t reply_tmou
     if (sim900.console != TTY_NULL) {
         return EXIT_FAILURE;
     }
+
+    uart0_tx_str(str, size);
 
     sim900.cmd_type = CMD_SOLICITED;
     sim900.rc = RC_NULL;
@@ -802,6 +816,7 @@ uint8_t sim900_parse_sms(char *str, const uint16_t size)
             s.ctrl_phone_len = sender_len;
             s.ctrl_phone[s.ctrl_phone_len] = 0; // needed for strstr
             save = true;
+            sim900_add_subtask(SUBTASK_SEND_SMS, SMS_CODE_OK);
         }
     }
 

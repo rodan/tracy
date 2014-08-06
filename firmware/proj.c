@@ -1,6 +1,5 @@
 
-//  sensor control board based on a MSP430F5510 uC
-//   - compatible with hardware rev 03 -
+//  GPS/GPRS tracking system based on a MSP430F5510 uC
 //
 //  author:          Petre Rodan <petre.rodan@simplex.ro>
 //  available from:  https://github.com/rodan/
@@ -201,7 +200,10 @@ void main_init(void)
 
     P1SEL = 0x0;
     P1DIR = 0x85;
-    P1REN = 0x2;
+    //P1REN = 0x2;
+    // make sure CTS is pulled low so the software doesn't get stuck 
+    // in case the sim900 is missing - or broken.
+    P1REN = 0x22;
     P1OUT = 0x2;
 
     P2SEL = 0x0;
