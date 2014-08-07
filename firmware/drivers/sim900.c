@@ -6,18 +6,19 @@
 
 
 #include <string.h>
+#include <stdio.h>
 
 #include "sim900.h"
 #include "timer_a0.h"
 #include "uart1.h"
 #include "sys_messagebus.h"
 #include "flash.h"
-
-// XXX
-#include <stdio.h>
-#include "uart0.h"
-#include "nmea_parse.h"
 #include "rtc.h"
+#include "nmea_parse.h"
+
+#ifdef DEBUG_GPRS
+#include "uart0.h"
+#endif
 
 uint8_t sm_c; // state machine internal counter
 
@@ -627,8 +628,10 @@ static void sim900_console_timing(enum sys_message msg)
 uint16_t sim900_tx_str(char *str, const uint16_t size)
 {
     uint16_t p = 0;
-
+    
+#ifdef DEBUG_GPRS
     uart0_tx_str(str, size);
+#endif
 
     while (p < size) {
         while (!(SIM900_UCAIFG & UCTXIFG)) ;  // TX buffer ready?
@@ -648,7 +651,9 @@ uint16_t sim900_tx_cmd(char *str, const uint16_t size, const uint16_t reply_tmou
         return EXIT_FAILURE;
     }
 
+#ifdef DEBUG_GPRS
     uart0_tx_str(str, size);
+#endif
 
     sim900.cmd_type = CMD_SOLICITED;
     sim900.rc = RC_NULL;

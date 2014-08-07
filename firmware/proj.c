@@ -32,20 +32,20 @@
 #define CHARGE_ENABLE       P6OUT &= ~BIT1
 #define CHARGE_DISABLE      P6OUT |= BIT1
 
-//const char gps_init[] = "$PMTK314,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*2A\r\n";
-const char gps_init[] = "$PMTK314,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*2C\r\n";
+const char gps_init[] = "$PMTK314,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*2A\r\n";
+//const char gps_init[] = "$PMTK314,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*2C\r\n";
 
 const uint32_t rtca_set_period = 86400;
 uint32_t rtca_set_next = 0;
 
-const uint16_t gps_get_period = 600;
-const uint8_t gps_fix_shtd = 5;
-uint16_t gps_retry_period = 300;
-uint32_t gps_get_next = 2;
-uint8_t gps_fix_shtd_ctr = 0;
-uint8_t gps_initialized = false;
+uint16_t fix_period = 600; // period between 2 fix reports sent via gprs
+uint32_t fix_next = 2;           // fix timer   
 
-uint32_t sim900_init_time = 6;
+uint8_t gps_fix_shtd = 5;  // after how many fixes should the the gps be turned off
+uint16_t gps_retry_period = 300; // timeout period until a fix is expected
+uint8_t gps_fix_shtd_ctr = 0;
+
+uint8_t s_status = 0;       // schedule status
 
 #ifndef DEBUG_GPRS
 static void parse_gps(enum sys_message msg)
@@ -87,6 +87,7 @@ static void parse_gprs(enum sys_message msg)
     sim900_parse_rx((char *)uart1_rx_buf, uart1_p);
 }
 
+#ifdef DEBUG_GPRS
 static void parse_UI(enum sys_message msg)
 {
     char f = uart0_rx_buf[0];
@@ -105,42 +106,37 @@ static void parse_UI(enum sys_message msg)
     uart0_p = 0;
     uart0_rx_enable = 1;
 }
+#endif
 
 static void schedule(enum sys_message msg)
 {
-    uint16_t q_bat = 0;//, q_raw = 0;
+    uint16_t q_bat = 0;
+    //uint16_t q_raw = 0;
+
+    //adc10_read(2, &q_raw, REFVSEL_1);
 
     // gps related
-    if (rtca_time.sys > gps_get_next) {
+    if (rtca_time.sys > fix_next) {
         GPS_ENABLE;
 
-        if ((rtca_time.sys > gps_get_next + 2) && (!gps_initialized)) {
+        if ((rtca_time.sys > fix_next + 2) && ((s_status & GPS_INITIALIZED) == 0)) {
             uart0_tx_str((char *)gps_init, 51);
-            gps_initialized = true;
+            s_status |= GPS_INITIALIZED;
+            // invalidate last fix
+            mc_f.fix = false;
         }
 
-        if ((rtca_time.sys > gps_get_next + gps_retry_period) || (gps_fix_shtd_ctr >= gps_fix_shtd)) {
+        if ((rtca_time.sys > fix_next + gps_retry_period) || (gps_fix_shtd_ctr >= gps_fix_shtd)) {
             GPS_DISABLE;
-            gps_initialized = false;
+            s_status &= ~GPS_INITIALIZED;
             gps_fix_shtd_ctr = 0;
-            gps_get_next += gps_get_period;
-        }
-    }
-
-    // sim900 related
-    if ((rtca_time.sys > sim900_init_time) && ((sim900.checks & BIT0) == 0) && (sim900.next_state != SIM900_OFF )) {
-        adc10_read(3, &q_bat, REFVSEL_1);
-        if (q_bat > 700) {
-            // 700 is the equivalent of ~3.4v
-            sim900.checks |= BIT0;
-            /*
-            if (!sim900.rdy) {
-                // if RDY was not received in the first 5 seconds
-                // then this sim900 has the default 
-                // baudrate autodetection activated
-                sim900_first_pwron();
+            fix_next += fix_period;
+            //s_status |= SIM900_INITIALIZED;
+            adc10_read(3, &q_bat, REFVSEL_1);
+            if (q_bat > 700) {
+                // 700 is the equivalent of ~3.4v
+                sim900_exec_default_task();
             }
-            */
         }
     }
 
@@ -154,19 +150,21 @@ int main(void)
     uart0_init();
     sim900_init_messagebus();
     sim900.next_state = SIM900_OFF;
-    //uart1_init(9600); // XXX
 
-    //GPS_BKP_ENABLE;
+    GPS_BKP_ENABLE;
     CHARGE_ENABLE;
 
     settings_init(SEGMENT_B);
 
     sys_messagebus_register(&parse_gprs, SYS_MSG_UART1_RX);
-    //sys_messagebus_register(&parse_gps, SYS_MSG_UART0_RX);
+#ifndef DEBUG_GPRS
+    sys_messagebus_register(&parse_gps, SYS_MSG_UART0_RX);
+#else
     sys_messagebus_register(&parse_UI, SYS_MSG_UART0_RX);
+#endif
     sys_messagebus_register(&schedule, SYS_MSG_RTC_SECOND);
 
-    uart0_tx_str("hi\r\n", 4);
+    //uart0_tx_str("hi\r\n", 4);
 
     while (1) {
         _BIS_SR(LPM3_bits + GIE);

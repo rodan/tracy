@@ -26,6 +26,10 @@ char str_temp[STR_LEN];
 #define VERSION             1   // must be incremented if struct settings_t changes
 #define FLASH_ADDR          SEGMENT_B
 
+// schedule status flags
+#define GPS_INITIALIZED     0x1
+#define SIM900_INITIALIZED  0x2
+
 void main_init(void);
 void check_events(void);
 void settings_init(uint8_t * addr);
