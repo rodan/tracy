@@ -106,7 +106,7 @@ static void parse_UI(enum sys_message msg)
     uart0_p = 0;
     uart0_rx_enable = 1;
 }
-#endif
+#else
 
 static void schedule(enum sys_message msg)
 {
@@ -139,8 +139,8 @@ static void schedule(enum sys_message msg)
             }
         }
     }
-
 }
+#endif
 
 int main(void)
 {
@@ -159,10 +159,10 @@ int main(void)
     sys_messagebus_register(&parse_gprs, SYS_MSG_UART1_RX);
 #ifndef DEBUG_GPRS
     sys_messagebus_register(&parse_gps, SYS_MSG_UART0_RX);
+    sys_messagebus_register(&schedule, SYS_MSG_RTC_SECOND);
 #else
     sys_messagebus_register(&parse_UI, SYS_MSG_UART0_RX);
 #endif
-    sys_messagebus_register(&schedule, SYS_MSG_RTC_SECOND);
 
     //uart0_tx_str("hi\r\n", 4);
 
