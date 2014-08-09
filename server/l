@@ -1,0 +1,94 @@
+#!/usr/bin/perl
+
+# perl CGI script that displays sqlite tracking data
+#
+#  Author:          Petre Rodan <petre.rodan@simplex.ro>
+#  Available from:  https://github.com/rodan/tracy
+#  License:         GNU GPLv3
+#
+
+use strict;
+use DBI;
+
+print "Content-Type: text/html\n\n";
+
+print '<html><head><title>gps locations</title><link href="/css/main.css" rel="stylesheet" type="text/css"><
+/head><body>';
+print '<table class="content" summary="specificaţii tehnice ale aparatelor folosite">';
+
+#my $imei = '013227009851738';
+my $imei = '013227002533879';
+
+my $database = "/var/lib/tracking/$imei.db";
+my $dsn = "DBI:SQLite:database=$database";
+my $username = undef;
+my $password = undef;
+my $dbh = DBI->connect($dsn, $username, $password, { RaiseError => 1 }) or die $DBI::errstr;
+
+if ( -z "$database" ) {
+    $dbh->do("CREATE TABLE live (row_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                 date DATE NOT NULL,
+                                 loc VARCHAR(20) NOT NULL,
+                                 fixtime INTEGER,
+                                 c0_rxl INTEGER,
+                                 c0_mcc INTEGER,
+                                 c0_mnc INTEGER,
+                                 c0_cellid INTEGER,
+                                 c0_lac INTEGER,
+                                 c1_rxl INTEGER,
+                                 c1_mcc INTEGER,
+                                 c1_mnc INTEGER,
+                                 c1_cellid INTEGER,
+                                 c1_lac INTEGER,
+                                 c2_rxl INTEGER,
+                                 c2_mcc INTEGER,
+                                 c2_mnc INTEGER,
+                                 c2_cellid INTEGER,
+                                 c2_lac INTEGER,
+                                 c3_rxl INTEGER,
+                                 c3_mcc INTEGER,
+                                 c3_mnc INTEGER,
+                                 c3_cellid INTEGER,
+                                 c3_lac INTEGER
+                                )");
+} 
+
+print "device imei: $imei<br><br>";
+
+print '<tr><td class="title">row_id</td><td class="title">rcv timestamp</td><td class="title">fix</td><td class="title">sec since fix</td><td class="title">map</td><td class="title">rxl</td><td class="title">cellid</td><td class="title">mcc</td><td class="title">mnc</td><td class="title">lac</td></tr>';
+
+
+my $sth = $dbh->prepare("SELECT * FROM live order by row_id DESC LIMIT 100");
+$sth->execute();
+
+my $row;
+while ($row = $sth->fetchrow_arrayref()) {
+    if ( "@$row[2]" == "no_fix" ) {
+        print "<tr><td>@$row[0]</td><td>@$row[1]</td><td>@$row[2]</td><td>@$row[3]</td><td></td>";
+    } else {
+        my $urlloc = "@$row[2]";
+        $urlloc =~ s/\s/%20/g;
+        print "<tr><td>@$row[0]</td><td>@$row[1]</td><td>@$row[2]</td><td>@$row[3]</td><td><a href='https://www.google.com/maps/place/$urlloc'>google</a></td>\r\n";
+    }
+
+    print "<td>@$row[4]</td><td>@$row[7]</td><td>@$row[5]</td><td>@$row[6]</td><td>@$row[8]</td></tr>\r\n";
+
+    if (( "@$row[12]" != "65535") && ("@$row[12]" != "0")) {
+        print "<td></td><td></td><td></td><td></td><td></td><td>@$row[9]</td><td>@$row[12]</td><td>@$row[10]</td><td>@$row[11]</td><td>@$row[13]</td></tr>\r\n";
+    }
+
+    if (( "@$row[17]" != "65535") && ("@$row[17]" != "0")) {
+        print "<td></td><td></td><td></td><td></td><td></td><td>@$row[14]</td><td>@$row[17]</td><td>@$row[15]</td><td>@$row[16]</td><td>@$row[18]</td></tr>\r\n";
+    }
+
+    if (( "@$row[22]" != "65535") && ("@$row[22]" != "0")) {
+        print "<td></td><td></td><td></td><td></td><td></td><td>@$row[19]</td><td>@$row[22]</td><td>@$row[20]</td><td>@$row[21]</td><td>@$row[23]</td></tr>\r\n";
+    }
+
+}
+
+$sth->finish();
+$dbh->disconnect();
+
+print '</body></html>'
+

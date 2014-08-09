@@ -1,7 +1,12 @@
 #!/usr/bin/perl
 
-# perl script that saves incoming GET requests that 
-# contain tracking information into an sqlite database 
+# perl CGI script that saves incoming GET requests that
+# contain tracking information into an sqlite database
+#
+#  Author:          Petre Rodan <petre.rodan@simplex.ro>
+#  Available from:  https://github.com/rodan/tracy
+#  License:         GNU GPLv3
+#
 
 use strict;
 use CGI;
@@ -18,6 +23,15 @@ my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = gmtime(time);
 my $timestamp = sprintf "%4d-%02d-%02d %02d:%02d:%02d", 1900+$year,$mon+1,$mday,$hour,$min,$sec;
 #my $timestamp = exec "date -u -d '-$fixtime seconds' +'%Y-%m-%d %H:%M:%S'";
 
+my $c0 = $WF->param('c0');
+my ($c0_rxl, $c0_mcc, $c0_mnc, $c0_cellid, $c0_lac) = split(',', $c0, 5);
+my $c1 = $WF->param('c1');
+my ($c1_rxl, $c1_mcc, $c1_mnc, $c1_cellid, $c1_lac) = split(',', $c1, 5);
+my $c2 = $WF->param('c2');
+my ($c2_rxl, $c2_mcc, $c2_mnc, $c2_cellid, $c2_lac) = split(',', $c2, 5);
+my $c3 = $WF->param('c3');
+my ($c3_rxl, $c3_mcc, $c3_mnc, $c3_cellid, $c3_lac) = split(',', $c3, 5);
+
 my $database = "/var/lib/tracking/$imei.db";
 my $dsn = "DBI:SQLite:database=$database";
 my $username = undef;
@@ -28,13 +42,41 @@ if ( -z "$database" ) {
     $dbh->do("CREATE TABLE live (row_id INTEGER PRIMARY KEY AUTOINCREMENT,
                                  date DATE NOT NULL,
                                  loc VARCHAR(20) NOT NULL,
-                                 fixtime INTEGER
+                                 fixtime INTEGER,
+                                 c0_rxl INTEGER,
+                                 c0_mcc INTEGER,
+                                 c0_mnc INTEGER,
+                                 c0_cellid INTEGER,
+                                 c0_lac INTEGER,
+                                 c1_rxl INTEGER,
+                                 c1_mcc INTEGER,
+                                 c1_mnc INTEGER,
+                                 c1_cellid INTEGER,
+                                 c1_lac INTEGER,
+                                 c2_rxl INTEGER,
+                                 c2_mcc INTEGER,
+                                 c2_mnc INTEGER,
+                                 c2_cellid INTEGER,
+                                 c2_lac INTEGER,
+                                 c3_rxl INTEGER,
+                                 c3_mcc INTEGER,
+                                 c3_mnc INTEGER,
+                                 c3_cellid INTEGER,
+                                 c3_lac INTEGER
                                 )");
-}
+} 
 
 
-my $stmt = qq(INSERT INTO live (date, loc, fixtime)
-      VALUES ("$timestamp", "$loc", "$fixtime" ));
+my $stmt = qq(INSERT INTO live (date, loc, fixtime, 
+    c0_rxl, c0_mcc, c0_mnc, c0_cellid, c0_lac,
+    c1_rxl, c1_mcc, c1_mnc, c1_cellid, c1_lac,
+    c2_rxl, c2_mcc, c2_mnc, c2_cellid, c2_lac,
+    c3_rxl, c3_mcc, c3_mnc, c3_cellid, c3_lac)
+      VALUES ("$timestamp", "$loc", "$fixtime",
+                "$c0_rxl", "$c0_mcc", "$c0_mnc", "$c0_cellid", "$c0_lac",
+                "$c1_rxl", "$c1_mcc", "$c1_mnc", "$c1_cellid", "$c1_lac",
+                "$c2_rxl", "$c2_mcc", "$c2_mnc", "$c2_cellid", "$c2_lac",
+                "$c3_rxl", "$c3_mcc", "$c3_mnc", "$c3_cellid", "$c3_lac" ));
 my $rv = $dbh->do($stmt) or die $DBI::errstr;
 
 $dbh->disconnect();

@@ -452,11 +452,13 @@ static void sim900_state_machine(enum sys_message msg)
                         if (s.settings & CONF_CELL_LOC) {
                             // tower cell data
                             for (i=0;i<4;i++) {
-                                snprintf(str_temp, STR_LEN, "&c%d=%u,%u,%u,%u,%u", 
-                                    i, sim900.cell[i].rxl, sim900.cell[i].mcc, 
-                                    sim900.cell[i].mnc, sim900.cell[i].cellid, 
-                                    sim900.cell[i].lac);
-                                sim900_tx_str(str_temp, strlen(str_temp));
+                                if (sim900.cell[i].cellid != 65535) {
+                                    snprintf(str_temp, STR_LEN, "&c%d=%u,%u,%u,%u,%u", 
+                                        i, sim900.cell[i].rxl, sim900.cell[i].mcc, 
+                                        sim900.cell[i].mnc, sim900.cell[i].cellid, 
+                                        sim900.cell[i].lac);
+                                    sim900_tx_str(str_temp, strlen(str_temp));
+                                }
                             }
                         }
                         sim900_tx_str(" HTTP/1.1\r\n\r\n", 13);
