@@ -21,7 +21,7 @@ how to install a local SIM card
 
 these are step-by-step instructions for a 'Cartela Vodafone' from the Romanian telephony provider:
  - buy a SIM card
- - write down the associated phone number, or even better insert it into your phone's phonebook - always also add the country prefix so you can contact the tracker while abroad. it's "+4" prefixed to the number in Romania.
+ - write down the associated phone number, or even better enter it into your phone's phonebook - don't forget to also add the country prefix so you can contact the tracker while abroad. it's "+4" prefixed to the number in Romania.
  - place the new SIM card inside a phone
  - if it has no initial credit, fill it with at least 5EUR
  - make sure no PIN is set on the SIM itself
@@ -46,7 +46,7 @@ gprs
 show APN, USER, PASSWORD that are currently used in order to authenticate for a gprs session
 
 setup
-NOT YET IMPLEMENTED
+show a hex value containing current switches
 
 fix
 try to send back a GPS fix as a SMS reply

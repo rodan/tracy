@@ -537,6 +537,8 @@ static void sim900_state_machine(enum sys_message msg)
                                 }
                             break;
                             case SMS_SETUP:
+                                snprintf(str_temp, STR_LEN, "setup 0x%04x\r", s.settings);
+                                sim900_tx_str(str_temp, strlen(str_temp));
                             break;
                             case SMS_GPRS_SETUP:
                                 sim900_tx_str("aup=\"", 5);
