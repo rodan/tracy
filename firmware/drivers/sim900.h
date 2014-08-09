@@ -28,24 +28,9 @@
 #define ERR_PARSE_CENG          0x100
 
 // state machine timeouts
-#define SM_STEP_DELAY   81 // ~20ms
-#define SM_DELAY        819 // ~200ms
-#define SM_R_DELAY      5424 // REPLY_TMOUT + RXBUF_TMOUT + ~100
-#define _0s5            2048
-#define _1s2            4915
-#define _1s             4096UL
-#define _2s             _1s * 2
-#define _3s             _1s * 3
-#define _3sp            _3s + SM_STEP_DELAY
-#define _5s             _1s * 5
-#define _5sp            _5s + SM_STEP_DELAY
-#define _6s             _1s * 6
-#define _6sp            _6s + SM_STEP_DELAY
-#define _10s            _1s * 10
-#define _10sp           _10s + SM_STEP_DELAY
-#define _14s            _1s * 14
-
-#define TASK_TMOUT 65500 // ~16s
+#define SM_STEP_DELAY   _10ms * 2  // ~20ms
+#define SM_DELAY        _10ms * 20 // ~200ms
+#define SM_R_DELAY      _10ms * 130 // ~1.3s
 
 // states that can be reached by the low level state machine
 typedef enum {

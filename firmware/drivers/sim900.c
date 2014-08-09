@@ -220,13 +220,13 @@ static void sim900_state_machine(enum sys_message msg)
                     uart1_init(9600);
 
                     sim900.next_state = SIM900_PWRKEY_ACT;
-                    timer_a0_delay_noblk_ccr2(_0s5);
+                    timer_a0_delay_noblk_ccr2(_500ms);
                 break;
                 case SIM900_PWRKEY_ACT:
                     LED_OFF;
                     SIM900_PWRKEY_LOW;
                     sim900.next_state = SIM900_ON;
-                    timer_a0_delay_noblk_ccr2(_1s2);
+                    timer_a0_delay_noblk_ccr2(_1200ms);
                 break;
                 case SIM900_ON:
                     LED_ON;

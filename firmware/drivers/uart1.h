@@ -15,10 +15,8 @@ enum uart1_tevent {
 // without any more communication then we end the buffer and
 // send it to be parsed
 
-#define INTRCHAR_TMOUT     40 // ~10ms in ticks
-
-//#define RXBUF_TMOUT        409   // ~100ms in ticks
-#define REPLY_TMOUT        4096  // ~1s in ticks
+#define INTRCHAR_TMOUT     _10ms    // ~10ms in ticks
+#define REPLY_TMOUT        _1s      // ~1s in ticks
 
 volatile char uart1_rx_buf[UART1_RXBUF_SZ];
 volatile uint8_t uart1_p;
