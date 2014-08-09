@@ -45,7 +45,7 @@ static void sim900_tasks(enum sys_message msg)
                         sim900.cmd = CMD_GET_READY;
                         sim900.next_state = SIM900_IDLE;
                         timer_a0_delay_noblk_ccr2(SM_STEP_DELAY); // - signal the low level sm
-                        timer_a0_delay_noblk_ccr1(_14s);
+                        timer_a0_delay_noblk_ccr1(_75s);
                     } else if (sim900.rdy & CALL_RDY) {
                         sim900.task_counter = 0;
                         sim900.task_next_state = SUBTASK_GET_IMEI;
@@ -54,7 +54,6 @@ static void sim900_tasks(enum sys_message msg)
                         if ((sim900.rdy & RDY) == 0) {
                             // we did not get the unsolicited 'RDY' message
                             // so probably the sim900 is not set up yet
-
                             // 2400bps is better detected by sim900's autobauding
                             uart1_init(2400);
                             sim900.cmd = CMD_FIRST_PWRON;
@@ -88,6 +87,10 @@ static void sim900_tasks(enum sys_message msg)
                         timer_a0_delay_noblk_ccr1(SM_STEP_DELAY);
                     } else if (sim900.task_counter == TASK_MAX_RETRIES) {
                         sim900.err |= ERR_IMEI_UNKNOWN;
+                        // this also happens when sim900 is unwilling/unable
+                        // to receive commands, so just halt the chip
+                        sim900.task_next_state = SUBTASK_PWROFF;
+                        timer_a0_delay_noblk_ccr1(SM_STEP_DELAY);
                     }
                 break;
                 case SUBTASK_SWITCHER:
@@ -141,7 +144,7 @@ static void sim900_tasks(enum sys_message msg)
                         sim900.next_state = SIM900_IDLE;
                         sim900.task_counter++;
                         timer_a0_delay_noblk_ccr2(SM_STEP_DELAY);
-                        timer_a0_delay_noblk_ccr1(_14s); // timeout in 14s+
+                        timer_a0_delay_noblk_ccr1(_14s); // XXX
                     } else if (sim900.task_rv == SUBTASK_PARSE_SMS_OK) {
                         sim900.task_next_state = SUBTASK_SWITCHER;
                         timer_a0_delay_noblk_ccr1(SM_STEP_DELAY);
@@ -259,8 +262,9 @@ static void sim900_state_machine(enum sys_message msg)
                     sim900.cmd = CMD_NULL;
                     sim900.next_state = SIM900_IDLE;
                     if (sim900.rdy & CALL_RDY) {
-                        // wait 10 seconds in case we get SMSs
-                        timer_a0_delay_noblk_ccr1(_10s);
+                        // wait 1 minute in order to get more tower cell info
+                        // and any possible SMSs
+                        timer_a0_delay_noblk_ccr1(_60s);
                     }
                 break;
             }
@@ -705,7 +709,15 @@ uint16_t sim900_tx_str(char *str, const uint16_t size)
 #endif
 
     while (p < size) {
-        while (!(SIM900_UCAIFG & UCTXIFG)) ;  // TX buffer ready?
+        while (!(SIM900_UCAIFG & UCTXIFG)) {
+            if (timer_a0_last_event & 0xe) {
+                return p;
+            }
+        }
+        if (timer_a0_last_event & 0xe) {
+            return p;
+        }
+        // TX buffer ready?
         if (!(SIM900_CTS_IN)) {
             SIM900_UCATXBUF = str[p];
             p++;
@@ -733,14 +745,22 @@ uint16_t sim900_tx_cmd(char *str, const uint16_t size, const uint16_t reply_tmou
     timer_a0_delay_noblk_ccr3(reply_tmout);
 
     while (p < size) {
-        while (!(SIM900_UCAIFG & UCTXIFG)) ;  // TX buffer ready?
+        while (!(SIM900_UCAIFG & UCTXIFG)) {
+            if (timer_a0_last_event & 0xe) {
+                return p;
+            }
+        }
+        if (timer_a0_last_event & 0xe) {
+            return p;
+        }
+        // TX buffer ready? and no timers triggered?
         if (!(SIM900_CTS_IN)) { // hw flow control allows TX?
             SIM900_UCATXBUF = str[p];
             p++;
         }
     }
 
-    return EXIT_SUCCESS;
+    return p;
 }
 
 uint8_t sim900_parse_rx(char *str, const uint16_t size)

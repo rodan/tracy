@@ -3,11 +3,9 @@
 
 #include "proj.h"
 
-//#define _10ms           41UL       // ~10ms
 #define _10ms           5UL       // ~10ms
 #define _500ms          _10ms * 50
 #define _1200ms         _10ms * 120
-//#define _1s             4096UL
 #define _1s             512UL
 #define _2s             _1s * 2
 #define _3s             _1s * 3
@@ -19,7 +17,8 @@
 #define _10s            _1s * 10
 #define _10sp           _10s + SM_STEP_DELAY
 #define _14s            _1s * 14
-
+#define _60s            _1s * 60
+#define _75s            _1s * 75
 
 enum timer_a0_event {
     TIMER_A0_EVENT_CCR0 = BIT0,

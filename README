@@ -35,7 +35,7 @@ code 1234
 
 '1234' will need to be replaced by those digits you wrote down during the previous step
 
- - power on the tracker and wait. it only connects to the gsm network every 10 minutes by default and it has a 10 seconds interval in which it's actively listening to incoming SMS messages. once the code is received and acknowledged you will get a 'code ok' reply on the phone. from this moment on you can send commands to the tracker.
+ - power on the tracker and wait. it only connects to the gsm network every 10 minutes by default and it has a 1 minute interval in which it's actively listening to incoming SMS messages. once the code is received and acknowledged you will get a 'code ok' reply on the phone. from this moment on you can send commands to the tracker.
 
 valid commands:
 
