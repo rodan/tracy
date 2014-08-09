@@ -35,7 +35,6 @@ static void sim900_tasks(enum sys_message msg)
                     sim900.cmd = CMD_ON;
                     sim900.next_state = SIM900_VBAT_ON;
                     sim900.task_next_state = SUBTASK_WAIT_FOR_RDY;
-                    //timer_a0_delay_noblk_ccr2(2048); // - signal the low level sm in 0.5s
                     timer_a0_delay_noblk_ccr2(SM_STEP_DELAY); // - signal the low level state machine
                     // no need for ccr1 timeout since this command does not receive any input from hw
                     sim900.task_counter = 0;
@@ -46,7 +45,7 @@ static void sim900_tasks(enum sys_message msg)
                         sim900.cmd = CMD_GET_READY;
                         sim900.next_state = SIM900_IDLE;
                         timer_a0_delay_noblk_ccr2(SM_STEP_DELAY); // - signal the low level sm
-                        timer_a0_delay_noblk_ccr1(57400); // timeout in 14s+
+                        timer_a0_delay_noblk_ccr1(_14s);
                     } else if (sim900.rdy & CALL_RDY) {
                         sim900.task_counter = 0;
                         sim900.task_next_state = SUBTASK_GET_IMEI;
@@ -83,7 +82,7 @@ static void sim900_tasks(enum sys_message msg)
                         sim900.next_state = SIM900_IDLE;
                         sim900.task_counter++;
                         timer_a0_delay_noblk_ccr2(SM_STEP_DELAY);
-                        timer_a0_delay_noblk_ccr1(12288); // ~3s
+                        timer_a0_delay_noblk_ccr1(_3sp); // ~3s
                     } else if (sim900.task_rv == SUBTASK_GET_IMEI_OK) {
                         sim900.task_next_state = SUBTASK_SWITCHER;
                         timer_a0_delay_noblk_ccr1(SM_STEP_DELAY);
@@ -108,7 +107,7 @@ static void sim900_tasks(enum sys_message msg)
                         sim900.next_state = SIM900_IP_INITIAL;
                         sim900.task_counter++;
                         timer_a0_delay_noblk_ccr2(SM_STEP_DELAY);
-                        timer_a0_delay_noblk_ccr1(57400); // timeout in 14s+
+                        timer_a0_delay_noblk_ccr1(_14s);
                     } else if (sim900.task_rv == SUBTASK_SEND_FIX_GPRS_OK) {
                         sim900.task_next_state = SUBTASK_SWITCHER;
                         timer_a0_delay_noblk_ccr1(SM_STEP_DELAY);
@@ -125,7 +124,7 @@ static void sim900_tasks(enum sys_message msg)
                         sim900.next_state = SIM900_IDLE;
                         sim900.task_counter++;
                         timer_a0_delay_noblk_ccr2(SM_STEP_DELAY);
-                        timer_a0_delay_noblk_ccr1(57400); // timeout in 14s+
+                        timer_a0_delay_noblk_ccr1(_14s); // timeout in 14s+
                     } else if (sim900.task_rv == SUBTASK_PARSE_CENG_OK) {
                         sim900.task_next_state = SUBTASK_SWITCHER;
                         timer_a0_delay_noblk_ccr1(SM_STEP_DELAY);
@@ -142,7 +141,7 @@ static void sim900_tasks(enum sys_message msg)
                         sim900.next_state = SIM900_IDLE;
                         sim900.task_counter++;
                         timer_a0_delay_noblk_ccr2(SM_STEP_DELAY);
-                        timer_a0_delay_noblk_ccr1(57400); // timeout in 14s+
+                        timer_a0_delay_noblk_ccr1(_14s); // timeout in 14s+
                     } else if (sim900.task_rv == SUBTASK_PARSE_SMS_OK) {
                         sim900.task_next_state = SUBTASK_SWITCHER;
                         timer_a0_delay_noblk_ccr1(SM_STEP_DELAY);
@@ -159,7 +158,7 @@ static void sim900_tasks(enum sys_message msg)
                         sim900.next_state = SIM900_IDLE;
                         sim900.task_counter++;
                         timer_a0_delay_noblk_ccr2(SM_STEP_DELAY);
-                        timer_a0_delay_noblk_ccr1(57400); // timeout in 14s+
+                        timer_a0_delay_noblk_ccr1(_14s); // timeout in 14s+
                     } else if (sim900.task_rv == SUBTASK_SEND_SMS_OK) {
                         sim900.task_next_state = SUBTASK_SWITCHER;
                         timer_a0_delay_noblk_ccr1(SM_STEP_DELAY);
@@ -221,19 +220,19 @@ static void sim900_state_machine(enum sys_message msg)
                     uart1_init(9600);
 
                     sim900.next_state = SIM900_PWRKEY_ACT;
-                    timer_a0_delay_noblk_ccr2(2048); // 0.5s
+                    timer_a0_delay_noblk_ccr2(_0s5);
                 break;
                 case SIM900_PWRKEY_ACT:
                     LED_OFF;
                     SIM900_PWRKEY_LOW;
                     sim900.next_state = SIM900_ON;
-                    timer_a0_delay_noblk_ccr2(4915); // 1.2s
+                    timer_a0_delay_noblk_ccr2(_1s2);
                 break;
                 case SIM900_ON:
                     LED_ON;
                     SIM900_PWRKEY_HIGH;
                     sim900.next_state = SIM900_PRE_IDLE;
-                    timer_a0_delay_noblk_ccr2(7782); // 1.9s
+                    timer_a0_delay_noblk_ccr2(_2s);
                 break;
                 case SIM900_PRE_IDLE:
                     LED_OFF;
@@ -254,14 +253,14 @@ static void sim900_state_machine(enum sys_message msg)
             switch (sim900.next_state) {
                 case SIM900_IDLE:
                     sim900.next_state = SIM900_WAIT_FOR_RDY;
-                    timer_a0_delay_noblk_ccr2(57344); // ~14s
+                    timer_a0_delay_noblk_ccr2(_14s); // ~14s
                 break;
                 case SIM900_WAIT_FOR_RDY:
                     sim900.cmd = CMD_NULL;
                     sim900.next_state = SIM900_IDLE;
                     if (sim900.rdy & CALL_RDY) {
                         // wait 10 seconds in case we get SMSs
-                        timer_a0_delay_noblk_ccr1(40960);
+                        timer_a0_delay_noblk_ccr1(_10s);
                     }
                 break;
             }
@@ -303,7 +302,7 @@ static void sim900_state_machine(enum sys_message msg)
                     sim900.next_state = SIM900_AT;
                     sim900.rc = RC_NULL;
                     sm_c = 0;
-                    timer_a0_delay_noblk_ccr2(4096); // ~1s
+                    timer_a0_delay_noblk_ccr2(_1s); // ~1s
                 break;
                 case SIM900_AT:
                     if (sim900.rc == RC_OK) {
@@ -344,8 +343,8 @@ static void sim900_state_machine(enum sys_message msg)
             switch (sim900.next_state) {
                 default:
                     sim900.next_state = SIM900_VBAT_OFF;
-                    timer_a0_delay_noblk_ccr2(12388);
-                    sim900_tx_cmd("AT+CPOWD=1\r", 11, 12288); // ~3s
+                    timer_a0_delay_noblk_ccr2(_3sp);
+                    sim900_tx_cmd("AT+CPOWD=1\r", 11, _3s); // ~3s
                 break;
                 case SIM900_VBAT_OFF:
                     sim900.next_state = SIM900_OFF;
@@ -391,8 +390,8 @@ static void sim900_state_machine(enum sys_message msg)
                 case SIM900_IP_GPRSACT:
                     if (sim900.rc == RC_STATE_IP_START) {
                         sim900.next_state = SIM900_IP_STATUS;
-                        sim900_tx_cmd("AT+CIICR;+CIPSTATUS\r", 20, 12288);
-                        timer_a0_delay_noblk_ccr2(12388);
+                        sim900_tx_cmd("AT+CIICR;+CIPSTATUS\r", 20, _3s);
+                        timer_a0_delay_noblk_ccr2(_3sp);
                     } else {
                         sim900.err |= ERR_GPRS_NO_IP_START;
                         timer_a0_delay_noblk_ccr1(SM_STEP_DELAY);
@@ -401,8 +400,8 @@ static void sim900_state_machine(enum sys_message msg)
                 case SIM900_IP_STATUS:
                     if (sim900.rc == RC_STATE_IP_GPRSACT) {
                         sim900.next_state = SIM900_IP_CONNECT;
-                        sim900_tx_cmd("AT+CIFSR;+CIPHEAD=1;+CIPSTATUS\r", 31, 12288); // ~3s
-                        timer_a0_delay_noblk_ccr2(12388);
+                        sim900_tx_cmd("AT+CIFSR;+CIPHEAD=1;+CIPSTATUS\r", 31, _3s);
+                        timer_a0_delay_noblk_ccr2(_3sp);
                     }
                 break;
                 case SIM900_IP_CONNECT:
@@ -423,8 +422,8 @@ static void sim900_state_machine(enum sys_message msg)
                         sim900.cmd_type = CMD_SOLICITED;
                         sim900.rc = RC_NULL;
                         sim900.console = TTY_RX_WAIT;
-                        timer_a0_delay_noblk_ccr3(12288); // ~3s
-                        timer_a0_delay_noblk_ccr2(12388); // ~>3s
+                        timer_a0_delay_noblk_ccr3(_3s);
+                        timer_a0_delay_noblk_ccr2(_3sp);
                     }
                 break;
                 case SIM900_IP_SEND:
@@ -462,8 +461,8 @@ static void sim900_state_machine(enum sys_message msg)
                             }
                         }
                         sim900_tx_str(" HTTP/1.1\r\n\r\n", 13);
-                        sim900_tx_cmd(eom, 2, 20480);
-                        timer_a0_delay_noblk_ccr2(20580);
+                        sim900_tx_cmd(eom, 2, _6s);
+                        timer_a0_delay_noblk_ccr2(_6sp);
                     }
                 break;
                 case SIM900_SEND_OK:
@@ -473,8 +472,8 @@ static void sim900_state_machine(enum sys_message msg)
                         sim900.cmd_type = CMD_SOLICITED;
                         sim900.rc = RC_NULL;
                         sim900.console = TTY_RX_WAIT;
-                        timer_a0_delay_noblk_ccr3(12288); // ~3s
-                        timer_a0_delay_noblk_ccr2(12388); // ~>3s
+                        timer_a0_delay_noblk_ccr3(_3s);
+                        timer_a0_delay_noblk_ccr2(_3sp);
                     }
                 break;
                 case SIM900_HTTP_REPLY:
@@ -567,9 +566,9 @@ static void sim900_state_machine(enum sys_message msg)
                             break;
                         }
 
-                        sim900_tx_cmd(eom, 2, 20480);
+                        sim900_tx_cmd(eom, 2, _5s);
                         sim900.next_state = SIM900_CLOSE_CMD;
-                        timer_a0_delay_noblk_ccr2(24576); // ~6s
+                        timer_a0_delay_noblk_ccr2(_6s);
                     }
                 break;
                 case SIM900_CLOSE_CMD:
@@ -598,8 +597,8 @@ static void sim900_state_machine(enum sys_message msg)
                 break;
                 case SIM900_SET1:
                     sim900.next_state = SIM900_PARSE_SMS;
-                    sim900_tx_cmd("AT+CMGL=\"ALL\",\r", 15, 20480); // ~5s
-                    timer_a0_delay_noblk_ccr2(20580);
+                    sim900_tx_cmd("AT+CMGL=\"ALL\",\r", 15, _5s);
+                    timer_a0_delay_noblk_ccr2(_5sp);
                 break;
                 case SIM900_PARSE_SMS:
                     if (sim900.rc == RC_CMGL) {
@@ -620,9 +619,9 @@ static void sim900_state_machine(enum sys_message msg)
                     if (sim900.rc == RC_CMGR) {
                         sim900_tx_str("AT+CMGD=", 8);
                         sim900_tx_str(sim900.rcvd_sms_id, sim900.rcvd_sms_id_len);
-                        sim900_tx_cmd(",0\r", 3, 20480); // ~5s because delete can take 3s
+                        sim900_tx_cmd(",0\r", 3, _5s);
                         sim900.next_state = SIM900_CLOSE_CMD;
-                        timer_a0_delay_noblk_ccr2(20580);
+                        timer_a0_delay_noblk_ccr2(_5sp);
                     }
                 break;
                 case SIM900_CLOSE_CMD:
@@ -654,8 +653,8 @@ static void sim900_state_machine(enum sys_message msg)
                         sim900.rc = RC_NULL;
                         sim900.console = TTY_RX_WAIT;
                         // wait ~10s for the unsolicited '+CENG:.*' messages
-                        timer_a0_delay_noblk_ccr3(40960); // ~10s
-                        timer_a0_delay_noblk_ccr2(41100); // ~>10s
+                        timer_a0_delay_noblk_ccr3(_10s);
+                        timer_a0_delay_noblk_ccr2(_10sp);
                     }
                 break;
                 case SIM900_WAITREPLY:
