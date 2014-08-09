@@ -3,10 +3,12 @@
 
 #include "proj.h"
 
-#define _10ms           40UL       // ~10ms
+//#define _10ms           41UL       // ~10ms
+#define _10ms           5UL       // ~10ms
 #define _500ms          _10ms * 50
 #define _1200ms         _10ms * 120
-#define _1s             4096UL
+//#define _1s             4096UL
+#define _1s             512UL
 #define _2s             _1s * 2
 #define _3s             _1s * 3
 #define _3sp            _3s + SM_STEP_DELAY

@@ -18,12 +18,14 @@ void timer_a0_init(void)
     __disable_interrupt();
     timer_a0_ovf = 0;
 
+    TA0EX0 |= TAIDEX_7;
     TA0CTL |= TASSEL__ACLK + MC__CONTINOUS + TACLR + ID__8;
     __enable_interrupt();
 }
 
 // ticks = microseconds / 30.5175 if no input divider
 // ticks = microseconds / 244.14  if ID__8 is used
+// ticks = microseconds / 1953.12 if ID__8 and TAIDEX 0x7
 void timer_a0_delay_noblk_ccr1(uint16_t ticks)
 {
     TA0CCTL1 &= ~CCIE;
