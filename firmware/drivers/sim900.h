@@ -169,13 +169,13 @@ typedef enum {
 #define TASK_QUEUE_SIZE    5
 #define SMS_QUEUE_SIZE     4
 
-struct sim900_cell_t {      // cell tower data
-    uint8_t rxl;            // receive level
+typedef struct {      // cell tower data
+    uint16_t rxl;           // receive level
     uint16_t mcc;           // mobile country code
     uint16_t mnc;           // mobile network code
     uint16_t cellid;        // tower cell id
     uint16_t lac;           // location area code
-};
+} sim900_cell_t;
 
 struct sim900_t {
     uint8_t checks;         // status register  - maybe remove?
@@ -199,7 +199,7 @@ struct sim900_t {
     sim900_rc_t  rc;        // return codes - obtained by parsing the reply {RC_OK, RC_ERROR ... }
     sim900_state_t next_state;  // low level sm state {SIM900_IP_START, SIM900_IP_GPRSACT ... }
     sim900_tty_t console;   // status of the console after a command is sent
-    //sim900_cell_t cell[4];  // tower cell data
+    sim900_cell_t cell[4];  // tower cell data
 };
 
 struct sim900_t sim900;
@@ -217,7 +217,8 @@ uint8_t sim900_parse_sms(char *str, const uint16_t size);
 uint8_t sim900_parse_ceng(char *str, const uint16_t size);
 void extract_str(const char *haystack, const char *needle, char *str, uint8_t *len, const uint8_t maxlen);
 
-uint8_t extract_uint16(char *str, char *seek, uint16_t *rv);
+uint8_t extract_dec(char *str, uint16_t *rv);
+uint8_t extract_hex(char *str, uint16_t *rv);
 
 uint8_t sim900_add_subtask(sim900_task_state_t subtask, sim900_sms_subj_t sms_subj);
 

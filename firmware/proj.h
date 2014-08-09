@@ -23,7 +23,7 @@
 #define STR_LEN 64
 char str_temp[STR_LEN];
 
-#define VERSION             1   // must be incremented if struct settings_t changes
+#define VERSION             2   // must be incremented if struct settings_t changes
 #define FLASH_ADDR          SEGMENT_B
 
 // schedule status flags
@@ -39,7 +39,8 @@ void settings_init(uint8_t * addr);
 #define MAX_USER_LEN    20
 #define MAX_PASS_LEN    20
 #define MAX_SERVER_LEN  20
-#define MAX_PORT_LEN     5
+
+#define CONF_CELL_LOC   0x1
 
 // this struct will end up written into an information flash segment
 // so it better not exceed 128bytes
@@ -47,6 +48,7 @@ void settings_init(uint8_t * addr);
 
 struct tracy_settings_t {
     uint8_t ver;                // firmware version
+    uint16_t settings;
     uint8_t ctrl_phone_len;
     char ctrl_phone[MAX_PHONE_LEN];
     uint8_t apn_len;
@@ -57,44 +59,25 @@ struct tracy_settings_t {
     char pass[MAX_PASS_LEN];
     uint8_t server_len;
     char server[MAX_SERVER_LEN];
-    uint8_t port_len;
-    char port[MAX_PORT_LEN];
+    uint16_t port;
 };
 
 struct tracy_settings_t s;
 
-/*
 static const struct tracy_settings_t defaults = {
     VERSION,                    // ver
-    12,
-    "+40721580040",
-    17,
-    "live.vodafone.com",
-    4,
-    "live",
-    8,
-    "vodafone",
-    14,
-    "www.simplex.ro",
-    2,
-    "80"
-};
-*/
-
-static const struct tracy_settings_t defaults = {
-    VERSION,                    // ver
-    0,
-    "",
-    17,
-    "live.vodafone.com",
-    4,
-    "live",
-    8,
-    "vodafone",
-    14,
-    "www.simplex.ro",
-    2,
-    "80"
+    CONF_CELL_LOC,              // settings
+    0,                          // ctrl_phone_len
+    "",                         // ctrl_phone
+    17,                         // gprs apn_name
+    "live.vodafone.com",        // gprs apn
+    4,                          // gprs user_len
+    "live",                     // gprs user
+    8,                          // gprs pass_len
+    "vodafone",                 // gprs pass
+    14,                         // server_len
+    "www.simplex.ro",           // server
+    80                          // port
 };
 
 #endif

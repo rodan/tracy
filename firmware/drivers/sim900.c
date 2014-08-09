@@ -190,6 +190,8 @@ static void sim900_tasks(enum sys_message msg)
 // low level state machine
 static void sim900_state_machine(enum sys_message msg)
 {
+    uint8_t i;
+
     switch (sim900.cmd) {
 
         ///////////////////////////////////
@@ -408,9 +410,8 @@ static void sim900_state_machine(enum sys_message msg)
                         sim900.next_state = SIM900_IP_CONNECT_OK;
                         sim900_tx_str("AT+CIPSTART=\"TCP\",\"", 19);
                         sim900_tx_str(s.server, s.server_len);
-                        sim900_tx_str("\",\"", 3);
-                        sim900_tx_str(s.port, s.port_len);
-                        sim900_tx_cmd("\"\r", 2, REPLY_TMOUT);
+                        snprintf(str_temp, STR_LEN, "\",\"%u\"\r", s.port);
+                        sim900_tx_cmd(str_temp, strlen(str_temp), REPLY_TMOUT);
                         timer_a0_delay_noblk_ccr2(SM_R_DELAY);
                     }
                 break;
@@ -447,6 +448,16 @@ static void sim900_state_machine(enum sys_message msg)
                             sim900_tx_str(str_temp, strlen(str_temp));
                         } else {
                             sim900_tx_str("no_fix", 6);
+                        }
+                        if (s.settings & CONF_CELL_LOC) {
+                            // tower cell data
+                            for (i=0;i<4;i++) {
+                                snprintf(str_temp, STR_LEN, "&c%d=%u,%u,%u,%u,%u", 
+                                    i, sim900.cell[i].rxl, sim900.cell[i].mcc, 
+                                    sim900.cell[i].mnc, sim900.cell[i].cellid, 
+                                    sim900.cell[i].lac);
+                                sim900_tx_str(str_temp, strlen(str_temp));
+                            }
                         }
                         sim900_tx_str(" HTTP/1.1\r\n\r\n", 13);
                         sim900_tx_cmd(eom, 2, 20480);
@@ -536,9 +547,8 @@ static void sim900_state_machine(enum sys_message msg)
                                 sim900_tx_str(s.pass, s.pass_len);
                                 sim900_tx_str("\" srv=\"", 7);
                                 sim900_tx_str(s.server, s.server_len);
-                                sim900_tx_str(":", 1);
-                                sim900_tx_str(s.port, s.port_len);
-                                sim900_tx_str("\"\r", 2);
+                                snprintf(str_temp, STR_LEN, ":%u\"\r", s.port);
+                                sim900_tx_str(str_temp, strlen(str_temp));
                             break;
                             case SMS_ERRORS:
                                 if (sim900.err) {
@@ -844,7 +854,7 @@ uint8_t sim900_parse_rx(char *str, const uint16_t size)
 
 uint8_t sim900_parse_ceng(char *str, const uint16_t size)
 {
-    uint8_t i, cell, rv;
+    uint8_t i, rv;
     char *seek;
     uint16_t num=0;
 
@@ -857,48 +867,69 @@ uint8_t sim900_parse_ceng(char *str, const uint16_t size)
 
     seek = strstr(str, "+CENG:0");
     seek += 9;
-    for (i=1;i<12;i++) {
-        rv = extract_uint16(str, seek, &num);
-        snprintf(str_temp, STR_LEN, "num=%d\r\n", num);
-        uart0_tx_str(str_temp, strlen(str_temp));
-        seek += rv + 1; // skip the comma
+
+    // ignore arcfn
+    rv = extract_dec(seek, &num);
+    seek += rv + 1;
+    // rxl
+    rv = extract_dec(seek, &sim900.cell[0].rxl);
+    seek += rv + 1;
+    // ignore rxq
+    rv = extract_dec(seek, &num);
+    seek += rv + 1;
+    // mcc
+    rv = extract_dec(seek, &sim900.cell[0].mcc);
+    seek += rv + 1;
+    // mnc
+    rv = extract_dec(seek, &sim900.cell[0].mnc);
+    seek += rv + 1;
+    // ignore bsic
+    rv = extract_dec(seek, &num);
+    seek += rv + 1;
+    // cellid
+    rv = extract_hex(seek, &sim900.cell[0].cellid);
+    seek += rv + 1;
+    // ignore rla
+    rv = extract_dec(seek, &num);
+    seek += rv + 1;
+    // ignore txp
+    rv = extract_dec(seek, &num);
+    seek += rv + 1;
+    // lac
+    rv = extract_hex(seek, &sim900.cell[0].lac);
+
+    seek = strstr(str, "+CENG:1");
+
+    for (i=1;i<4;i++) {
+        seek += 9;
+
+        // ignore arcfn
+        rv = extract_dec(seek, &num);
+        seek += rv + 1; // ,
+        // rxl
+        rv = extract_dec(seek, &sim900.cell[i].rxl);
+        seek += rv + 1; // ,
+        // ignore bsic
+        rv = extract_dec(seek, &num);
+        seek += rv + 1; // ,
+        // cellid
+        rv = extract_hex(seek, &sim900.cell[i].cellid);
+        seek += rv + 1; // ,
+        // mcc
+        rv = extract_dec(seek, &sim900.cell[i].mcc);
+        seek += rv + 1; // ,
+        // mnc
+        rv = extract_dec(seek, &sim900.cell[i].mnc);
+        seek += rv + 1; // ,
+        // lac
+        rv = extract_hex(seek, &sim900.cell[i].lac);
+        seek += rv + 3; // "\r\n
+    }
+ 
+    for (i=0;i<4;i++) {
     }
    
-    /*
-    for (cell=1;cell<4;cell++) {
-        snprintf(str_temp, STR_LEN, "+CENG:%d", cell);
-        seek = strstr(str, str_temp);
-        seek += 10;
-        for (i=1;i<12;i++) {
-            extract_uint16(str, seek, &num);
-            snprintf(str_temp, STR_LEN, "num=%d\r\n", num);
-            uart0_tx_str(str_temp, strlen(str_temp));
-        }
-    }
-    */
-    
     return EXIT_SUCCESS;
-}
-
-uint8_t extract_uint16(char *str, char *seek, uint16_t *rv)
-{
-    uint8_t i=0;
-    
-    *rv = 0;
-
-    snprintf(str_temp, STR_LEN, "first=%d %c\r\n", seek[0], seek[0]);
-    uart0_tx_str(str_temp, strlen(str_temp));
-
-    while ((i<5) && (seek[0] > 47) && (seek[0] < 58)) {
-        *rv *= 10;
-        *rv += seek[0] - 48;
-        i++;
-        seek++;
-        //snprintf(str_temp, STR_LEN, "i=%d,s=%d,rv=%d,p=%p\r\n", i, seek[0], *rv, seek);
-        //uart0_tx_str(str_temp, strlen(str_temp));
-    }
-
-    return i;
 }
 
 uint8_t sim900_parse_sms(char *str, const uint16_t size)
@@ -908,6 +939,7 @@ uint8_t sim900_parse_sms(char *str, const uint16_t size)
     uint8_t sender_len;
     uint8_t save = false;
     char code[4];
+    char *p;
 
     // find out who is calling
     // +CMGL: 1,"REC READ","+40555000001","","14/07/30,10:52:07+12"
@@ -948,6 +980,10 @@ uint8_t sim900_parse_sms(char *str, const uint16_t size)
         }
     }
 
+    if (s.ctrl_phone[0] == 0) {
+        return EXIT_SUCCESS;
+    }
+
     if (strstr(sender, s.ctrl_phone)) {
         // the authorized phone sent us a command
         // XXX should make sure add_subtask does not end in failure!
@@ -976,49 +1012,18 @@ uint8_t sim900_parse_sms(char *str, const uint16_t size)
             extract_str(str, "srv", s.server, &s.server_len, MAX_SERVER_LEN);
             save = true;
         } else if (strstr(str, "port")) {
-            extract_str(str, "port", s.port, &s.port_len, MAX_PORT_LEN);
+            p = strstr(str, "port");
+            p += 4;
+            extract_dec(p, &s.port);
             save = true;
         }
-    } 
+    }
 
     if (save) {
         flash_save(SEGMENT_B, (void *)&s, sizeof(s));
     }
 
     return EXIT_SUCCESS;
-}
-
-void extract_str(const char *haystack, const char *needle, char *str, uint8_t *len, const uint8_t max_len)
-{
-    char *seek;
-    uint8_t i=0;
-
-    seek = strstr(haystack, needle);
-    seek += strlen(needle);
-
-    if (seek[0] == 0x0d) {
-        *len = 0;
-    }
-
-    while (seek[0] != 0x0d) {
-        if (i == max_len) {
-            break;
-        }
-        if (seek[0] == ' ') {
-            // ignore spaces
-        } else if (seek[0] == ',') {
-            // my phone is unable to send full stops
-            // but can send commas
-            str[i] = '.';
-            i++;
-            *len = i;
-        } else {
-            str[i] = seek[0];
-            i++;
-            *len = i;
-        }
-        seek++;
-    }
 }
 
 void sim900_init_messagebus(void)
@@ -1065,10 +1070,107 @@ void sim900_exec_default_task(void)
     sim900.last_t = 0;
     sim900.current_s = 0;
     sim900.last_sms = 0;
-    //sim900_add_subtask(SUBTASK_PARSE_SMS, SMS_NULL);
-    //sim900_add_subtask(SUBTASK_SEND_FIX_GPRS, SMS_NULL);
+    sim900_add_subtask(SUBTASK_PARSE_SMS, SMS_NULL);
     sim900_add_subtask(SUBTASK_PARSE_CENG, SMS_NULL);
+    sim900_add_subtask(SUBTASK_SEND_FIX_GPRS, SMS_NULL);
     timer_a0_delay_noblk_ccr1(SM_STEP_DELAY);
+}
+
+//////////////////////////////////////////////////////////
+//
+// helper functions
+//
+
+uint8_t extract_dec(char *str, uint16_t *rv)
+{
+    uint8_t i=0;
+    char *p = str;
+    char c = *p;
+    
+    *rv = 0;
+
+    // ignore spaces before the number
+    while (c == 32) {
+        c = *++p;
+    }
+
+    while ((i<5) && (c > 47) && (c < 58)) {
+        *rv *= 10;
+        *rv += c - 48;
+        i++;
+        //p++;
+        c = *++p;
+    }
+
+    return i;
+}
+
+uint8_t extract_hex(char *str, uint16_t *rv)
+{
+    uint8_t i=0;
+    char *p = str;
+    char c = *p;
+    
+    *rv = 0;
+
+    // ignore spaces before the number
+    while (c == 32) {
+        c = *++p;
+    }
+
+    while ((i<4) && (((c > 47) && (c < 58)) || ((c > 96) && (c < 103)) || ((c > 64) && (c < 71)))) {
+
+        // go lowercase (A-F -> a-f)
+        if ((c > 64) && (c < 71)) {
+            c += 32;
+        }
+
+        *rv = *rv << 4;
+        if ((c > 47) && (c < 58)) {
+            *rv += c - 48;
+        } else if ((c > 96) && (c < 103)) {
+            *rv += c - 87;
+        }
+        i++;
+        //p++;
+        c = *++p;
+    }
+
+    return i;
+}
+
+
+void extract_str(const char *haystack, const char *needle, char *str, uint8_t *len, const uint8_t max_len)
+{
+    char *seek;
+    uint8_t i=0;
+
+    seek = strstr(haystack, needle);
+    seek += strlen(needle);
+
+    if (seek[0] == 0x0d) {
+        *len = 0;
+    }
+
+    while (seek[0] != 0x0d) {
+        if (i == max_len) {
+            break;
+        }
+        if (seek[0] == ' ') {
+            // ignore spaces
+        } else if (seek[0] == ',') {
+            // my phone is unable to send full stops
+            // but can send commas
+            str[i] = '.';
+            i++;
+            *len = i;
+        } else {
+            str[i] = seek[0];
+            i++;
+            *len = i;
+        }
+        seek++;
+    }
 }
 
 
