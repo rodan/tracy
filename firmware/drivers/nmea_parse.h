@@ -3,7 +3,7 @@
 
 #include <inttypes.h>
 
-struct nmea_gprmc {
+struct nmea_gprmc_t {
     uint8_t hour;
     uint8_t minute;
     uint8_t second;
@@ -24,8 +24,20 @@ struct nmea_gprmc {
     uint32_t fixtime;
 };
 
-struct nmea_gprmc mc_f;
-struct nmea_gprmc mc_t;
+struct nmea_gprmc_t mc_f;
+struct nmea_gprmc_t mc_t;
+
+#ifdef CONFIG_GEOFENCE
+struct geofence_t {
+    double lat_home;
+    double lon_home;
+    double lat_cur;
+    double lon_cur;
+    double distance;
+};
+
+struct geofence_t geo;
+#endif
 
 uint8_t nmea_parse(char *str, const uint8_t len);
 uint8_t str_to_uint32(char *str, uint32_t * out, const uint8_t seek,
@@ -33,5 +45,6 @@ uint8_t str_to_uint32(char *str, uint32_t * out, const uint8_t seek,
 uint8_t str_to_uint16(char *str, uint16_t * out, const uint8_t seek,
                       const uint8_t len, const uint16_t min, const uint16_t max);
 
+void haversine_km(struct geofence_t geofence);
 
 #endif
