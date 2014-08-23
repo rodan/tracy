@@ -1,9 +1,12 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <math.h>
 #include "drivers/rtc.h"
 #include "drivers/nmea_parse.h"
 #include "proj.h"
+
+#define d2r 0.0174532925199433
 
 /// function that parses one full nmea sentence
 /// input
@@ -152,6 +155,30 @@ uint8_t nmea_parse(char *s, const uint8_t len)
         return EXIT_FAILURE;
     }
     return EXIT_SUCCESS;
+}
+
+double nmea_to_double(const uint8_t deg, const uint8_t min, const uint8_t fr, const uint8_t suffix)
+{
+    double rv;
+
+    rv = (double) deg + ((double) min + (double) fr / 10000.0) / 60.0;
+
+    if ((suffix == 'S') || (suffix == 'W')) {
+        rv *= -1.0;
+    }
+
+    return rv;
+}
+
+void haversine_km(struct geofence_t g)
+{
+    double dlong = (g.lon_cur - g.lon_home) * d2r;
+    double dlat = (g.lat_cur - g.lat_home) * d2r;
+    double a1 = sin(dlat/2.0);
+    double a2 = sin(dlong/2.0);
+    double a = (a1 * a1) + (cos(g.lat_home*d2r) * cos(g.lat_cur*d2r) * a2 * a2);
+    double c = 2.0 * atan2(sqrt(a), sqrt(1.0-a));
+    g.distance = 6367 * c;
 }
 
 uint8_t str_to_uint16(char *str, uint16_t * out, const uint8_t seek,

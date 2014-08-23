@@ -166,6 +166,12 @@ int main(void)
 
     //uart0_tx_str("hi\r\n", 4);
 
+#include <math.h>
+
+    snprintf(str_temp, STR_LEN, "n is %f\r\n", atan2(4,2));
+    uart0_tx_str(str_temp, strlen(str_temp));
+
+
     while (1) {
         _BIS_SR(LPM3_bits + GIE);
         //wake_up();
