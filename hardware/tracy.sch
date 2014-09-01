@@ -75,6 +75,7 @@
 <layer number="110" name="fp0" color="7" fill="1" visible="no" active="yes"/>
 <layer number="111" name="LPC17xx" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="112" name="tSilk" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="113" name="IDFDebug" color="4" fill="1" visible="yes" active="yes"/>
 <layer number="116" name="Patch_BOT" color="9" fill="4" visible="yes" active="yes"/>
 <layer number="121" name="_tsilk" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="122" name="_bsilk" color="7" fill="1" visible="yes" active="yes"/>
@@ -11714,185 +11715,97 @@ Source: http://focus.ti.com/lit/ds/symlink/sn65als176.pdf</description>
 <library name="Simplex-Connectors">
 <description>finest footprints by petre rodan</description>
 <packages>
-<package name="SIMLOCK_C707_10M006">
-<description>Amphenol SIMLOCK &lt;b&gt; C707 10M006 000 2&lt;/b&gt;</description>
-<hole x="0" y="0" drill="1.6"/>
-<hole x="22" y="1.6" drill="1.6"/>
-<hole x="0" y="12.7" drill="1.6"/>
-<hole x="22" y="11.5" drill="1.6"/>
-<smd name="LOCK_2" x="-4.2" y="9.35" dx="3" dy="0.9" layer="1"/>
-<smd name="LOCK_1" x="-4.2" y="10.62" dx="3" dy="0.9" layer="1"/>
-<smd name="CLK" x="26.9" y="10.07" dx="3" dy="0.9" layer="1"/>
-<smd name="IO" x="26.9" y="8.8" dx="3" dy="0.9" layer="1"/>
-<smd name="RST" x="26.9" y="7.53" dx="3" dy="0.9" layer="1"/>
-<smd name="VPROG" x="26.9" y="6.26" dx="3" dy="0.9" layer="1"/>
-<smd name="VCC" x="26.9" y="4.99" dx="3" dy="0.9" layer="1"/>
-<smd name="GND" x="26.9" y="3.72" dx="3" dy="0.9" layer="1"/>
-<wire x1="-3" y1="-3.6" x2="5" y2="-3.6" width="0.127" layer="21"/>
-<wire x1="5" y1="-3.6" x2="5" y2="-2.6" width="0.127" layer="21"/>
-<wire x1="5" y1="-2.6" x2="25" y2="-2.6" width="0.127" layer="21"/>
-<wire x1="-3" y1="-3.6" x2="-3" y2="-1.1" width="0.127" layer="21"/>
-<wire x1="-3" y1="-1.1" x2="-2" y2="-1.1" width="0.127" layer="21"/>
-<wire x1="-2" y1="-1.1" x2="-2" y2="5.6" width="0.127" layer="21"/>
-<wire x1="-2" y1="5.6" x2="-3" y2="5.6" width="0.127" layer="21"/>
-<wire x1="-3" y1="5.6" x2="-3" y2="7.1" width="0.127" layer="21"/>
-<wire x1="-3" y1="7.1" x2="-2" y2="7.1" width="0.127" layer="21"/>
-<wire x1="-2" y1="7.1" x2="-2" y2="8" width="0.127" layer="21"/>
-<wire x1="-2" y1="8" x2="-1" y2="8" width="0.127" layer="21"/>
-<wire x1="-1" y1="8" x2="-1" y2="12" width="0.127" layer="21"/>
-<wire x1="-1" y1="12" x2="-2" y2="12" width="0.127" layer="21"/>
-<wire x1="-2" y1="12" x2="-2" y2="13.8" width="0.127" layer="21"/>
-<wire x1="-2" y1="13.8" x2="-3" y2="13.8" width="0.127" layer="21"/>
-<wire x1="-3" y1="13.8" x2="-3" y2="16.3" width="0.127" layer="21"/>
-<wire x1="25" y1="-2.6" x2="25" y2="15.3" width="0.127" layer="21"/>
-<wire x1="-3" y1="16.3" x2="5" y2="16.3" width="0.127" layer="21"/>
-<wire x1="5" y1="16.3" x2="5" y2="15.3" width="0.127" layer="21"/>
-<wire x1="5" y1="15.3" x2="9.5" y2="15.3" width="0.127" layer="21"/>
-<wire x1="9.5" y1="15.3" x2="9.5" y2="16.3" width="0.127" layer="21"/>
-<wire x1="9.5" y1="16.3" x2="19.4" y2="16.3" width="0.127" layer="21"/>
-<wire x1="19.4" y1="16.3" x2="19.4" y2="15.3" width="0.127" layer="21"/>
-<wire x1="19.4" y1="15.3" x2="25" y2="15.3" width="0.127" layer="21"/>
-</package>
-<package name="0530480401">
-<description>MOLEX &lt;b&gt;0530480410&lt;/b&gt;</description>
-<pad name="1" x="0" y="0" drill="0.6" diameter="0.9" shape="long" rot="R90"/>
-<pad name="2" x="1.25" y="0" drill="0.6" diameter="0.9" shape="long" rot="R90"/>
-<wire x1="5.25" y1="4.5" x2="5.25" y2="-1" width="0.127" layer="21"/>
-<wire x1="-1.5" y1="4.5" x2="-1.5" y2="-1" width="0.127" layer="21"/>
-<wire x1="-1.5" y1="4.5" x2="5.25" y2="4.5" width="0.127" layer="21"/>
-<wire x1="-1.5" y1="-1" x2="-0.625" y2="-1" width="0.127" layer="21"/>
-<wire x1="4.375" y1="-1" x2="5.25" y2="-1" width="0.127" layer="21"/>
-<wire x1="-0.625" y1="-1" x2="-0.625" y2="-0.1" width="0.127" layer="21"/>
-<wire x1="4.375" y1="-1" x2="4.375" y2="-0.1" width="0.127" layer="21"/>
-<wire x1="-0.625" y1="-0.1" x2="4.375" y2="-0.1" width="0.127" layer="21"/>
-<wire x1="-0.25" y1="1.8" x2="0" y2="1.15" width="0.127" layer="21"/>
-<wire x1="0" y1="1.15" x2="0.25" y2="1.8" width="0.127" layer="21"/>
-<wire x1="-0.25" y1="1.8" x2="0.25" y2="1.8" width="0.127" layer="21"/>
-<pad name="4" x="3.75" y="0" drill="0.6" diameter="0.9" shape="long" rot="R90"/>
-<pad name="3" x="2.5" y="0" drill="0.6" diameter="0.9" shape="long" rot="R90"/>
-<text x="0" y="-2.54" size="1.27" layer="27">&gt;value</text>
-<text x="0" y="5.08" size="1.27" layer="26">&gt;name</text>
-</package>
-<package name="0530470410">
-<description>Molex &lt;b&gt;0530470410&lt;/b&gt;</description>
-<wire x1="5.25" y1="2" x2="5.25" y2="-1.2" width="0.127" layer="21"/>
-<wire x1="-1.5" y1="2" x2="-1.5" y2="-1.2" width="0.127" layer="21"/>
-<wire x1="-1.5" y1="2" x2="5.25" y2="2" width="0.127" layer="21"/>
-<wire x1="-1.5" y1="-1.2" x2="5.25" y2="-1.2" width="0.127" layer="21"/>
-<wire x1="-0.25" y1="3.05" x2="0" y2="2.4" width="0.127" layer="21"/>
-<wire x1="0" y1="2.4" x2="0.25" y2="3.05" width="0.127" layer="21"/>
-<wire x1="-0.25" y1="3.05" x2="0.25" y2="3.05" width="0.127" layer="21"/>
-<pad name="2" x="1.25" y="0" drill="0.6" diameter="0.9" shape="long" rot="R90"/>
-<pad name="1" x="0" y="0" drill="0.6" diameter="0.9" shape="long" rot="R90"/>
-<text x="0.55" y="-2.29" size="1.27" layer="27">&gt;value</text>
-<text x="1.8" y="2.83" size="1.27" layer="26">&gt;name</text>
-<pad name="4" x="3.75" y="0" drill="0.6" diameter="0.9" shape="long" rot="R90"/>
-<pad name="3" x="2.5" y="0" drill="0.6" diameter="0.9" shape="long" rot="R90"/>
-</package>
-<package name="0530480610">
-<description>MOLEX &lt;b&gt;0530480610&lt;/b&gt;</description>
-<pad name="1" x="0" y="0" drill="0.6" diameter="0.9" shape="long" rot="R90"/>
-<pad name="2" x="1.25" y="0" drill="0.6" diameter="0.9" shape="long" rot="R90"/>
-<wire x1="7.75" y1="4.5" x2="7.75" y2="-1" width="0.127" layer="21"/>
-<wire x1="-1.5" y1="4.5" x2="-1.5" y2="-1" width="0.127" layer="21"/>
-<wire x1="-1.5" y1="4.5" x2="7.75" y2="4.5" width="0.127" layer="21"/>
-<wire x1="-1.5" y1="-1" x2="-0.625" y2="-1" width="0.127" layer="21"/>
-<wire x1="6.875" y1="-1" x2="7.75" y2="-1" width="0.127" layer="21"/>
-<wire x1="-0.625" y1="-1" x2="-0.625" y2="-0.1" width="0.127" layer="21"/>
-<wire x1="6.875" y1="-1" x2="6.875" y2="-0.1" width="0.127" layer="21"/>
-<wire x1="-0.625" y1="-0.1" x2="6.875" y2="-0.1" width="0.127" layer="21"/>
-<wire x1="-0.25" y1="1.8" x2="0" y2="1.15" width="0.127" layer="21"/>
-<wire x1="0" y1="1.15" x2="0.25" y2="1.8" width="0.127" layer="21"/>
-<wire x1="-0.25" y1="1.8" x2="0.25" y2="1.8" width="0.127" layer="21"/>
-<pad name="4" x="3.75" y="0" drill="0.6" diameter="0.9" shape="long" rot="R90"/>
-<pad name="3" x="2.5" y="0" drill="0.6" diameter="0.9" shape="long" rot="R90"/>
-<text x="0" y="-2.54" size="1.27" layer="27">&gt;value</text>
-<text x="0" y="5.08" size="1.27" layer="26">&gt;name</text>
-<pad name="6" x="6.25" y="0" drill="0.6" diameter="0.9" shape="long" rot="R90"/>
-<pad name="5" x="5" y="0" drill="0.6" diameter="0.9" shape="long" rot="R90"/>
-</package>
 <package name="0530470610">
 <description>Molex &lt;b&gt;0530470610&lt;/b&gt;</description>
 <pad name="1" x="0" y="0" drill="0.6" diameter="0.8128" shape="long" rot="R90"/>
 <pad name="2" x="1.25" y="0" drill="0.6" diameter="0.8128" shape="long" rot="R90"/>
-<wire x1="7.75" y1="1.2" x2="7.75" y2="-2" width="0.127" layer="21"/>
-<wire x1="-1.5" y1="1.2" x2="-1.5" y2="-2" width="0.127" layer="21"/>
-<wire x1="-1.5" y1="1.2" x2="7.75" y2="1.2" width="0.127" layer="21"/>
-<wire x1="-1.5" y1="-2" x2="7.75" y2="-2" width="0.127" layer="21"/>
-<wire x1="-0.25" y1="2.15" x2="0" y2="1.5" width="0.127" layer="21"/>
-<wire x1="0" y1="1.5" x2="0.25" y2="2.15" width="0.127" layer="21"/>
-<wire x1="-0.25" y1="2.15" x2="0.25" y2="2.15" width="0.127" layer="21"/>
+<wire x1="7.75" y1="2" x2="7.75" y2="-1.2" width="0.127" layer="21"/>
+<wire x1="-1.5" y1="2" x2="-1.5" y2="-1.2" width="0.127" layer="21"/>
+<wire x1="-1.5" y1="2" x2="7.75" y2="2" width="0.127" layer="21"/>
+<wire x1="-1.5" y1="-1.2" x2="7.75" y2="-1.2" width="0.127" layer="21"/>
+<wire x1="-0.25" y1="3.04" x2="0" y2="2.39" width="0.127" layer="21"/>
+<wire x1="0" y1="2.39" x2="0.25" y2="3.04" width="0.127" layer="21"/>
+<wire x1="-0.25" y1="3.04" x2="0.25" y2="3.04" width="0.127" layer="21"/>
 <pad name="4" x="3.75" y="0" drill="0.6" diameter="0.8128" shape="long" rot="R90"/>
 <pad name="3" x="2.5" y="0" drill="0.6" diameter="0.8128" shape="long" rot="R90"/>
-<text x="0.85" y="1.66" size="1.27" layer="27">&gt;value</text>
+<text x="0.85" y="2.55" size="1.27" layer="27">&gt;value</text>
 <text x="0.9" y="-1.52" size="1.27" layer="26">&gt;name</text>
 <pad name="6" x="6.25" y="0" drill="0.6" diameter="0.8128" shape="long" rot="R90"/>
 <pad name="5" x="5" y="0" drill="0.6" diameter="0.8128" shape="long" rot="R90"/>
 </package>
-<package name="0530480210">
-<description>MOLEX &lt;b&gt;0530480210&lt;/b&gt;</description>
-<pad name="1" x="0" y="0" drill="0.6" diameter="0.9" shape="long" rot="R90"/>
-<pad name="2" x="1.25" y="0" drill="0.6" diameter="0.9" shape="long" rot="R90"/>
-<wire x1="2.75" y1="4.5" x2="2.75" y2="-1" width="0.127" layer="21"/>
-<wire x1="-1.5" y1="4.5" x2="-1.5" y2="-1" width="0.127" layer="21"/>
-<wire x1="-1.5" y1="4.5" x2="2.75" y2="4.5" width="0.127" layer="21"/>
-<wire x1="-1.5" y1="-1" x2="-0.625" y2="-1" width="0.127" layer="21"/>
-<wire x1="1.875" y1="-1" x2="2.75" y2="-1" width="0.127" layer="21"/>
-<wire x1="-0.625" y1="-1" x2="-0.625" y2="-0.1" width="0.127" layer="21"/>
-<wire x1="1.875" y1="-1" x2="1.875" y2="-0.1" width="0.127" layer="21"/>
-<wire x1="-0.625" y1="-0.1" x2="1.875" y2="-0.1" width="0.127" layer="21"/>
+<package name="MOLEX_7880-0001">
+<description>&lt;b&gt;MOLEX 7880-0001&lt;/b&gt; mini SIM card holder</description>
+<wire x1="0" y1="0" x2="16.96" y2="0" width="0.127" layer="21"/>
+<wire x1="16.96" y1="0" x2="16.96" y2="13.85" width="0.127" layer="21"/>
+<wire x1="0" y1="0" x2="0" y2="13.85" width="0.127" layer="21"/>
+<wire x1="0" y1="13.85" x2="16.96" y2="13.85" width="0.127" layer="21"/>
+<smd name="SH@1" x="1.54" y="1.5" dx="1.2" dy="0.95" layer="1" rot="R90"/>
+<smd name="SH@4" x="1.54" y="12.35" dx="1.2" dy="0.95" layer="1" rot="R90"/>
+<smd name="SH@2" x="14.85" y="0.66" dx="1.4" dy="0.95" layer="1"/>
+<smd name="SH@3" x="14.85" y="13.18" dx="1.4" dy="0.95" layer="1"/>
+<smd name="VCC" x="1.77" y="4.35" dx="0.8" dy="0.9" layer="1"/>
+<smd name="RST" x="1.77" y="5.59" dx="0.8" dy="0.9" layer="1"/>
+<smd name="CLK" x="1.77" y="8.13" dx="0.8" dy="0.9" layer="1"/>
+<smd name="GND" x="16.71" y="4.35" dx="0.8" dy="0.9" layer="1"/>
+<smd name="VPROG" x="16.71" y="5.59" dx="0.8" dy="0.9" layer="1"/>
+<smd name="IO" x="16.71" y="8.13" dx="0.8" dy="0.9" layer="1"/>
+</package>
+<package name="0530480610">
+<description>MOLEX &lt;b&gt;0530480610&lt;/b&gt;</description>
+<pad name="6" x="6.25" y="0" drill="0.6" diameter="0.9" shape="long" rot="R270"/>
+<pad name="5" x="5" y="0" drill="0.6" diameter="0.9" shape="long" rot="R270"/>
+<wire x1="-1.5" y1="-4.5" x2="-1.5" y2="1" width="0.127" layer="21"/>
+<wire x1="7.75" y1="-4.5" x2="7.75" y2="1" width="0.127" layer="21"/>
+<wire x1="7.75" y1="-4.5" x2="-1.5" y2="-4.5" width="0.127" layer="21"/>
+<wire x1="7.75" y1="1" x2="6.875" y2="1" width="0.127" layer="21"/>
+<wire x1="-0.625" y1="1" x2="-1.5" y2="1" width="0.127" layer="21"/>
+<wire x1="6.875" y1="1" x2="6.875" y2="0.1" width="0.127" layer="21"/>
+<wire x1="-0.625" y1="1" x2="-0.625" y2="0.1" width="0.127" layer="21"/>
+<wire x1="6.875" y1="0.1" x2="-0.625" y2="0.1" width="0.127" layer="21"/>
 <wire x1="-0.25" y1="1.8" x2="0" y2="1.15" width="0.127" layer="21"/>
 <wire x1="0" y1="1.15" x2="0.25" y2="1.8" width="0.127" layer="21"/>
 <wire x1="-0.25" y1="1.8" x2="0.25" y2="1.8" width="0.127" layer="21"/>
-<text x="-1.27" y="-2.54" size="1.27" layer="25">&gt;names</text>
-<text x="-1.27" y="6.35" size="1.27" layer="27">&gt;value</text>
+<pad name="3" x="2.5" y="0" drill="0.6" diameter="0.9" shape="long" rot="R270"/>
+<pad name="4" x="3.75" y="0" drill="0.6" diameter="0.9" shape="long" rot="R270"/>
+<text x="0" y="-6.29" size="1.27" layer="27">&gt;value</text>
+<text x="0" y="2.58" size="1.27" layer="26">&gt;name</text>
+<pad name="1" x="0" y="0" drill="0.6" diameter="0.9" shape="long" rot="R270" first="yes"/>
+<pad name="2" x="1.25" y="0" drill="0.6" diameter="0.9" shape="long" rot="R270"/>
+</package>
+<package name="0530480210">
+<description>MOLEX &lt;b&gt;0530480210&lt;/b&gt;</description>
+<pad name="2" x="1.25" y="0" drill="0.6" diameter="0.9" shape="long" rot="R270"/>
+<pad name="1" x="0" y="0" drill="0.6" diameter="0.9" shape="long" rot="R270" first="yes"/>
+<wire x1="-1.5" y1="-4.5" x2="-1.5" y2="1" width="0.127" layer="21"/>
+<wire x1="2.75" y1="-4.5" x2="2.75" y2="1" width="0.127" layer="21"/>
+<wire x1="2.75" y1="-4.5" x2="-1.5" y2="-4.5" width="0.127" layer="21"/>
+<wire x1="2.75" y1="1" x2="1.875" y2="1" width="0.127" layer="21"/>
+<wire x1="-0.625" y1="1" x2="-1.5" y2="1" width="0.127" layer="21"/>
+<wire x1="1.875" y1="1" x2="1.875" y2="0.1" width="0.127" layer="21"/>
+<wire x1="-0.625" y1="1" x2="-0.625" y2="0.1" width="0.127" layer="21"/>
+<wire x1="1.875" y1="0.1" x2="-0.625" y2="0.1" width="0.127" layer="21"/>
+<wire x1="-0.25" y1="1.8" x2="0" y2="1.15" width="0.127" layer="21"/>
+<wire x1="0" y1="1.15" x2="0.25" y2="1.8" width="0.127" layer="21"/>
+<wire x1="-0.25" y1="1.8" x2="0.25" y2="1.8" width="0.127" layer="21"/>
+<text x="-0.02" y="2.46" size="1.27" layer="25">&gt;names</text>
+<text x="-1.27" y="-6.15" size="1.27" layer="27">&gt;value</text>
 </package>
 <package name="0530470210">
 <description>Molex &lt;b&gt;0530470210&lt;/b&gt;</description>
-<wire x1="2.75" y1="1.2" x2="2.75" y2="-2" width="0.127" layer="21"/>
-<wire x1="-1.5" y1="1.2" x2="-1.5" y2="-2" width="0.127" layer="21"/>
-<wire x1="-1.5" y1="1.2" x2="2.75" y2="1.2" width="0.127" layer="21"/>
-<wire x1="-1.5" y1="-2" x2="2.75" y2="-2" width="0.127" layer="21"/>
-<wire x1="-0.25" y1="2.15" x2="0" y2="1.5" width="0.127" layer="21"/>
-<wire x1="0" y1="1.5" x2="0.25" y2="2.15" width="0.127" layer="21"/>
-<wire x1="-0.25" y1="2.15" x2="0.25" y2="2.15" width="0.127" layer="21"/>
-<text x="0.75" y="1.56" size="1.27" layer="27">&gt;value</text>
-<text x="0.2" y="-1.52" size="1.27" layer="26">&gt;name</text>
+<wire x1="2.75" y1="2" x2="2.75" y2="-1.2" width="0.127" layer="21"/>
+<wire x1="-1.5" y1="2" x2="-1.5" y2="-1.2" width="0.127" layer="21"/>
+<wire x1="-1.5" y1="2" x2="2.75" y2="2" width="0.127" layer="21"/>
+<wire x1="-1.5" y1="-1.2" x2="2.75" y2="-1.2" width="0.127" layer="21"/>
+<wire x1="-0.25" y1="3.4" x2="0" y2="2.75" width="0.127" layer="21"/>
+<wire x1="0" y1="2.75" x2="0.25" y2="3.4" width="0.127" layer="21"/>
+<wire x1="-0.25" y1="3.4" x2="0.25" y2="3.4" width="0.127" layer="21"/>
+<text x="0.75" y="2.81" size="1.27" layer="27">&gt;value</text>
+<text x="-1.05" y="-1.52" size="1.27" layer="26">&gt;name</text>
 <pad name="2" x="1.25" y="0" drill="0.6" diameter="0.9" shape="long" rot="R90"/>
-<pad name="1" x="0" y="0" drill="0.6" diameter="0.9" shape="long" rot="R90"/>
+<pad name="1" x="0" y="0" drill="0.6" diameter="0.9" shape="long" rot="R90" first="yes"/>
 </package>
 </packages>
 <symbols>
-<symbol name="SIMLOCK_C707_10M006">
-<description>Amphenol SIMLOCK &lt;b&gt;C707 10M006 000 2&lt;/b&gt;</description>
-<wire x1="-7.62" y1="12.7" x2="-7.62" y2="-10.16" width="0.254" layer="94"/>
-<wire x1="-7.62" y1="-10.16" x2="7.62" y2="-10.16" width="0.254" layer="94"/>
-<wire x1="7.62" y1="-10.16" x2="7.62" y2="12.7" width="0.254" layer="94"/>
-<wire x1="7.62" y1="12.7" x2="-7.62" y2="12.7" width="0.254" layer="94"/>
-<pin name="LOCK_01" x="-10.16" y="7.62" visible="pad" length="short"/>
-<pin name="LOCK_02" x="-10.16" y="5.08" visible="pad" length="short"/>
-<pin name="CLK" x="10.16" y="7.62" visible="pad" length="short" rot="R180"/>
-<pin name="IO" x="10.16" y="5.08" visible="pad" length="short" rot="R180"/>
-<pin name="RST" x="10.16" y="2.54" visible="pad" length="short" rot="R180"/>
-<pin name="VPROG" x="10.16" y="0" visible="pad" length="short" rot="R180"/>
-<pin name="VCC" x="10.16" y="-2.54" visible="pad" length="short" rot="R180"/>
-<pin name="GND" x="10.16" y="-5.08" visible="pad" length="short" rot="R180"/>
-<text x="-5.08" y="-12.7" size="1.778" layer="96">&gt;VALUE</text>
-<text x="-5.08" y="15.24" size="1.778" layer="95">&gt;NAME</text>
-</symbol>
-<symbol name="CON4">
-<description>4 pin connector</description>
-<pin name="1" x="0" y="7.62" visible="off" length="short" direction="pas"/>
-<pin name="2" x="0" y="5.08" visible="off" length="short" direction="pas"/>
-<wire x1="2.54" y1="7.62" x2="3.81" y2="7.62" width="0.6096" layer="94"/>
-<wire x1="2.54" y1="5.08" x2="3.81" y2="5.08" width="0.6096" layer="94"/>
-<text x="0" y="10.16" size="1.778" layer="96">&gt;VALUE</text>
-<text x="0" y="-2.54" size="1.778" layer="95">&gt;NAME</text>
-<pin name="3" x="0" y="2.54" visible="off" length="short" direction="pas"/>
-<wire x1="2.54" y1="2.54" x2="3.81" y2="2.54" width="0.6096" layer="94"/>
-<pin name="4" x="0" y="0" visible="off" length="short" direction="pas"/>
-<wire x1="2.54" y1="0" x2="3.81" y2="0" width="0.6096" layer="94"/>
-</symbol>
 <symbol name="CON6">
 <description>6 pin connector</description>
 <pin name="1" x="-2.54" y="5.08" visible="pad" length="short" direction="pas"/>
@@ -11910,6 +11823,24 @@ Source: http://focus.ti.com/lit/ds/symlink/sn65als176.pdf</description>
 <pin name="6" x="-2.54" y="-7.62" visible="pad" length="short" direction="pas"/>
 <wire x1="0" y1="-7.62" x2="1.27" y2="-7.62" width="0.6096" layer="94"/>
 </symbol>
+<symbol name="SIM">
+<wire x1="-7.62" y1="10.16" x2="-7.62" y2="-12.7" width="0.254" layer="94"/>
+<wire x1="-7.62" y1="-12.7" x2="7.62" y2="-12.7" width="0.254" layer="94"/>
+<wire x1="7.62" y1="-12.7" x2="7.62" y2="10.16" width="0.254" layer="94"/>
+<wire x1="7.62" y1="10.16" x2="-7.62" y2="10.16" width="0.254" layer="94"/>
+<pin name="CLK" x="10.16" y="5.08" visible="pad" length="short" rot="R180"/>
+<pin name="IO" x="10.16" y="2.54" visible="pad" length="short" rot="R180"/>
+<pin name="RST" x="10.16" y="0" visible="pad" length="short" rot="R180"/>
+<pin name="VPROG" x="10.16" y="-2.54" visible="pad" length="short" rot="R180"/>
+<pin name="VCC" x="10.16" y="-5.08" visible="pad" length="short" rot="R180"/>
+<pin name="GND" x="10.16" y="-7.62" visible="pad" length="short" rot="R180"/>
+<text x="-5.08" y="-15.24" size="1.778" layer="96">&gt;VALUE</text>
+<text x="-5.08" y="12.7" size="1.778" layer="95">&gt;NAME</text>
+<pin name="SH@4" x="-10.16" y="-7.62" visible="pad" length="short"/>
+<pin name="SH@3" x="-10.16" y="-5.08" visible="pad" length="short"/>
+<pin name="SH@2" x="-10.16" y="-2.54" visible="pad" length="short"/>
+<pin name="SH@1" x="-10.16" y="0" visible="pad" length="short"/>
+</symbol>
 <symbol name="CON2">
 <description>2 pin connector</description>
 <pin name="1" x="-2.54" y="0" visible="pad" length="short" direction="pas"/>
@@ -11921,60 +11852,6 @@ Source: http://focus.ti.com/lit/ds/symlink/sn65als176.pdf</description>
 </symbol>
 </symbols>
 <devicesets>
-<deviceset name="SIMLOCK">
-<description>Amphenol SIMLOCK Card Reader</description>
-<gates>
-<gate name="G$1" symbol="SIMLOCK_C707_10M006" x="0" y="-2.54"/>
-</gates>
-<devices>
-<device name="C707_10M006_000_2" package="SIMLOCK_C707_10M006">
-<connects>
-<connect gate="G$1" pin="CLK" pad="CLK"/>
-<connect gate="G$1" pin="GND" pad="GND"/>
-<connect gate="G$1" pin="IO" pad="IO"/>
-<connect gate="G$1" pin="LOCK_01" pad="LOCK_1"/>
-<connect gate="G$1" pin="LOCK_02" pad="LOCK_2"/>
-<connect gate="G$1" pin="RST" pad="RST"/>
-<connect gate="G$1" pin="VCC" pad="VCC"/>
-<connect gate="G$1" pin="VPROG" pad="VPROG"/>
-</connects>
-<technologies>
-<technology name=""/>
-</technologies>
-</device>
-</devices>
-</deviceset>
-<deviceset name="MOLEX_4">
-<description>Molex 4 pin connectors
-1.25mm PicoBlade</description>
-<gates>
-<gate name="G$1" symbol="CON4" x="0" y="0"/>
-</gates>
-<devices>
-<device name="HORIZONTAL" package="0530480401">
-<connects>
-<connect gate="G$1" pin="1" pad="1"/>
-<connect gate="G$1" pin="2" pad="2"/>
-<connect gate="G$1" pin="3" pad="3"/>
-<connect gate="G$1" pin="4" pad="4"/>
-</connects>
-<technologies>
-<technology name=""/>
-</technologies>
-</device>
-<device name="VERTICAL" package="0530470410">
-<connects>
-<connect gate="G$1" pin="1" pad="1"/>
-<connect gate="G$1" pin="2" pad="2"/>
-<connect gate="G$1" pin="3" pad="3"/>
-<connect gate="G$1" pin="4" pad="4"/>
-</connects>
-<technologies>
-<technology name=""/>
-</technologies>
-</device>
-</devices>
-</deviceset>
 <deviceset name="MOLEX_6" prefix="X">
 <description>Molex 6 pin connectors
 1.25mm PicoBlade</description>
@@ -11984,12 +11861,12 @@ Source: http://focus.ti.com/lit/ds/symlink/sn65als176.pdf</description>
 <devices>
 <device name="HORIZONTAL" package="0530480610">
 <connects>
-<connect gate="G$1" pin="1" pad="1"/>
-<connect gate="G$1" pin="2" pad="2"/>
-<connect gate="G$1" pin="3" pad="3"/>
-<connect gate="G$1" pin="4" pad="4"/>
-<connect gate="G$1" pin="5" pad="5"/>
-<connect gate="G$1" pin="6" pad="6"/>
+<connect gate="G$1" pin="1" pad="6"/>
+<connect gate="G$1" pin="2" pad="5"/>
+<connect gate="G$1" pin="3" pad="4"/>
+<connect gate="G$1" pin="4" pad="3"/>
+<connect gate="G$1" pin="5" pad="2"/>
+<connect gate="G$1" pin="6" pad="1"/>
 </connects>
 <technologies>
 <technology name=""/>
@@ -12010,6 +11887,31 @@ Source: http://focus.ti.com/lit/ds/symlink/sn65als176.pdf</description>
 </device>
 </devices>
 </deviceset>
+<deviceset name="SIM">
+<description>SIM card holders without lock detection</description>
+<gates>
+<gate name="G$1" symbol="SIM" x="0" y="0"/>
+</gates>
+<devices>
+<device name="_MOLEX_7880-0001" package="MOLEX_7880-0001">
+<connects>
+<connect gate="G$1" pin="CLK" pad="CLK"/>
+<connect gate="G$1" pin="GND" pad="GND"/>
+<connect gate="G$1" pin="IO" pad="IO"/>
+<connect gate="G$1" pin="RST" pad="RST"/>
+<connect gate="G$1" pin="SH@1" pad="SH@1"/>
+<connect gate="G$1" pin="SH@2" pad="SH@2"/>
+<connect gate="G$1" pin="SH@3" pad="SH@3"/>
+<connect gate="G$1" pin="SH@4" pad="SH@4"/>
+<connect gate="G$1" pin="VCC" pad="VCC"/>
+<connect gate="G$1" pin="VPROG" pad="VPROG"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+</devices>
+</deviceset>
 <deviceset name="MOLEX_2" prefix="X">
 <description>Molex 2 pin connectors
 1.25mm PicoBlade</description>
@@ -12019,8 +11921,8 @@ Source: http://focus.ti.com/lit/ds/symlink/sn65als176.pdf</description>
 <devices>
 <device name="HORIZONTAL" package="0530480210">
 <connects>
-<connect gate="G$1" pin="1" pad="1"/>
-<connect gate="G$1" pin="2" pad="2"/>
+<connect gate="G$1" pin="1" pad="2"/>
+<connect gate="G$1" pin="2" pad="1"/>
 </connects>
 <technologies>
 <technology name=""/>
@@ -12905,7 +12807,6 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <part name="U1" library="SparkFun" deviceset="V_REG_LDO" device="SMD" value="SPX5205 3v3"/>
 <part name="C1" library="rcl" deviceset="C-EU" device="C0805" value="100nF"/>
 <part name="GND2" library="SparkFun" deviceset="GND" device=""/>
-<part name="C3" library="rcl" deviceset="C-EU" device="C1206" value="10uF"/>
 <part name="GND4" library="SparkFun" deviceset="GND" device=""/>
 <part name="GND5" library="SparkFun" deviceset="GND" device=""/>
 <part name="C4" library="rcl" deviceset="C-EU" device="C0805" value="1uF"/>
@@ -12950,7 +12851,6 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <part name="GND14" library="SparkFun" deviceset="GND" device=""/>
 <part name="J1" library="SparkFun-Connectors" deviceset="U.FL" device=""/>
 <part name="GND18" library="SparkFun" deviceset="GND" device=""/>
-<part name="U$3" library="Simplex-Connectors" deviceset="SIMLOCK" device="C707_10M006_000_2"/>
 <part name="GND20" library="SparkFun" deviceset="GND" device=""/>
 <part name="R11" library="rcl" deviceset="R-EU_" device="R0805W" value="3k"/>
 <part name="R14" library="rcl" deviceset="R-EU_" device="R0805W" value="DNP 10k th"/>
@@ -12964,8 +12864,6 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <part name="GND31" library="SparkFun" deviceset="GND" device=""/>
 <part name="C14" library="rcl" deviceset="C-EU" device="C0805" value="22p"/>
 <part name="GND37" library="SparkFun" deviceset="GND" device=""/>
-<part name="GND42" library="SparkFun" deviceset="GND" device=""/>
-<part name="R17" library="rcl" deviceset="R-EU_" device="R0805W" value="10k"/>
 <part name="T2" library="transistor" deviceset="BC846" device=""/>
 <part name="GND45" library="SparkFun" deviceset="GND" device=""/>
 <part name="R18" library="rcl" deviceset="R-EU_" device="R0805W" value="47k"/>
@@ -13015,7 +12913,6 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <part name="U$6" library="Simplex-ICs" deviceset="BQ24072" device=""/>
 <part name="GND1" library="SparkFun" deviceset="GND" device=""/>
 <part name="IC1" library="Simplex-ICs" deviceset="SIM900" device=""/>
-<part name="U$19" library="Simplex-Connectors" deviceset="MOLEX_4" device="HORIZONTAL" value="LiPo"/>
 <part name="R6" library="rcl" deviceset="R-EU_" device="R0805W" value="100k"/>
 <part name="GND36" library="SparkFun" deviceset="GND" device=""/>
 <part name="LED1" library="led" deviceset="LED" device="CHIPLED_0805" value="green"/>
@@ -13036,14 +12933,12 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <part name="TP6" library="testpad" deviceset="TP" device="TP12R"/>
 <part name="GND57" library="SparkFun" deviceset="GND" device=""/>
 <part name="GND23" library="SparkFun" deviceset="GND" device=""/>
-<part name="C11" library="rcl" deviceset="C-EU" device="C0805" value="10uF"/>
+<part name="C11" library="rcl" deviceset="C-EU" device="C0805" value="1uF"/>
 <part name="T1" library="transistor" deviceset="BC846" device=""/>
 <part name="GND58" library="SparkFun" deviceset="GND" device=""/>
-<part name="X1" library="Simplex-Connectors" deviceset="MOLEX_6" device="VERTICAL"/>
 <part name="R2" library="rcl" deviceset="R-EU_" device="R0805W" value="6K2"/>
 <part name="GND24" library="SparkFun" deviceset="GND" device=""/>
 <part name="U$20" library="Simplex-Power" deviceset="2V8" device=""/>
-<part name="X2" library="Simplex-Connectors" deviceset="MOLEX_2" device="HORIZONTAL"/>
 <part name="U$17" library="Simplex-ICs" deviceset="FM24V" device=""/>
 <part name="U$21" library="Simplex-Power" deviceset="2V8" device=""/>
 <part name="GND59" library="SparkFun" deviceset="GND" device=""/>
@@ -13054,6 +12949,17 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <part name="R5" library="rcl" deviceset="R-EU_" device="R0805W" value="4k7"/>
 <part name="GND61" library="SparkFun" deviceset="GND" device=""/>
 <part name="U$9" library="Simplex-Fuses" deviceset="RESETTABLE" device="_0805"/>
+<part name="C3" library="rcl" deviceset="C-EU" device="C0805" value="10uF"/>
+<part name="GND42" library="SparkFun" deviceset="GND" device=""/>
+<part name="U$3" library="Simplex-Connectors" deviceset="SIM" device="_MOLEX_7880-0001"/>
+<part name="X3" library="Simplex-Connectors" deviceset="MOLEX_6" device="HORIZONTAL"/>
+<part name="X1" library="Simplex-Connectors" deviceset="MOLEX_2" device="HORIZONTAL"/>
+<part name="X2" library="Simplex-Connectors" deviceset="MOLEX_2" device="HORIZONTAL"/>
+<part name="GND62" library="SparkFun" deviceset="GND" device=""/>
+<part name="X4" library="Simplex-Connectors" deviceset="MOLEX_2" device="HORIZONTAL"/>
+<part name="R7" library="rcl" deviceset="R-EU_" device="R0805W" value="4k7"/>
+<part name="R8" library="rcl" deviceset="R-EU_" device="R0805W" value="4k7"/>
+<part name="U$19" library="Simplex-Power" deviceset="2V8" device=""/>
 </parts>
 <sheets>
 <sheet>
@@ -13078,7 +12984,6 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <instance part="U1" gate="G$1" x="38.1" y="279.4"/>
 <instance part="C1" gate="G$1" x="63.5" y="271.78"/>
 <instance part="GND2" gate="1" x="63.5" y="259.08"/>
-<instance part="C3" gate="G$1" x="12.7" y="271.78"/>
 <instance part="GND4" gate="1" x="22.86" y="259.08"/>
 <instance part="GND5" gate="1" x="12.7" y="259.08"/>
 <instance part="C4" gate="G$1" x="53.34" y="269.24"/>
@@ -13123,7 +13028,6 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <instance part="GND14" gate="1" x="424.18" y="243.84"/>
 <instance part="J1" gate="G$1" x="436.88" y="261.62" rot="MR0"/>
 <instance part="GND18" gate="1" x="441.96" y="243.84"/>
-<instance part="U$3" gate="G$1" x="160.02" y="86.36"/>
 <instance part="GND20" gate="1" x="139.7" y="259.08"/>
 <instance part="R11" gate="G$1" x="167.64" y="254" rot="R270"/>
 <instance part="R14" gate="G$1" x="182.88" y="254" rot="R270"/>
@@ -13137,8 +13041,6 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <instance part="GND31" gate="1" x="215.9" y="66.04"/>
 <instance part="C14" gate="G$1" x="203.2" y="73.66" rot="R180"/>
 <instance part="GND37" gate="1" x="203.2" y="66.04"/>
-<instance part="GND42" gate="1" x="144.78" y="66.04"/>
-<instance part="R17" gate="G$1" x="144.78" y="124.46" rot="R270"/>
 <instance part="T2" gate="G$1" x="139.7" y="175.26"/>
 <instance part="GND45" gate="1" x="142.24" y="157.48"/>
 <instance part="R18" gate="G$1" x="132.08" y="167.64" rot="R90"/>
@@ -13189,7 +13091,6 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <instance part="U$6" gate="TH" x="144.78" y="251.46" rot="R180"/>
 <instance part="GND1" gate="1" x="149.86" y="243.84"/>
 <instance part="IC1" gate="G$1" x="205.74" y="162.56"/>
-<instance part="U$19" gate="G$1" x="119.38" y="30.48" rot="MR180"/>
 <instance part="R6" gate="G$1" x="111.76" y="93.98" rot="R270"/>
 <instance part="GND36" gate="1" x="111.76" y="83.82"/>
 <instance part="LED1" gate="G$1" x="111.76" y="109.22"/>
@@ -13213,11 +13114,9 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <instance part="C11" gate="G$1" x="368.3" y="266.7"/>
 <instance part="T1" gate="G$1" x="223.52" y="243.84"/>
 <instance part="GND58" gate="1" x="226.06" y="231.14"/>
-<instance part="X1" gate="G$1" x="55.88" y="25.4"/>
 <instance part="R2" gate="G$1" x="436.88" y="116.84" rot="R180"/>
 <instance part="GND24" gate="1" x="447.04" y="101.6"/>
 <instance part="U$20" gate="G$1" x="368.3" y="281.94"/>
-<instance part="X2" gate="G$1" x="93.98" y="25.4"/>
 <instance part="U$17" gate="G$1" x="185.42" y="17.78"/>
 <instance part="U$21" gate="G$1" x="205.74" y="40.64"/>
 <instance part="GND59" gate="1" x="205.74" y="10.16"/>
@@ -13228,6 +13127,17 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <instance part="R5" gate="G$1" x="220.98" y="30.48" rot="MR90"/>
 <instance part="GND61" gate="1" x="170.18" y="10.16"/>
 <instance part="U$9" gate="G$1" x="119.38" y="279.4"/>
+<instance part="C3" gate="G$1" x="12.7" y="271.78"/>
+<instance part="GND42" gate="1" x="144.78" y="66.04"/>
+<instance part="U$3" gate="G$1" x="160.02" y="88.9"/>
+<instance part="X3" gate="G$1" x="55.88" y="25.4"/>
+<instance part="X1" gate="G$1" x="93.98" y="22.86"/>
+<instance part="X2" gate="G$1" x="121.92" y="22.86"/>
+<instance part="GND62" gate="1" x="137.16" y="10.16"/>
+<instance part="X4" gate="G$1" x="144.78" y="25.4"/>
+<instance part="R7" gate="G$1" x="45.72" y="-2.54" rot="MR90"/>
+<instance part="R8" gate="G$1" x="40.64" y="-2.54" rot="MR90"/>
+<instance part="U$19" gate="G$1" x="55.88" y="-5.08"/>
 </instances>
 <busses>
 </busses>
@@ -13255,8 +13165,8 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 </segment>
 <segment>
 <wire x1="12.7" y1="261.62" x2="12.7" y2="266.7" width="0.1524" layer="91"/>
-<pinref part="C3" gate="G$1" pin="2"/>
 <pinref part="GND5" gate="1" pin="GND"/>
+<pinref part="C3" gate="G$1" pin="2"/>
 </segment>
 <segment>
 <pinref part="C4" gate="G$1" pin="2"/>
@@ -13424,10 +13334,10 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <wire x1="205.74" y1="111.76" x2="205.74" y2="109.22" width="0.1524" layer="91"/>
 </segment>
 <segment>
-<pinref part="U$3" gate="G$1" pin="GND"/>
 <pinref part="GND29" gate="1" pin="GND"/>
 <wire x1="170.18" y1="81.28" x2="177.8" y2="81.28" width="0.1524" layer="91"/>
 <wire x1="177.8" y1="81.28" x2="177.8" y2="68.58" width="0.1524" layer="91"/>
+<pinref part="U$3" gate="G$1" pin="GND"/>
 </segment>
 <segment>
 <pinref part="C13" gate="G$1" pin="1"/>
@@ -13438,12 +13348,6 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <pinref part="C14" gate="G$1" pin="1"/>
 <pinref part="GND37" gate="1" pin="GND"/>
 <wire x1="203.2" y1="71.12" x2="203.2" y2="68.58" width="0.1524" layer="91"/>
-</segment>
-<segment>
-<pinref part="U$3" gate="G$1" pin="LOCK_02"/>
-<pinref part="GND42" gate="1" pin="GND"/>
-<wire x1="149.86" y1="91.44" x2="144.78" y2="91.44" width="0.1524" layer="91"/>
-<wire x1="144.78" y1="91.44" x2="144.78" y2="68.58" width="0.1524" layer="91"/>
 </segment>
 <segment>
 <pinref part="T2" gate="G$1" pin="E"/>
@@ -13518,19 +13422,15 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 </segment>
 <segment>
 <pinref part="GND15" gate="1" pin="GND"/>
-<wire x1="91.44" y1="25.4" x2="86.36" y2="25.4" width="0.1524" layer="91"/>
-<wire x1="86.36" y1="25.4" x2="86.36" y2="12.7" width="0.1524" layer="91"/>
-<pinref part="X2" gate="G$1" pin="1"/>
+<wire x1="86.36" y1="20.32" x2="86.36" y2="12.7" width="0.1524" layer="91"/>
+<wire x1="86.36" y1="20.32" x2="91.44" y2="20.32" width="0.1524" layer="91"/>
+<pinref part="X1" gate="G$1" pin="2"/>
 </segment>
 <segment>
 <pinref part="GND26" gate="1" pin="GND"/>
-<wire x1="119.38" y1="25.4" x2="114.3" y2="25.4" width="0.1524" layer="91"/>
-<wire x1="114.3" y1="25.4" x2="114.3" y2="12.7" width="0.1524" layer="91"/>
-<wire x1="114.3" y1="25.4" x2="114.3" y2="27.94" width="0.1524" layer="91"/>
-<wire x1="114.3" y1="27.94" x2="119.38" y2="27.94" width="0.1524" layer="91"/>
-<junction x="114.3" y="25.4"/>
-<pinref part="U$19" gate="G$1" pin="2"/>
-<pinref part="U$19" gate="G$1" pin="3"/>
+<wire x1="119.38" y1="20.32" x2="114.3" y2="20.32" width="0.1524" layer="91"/>
+<wire x1="114.3" y1="20.32" x2="114.3" y2="12.7" width="0.1524" layer="91"/>
+<pinref part="X2" gate="G$1" pin="2"/>
 </segment>
 <segment>
 <pinref part="U$6" gate="TH" pin="TH"/>
@@ -13587,7 +13487,7 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <wire x1="53.34" y1="30.48" x2="50.8" y2="30.48" width="0.1524" layer="91"/>
 <pinref part="GND27" gate="1" pin="GND"/>
 <wire x1="50.8" y1="30.48" x2="50.8" y2="12.7" width="0.1524" layer="91"/>
-<pinref part="X1" gate="G$1" pin="1"/>
+<pinref part="X3" gate="G$1" pin="1"/>
 </segment>
 <segment>
 <pinref part="R2" gate="G$1" pin="1"/>
@@ -13616,6 +13516,30 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <wire x1="170.18" y1="22.86" x2="175.26" y2="22.86" width="0.1524" layer="91"/>
 <junction x="170.18" y="20.32"/>
 </segment>
+<segment>
+<pinref part="GND42" gate="1" pin="GND"/>
+<wire x1="149.86" y1="81.28" x2="144.78" y2="81.28" width="0.1524" layer="91"/>
+<wire x1="144.78" y1="81.28" x2="144.78" y2="68.58" width="0.1524" layer="91"/>
+<pinref part="U$3" gate="G$1" pin="SH@4"/>
+<pinref part="U$3" gate="G$1" pin="SH@1"/>
+<wire x1="149.86" y1="88.9" x2="144.78" y2="88.9" width="0.1524" layer="91"/>
+<wire x1="144.78" y1="88.9" x2="144.78" y2="86.36" width="0.1524" layer="91"/>
+<pinref part="U$3" gate="G$1" pin="SH@2"/>
+<wire x1="144.78" y1="86.36" x2="144.78" y2="83.82" width="0.1524" layer="91"/>
+<wire x1="144.78" y1="83.82" x2="144.78" y2="81.28" width="0.1524" layer="91"/>
+<wire x1="149.86" y1="86.36" x2="144.78" y2="86.36" width="0.1524" layer="91"/>
+<pinref part="U$3" gate="G$1" pin="SH@3"/>
+<wire x1="149.86" y1="83.82" x2="144.78" y2="83.82" width="0.1524" layer="91"/>
+<junction x="144.78" y="81.28"/>
+<junction x="144.78" y="83.82"/>
+<junction x="144.78" y="86.36"/>
+</segment>
+<segment>
+<pinref part="GND62" gate="1" pin="GND"/>
+<wire x1="142.24" y1="25.4" x2="137.16" y2="25.4" width="0.1524" layer="91"/>
+<wire x1="137.16" y1="25.4" x2="137.16" y2="12.7" width="0.1524" layer="91"/>
+<pinref part="X4" gate="G$1" pin="1"/>
+</segment>
 </net>
 <net name="VIN" class="0">
 <segment>
@@ -13626,10 +13550,10 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <junction x="12.7" y="284.48"/>
 <label x="10.16" y="284.48" size="1.778" layer="95"/>
 <pinref part="U1" gate="G$1" pin="IN"/>
-<pinref part="C3" gate="G$1" pin="1"/>
 <pinref part="C6" gate="G$1" pin="1"/>
 <wire x1="0" y1="284.48" x2="5.08" y2="284.48" width="0.1524" layer="91"/>
 <junction x="5.08" y="284.48"/>
+<pinref part="C3" gate="G$1" pin="1"/>
 </segment>
 <segment>
 <wire x1="20.32" y1="236.22" x2="10.16" y2="236.22" width="0.1524" layer="91"/>
@@ -13687,9 +13611,13 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <label x="408.94" y="119.38" size="1.778" layer="95"/>
 </segment>
 <segment>
-<wire x1="53.34" y1="17.78" x2="43.18" y2="17.78" width="0.1524" layer="91"/>
+<wire x1="53.34" y1="17.78" x2="45.72" y2="17.78" width="0.1524" layer="91"/>
 <label x="43.18" y="17.78" size="1.778" layer="95"/>
-<pinref part="X1" gate="G$1" pin="6"/>
+<pinref part="X3" gate="G$1" pin="6"/>
+<pinref part="R7" gate="G$1" pin="2"/>
+<wire x1="45.72" y1="17.78" x2="43.18" y2="17.78" width="0.1524" layer="91"/>
+<wire x1="45.72" y1="2.54" x2="45.72" y2="17.78" width="0.1524" layer="91"/>
+<junction x="45.72" y="17.78"/>
 </segment>
 </net>
 <net name="N$6" class="0">
@@ -13758,7 +13686,7 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <label x="43.18" y="27.94" size="1.778" layer="95"/>
 <pinref part="R34" gate="G$1" pin="1"/>
 <wire x1="35.56" y1="27.94" x2="53.34" y2="27.94" width="0.1524" layer="91"/>
-<pinref part="X1" gate="G$1" pin="2"/>
+<pinref part="X3" gate="G$1" pin="2"/>
 </segment>
 </net>
 <net name="TEST" class="0">
@@ -13771,7 +13699,7 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <wire x1="53.34" y1="25.4" x2="38.1" y2="25.4" width="0.1524" layer="91"/>
 <label x="43.18" y="25.4" size="1.778" layer="95"/>
 <pinref part="R35" gate="G$1" pin="1"/>
-<pinref part="X1" gate="G$1" pin="3"/>
+<pinref part="X3" gate="G$1" pin="3"/>
 </segment>
 </net>
 <net name="P4.0" class="0">
@@ -13781,9 +13709,11 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <label x="408.94" y="116.84" size="1.778" layer="95"/>
 </segment>
 <segment>
-<wire x1="53.34" y1="20.32" x2="43.18" y2="20.32" width="0.1524" layer="91"/>
+<wire x1="53.34" y1="20.32" x2="40.64" y2="20.32" width="0.1524" layer="91"/>
 <label x="43.18" y="20.32" size="1.778" layer="95"/>
-<pinref part="X1" gate="G$1" pin="5"/>
+<pinref part="X3" gate="G$1" pin="5"/>
+<pinref part="R8" gate="G$1" pin="2"/>
+<wire x1="40.64" y1="20.32" x2="40.64" y2="2.54" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="GPS_VCC" class="0">
@@ -13847,9 +13777,9 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <pinref part="U$6" gate="G$1" pin="TS"/>
 </segment>
 <segment>
-<wire x1="119.38" y1="30.48" x2="111.76" y2="30.48" width="0.1524" layer="91"/>
-<label x="111.76" y="30.48" size="1.778" layer="95"/>
-<pinref part="U$19" gate="G$1" pin="4"/>
+<wire x1="142.24" y1="22.86" x2="132.08" y2="22.86" width="0.1524" layer="91"/>
+<label x="132.08" y="22.86" size="1.778" layer="95"/>
+<pinref part="X4" gate="G$1" pin="2"/>
 </segment>
 </net>
 <net name="N$33" class="0">
@@ -13888,7 +13818,7 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <segment>
 <wire x1="119.38" y1="22.86" x2="111.76" y2="22.86" width="0.1524" layer="91"/>
 <label x="111.76" y="22.86" size="1.778" layer="95"/>
-<pinref part="U$19" gate="G$1" pin="1"/>
+<pinref part="X2" gate="G$1" pin="1"/>
 </segment>
 </net>
 <net name="VRTC" class="0">
@@ -13900,7 +13830,6 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 </net>
 <net name="SIM_VCC" class="0">
 <segment>
-<pinref part="U$3" gate="G$1" pin="VCC"/>
 <wire x1="170.18" y1="83.82" x2="180.34" y2="83.82" width="0.1524" layer="91"/>
 <wire x1="180.34" y1="83.82" x2="180.34" y2="81.28" width="0.1524" layer="91"/>
 <wire x1="180.34" y1="81.28" x2="215.9" y2="81.28" width="0.1524" layer="91"/>
@@ -13913,33 +13842,33 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <wire x1="215.9" y1="96.52" x2="246.38" y2="96.52" width="0.1524" layer="91"/>
 <pinref part="U$8" gate="G$1" pin="CATODE2"/>
 <pinref part="IC1" gate="G$1" pin="SIM_VDD"/>
+<pinref part="U$3" gate="G$1" pin="VCC"/>
 </segment>
 </net>
 <net name="SIMLOCK_CLK" class="0">
 <segment>
-<pinref part="U$3" gate="G$1" pin="CLK"/>
 <wire x1="170.18" y1="93.98" x2="220.98" y2="93.98" width="0.1524" layer="91"/>
 <pinref part="U$18" gate="G$1" pin="2"/>
 <wire x1="220.98" y1="106.68" x2="220.98" y2="93.98" width="0.1524" layer="91"/>
 <wire x1="220.98" y1="93.98" x2="246.38" y2="93.98" width="0.1524" layer="91"/>
 <junction x="220.98" y="93.98"/>
 <pinref part="U$8" gate="G$1" pin="CATODE3"/>
+<pinref part="U$3" gate="G$1" pin="CLK"/>
 </segment>
 </net>
 <net name="SIMLOCK_RST" class="0">
 <segment>
-<pinref part="U$3" gate="G$1" pin="RST"/>
 <wire x1="170.18" y1="88.9" x2="223.52" y2="88.9" width="0.1524" layer="91"/>
 <pinref part="U$18" gate="G$1" pin="3"/>
 <wire x1="223.52" y1="88.9" x2="223.52" y2="106.68" width="0.1524" layer="91"/>
 <junction x="223.52" y="88.9"/>
 <wire x1="223.52" y1="88.9" x2="246.38" y2="88.9" width="0.1524" layer="91"/>
 <pinref part="U$8" gate="G$1" pin="CATODE5"/>
+<pinref part="U$3" gate="G$1" pin="RST"/>
 </segment>
 </net>
 <net name="SIMLOCK_IO" class="0">
 <segment>
-<pinref part="U$3" gate="G$1" pin="IO"/>
 <wire x1="203.2" y1="91.44" x2="218.44" y2="91.44" width="0.1524" layer="91"/>
 <pinref part="C14" gate="G$1" pin="2"/>
 <wire x1="203.2" y1="78.74" x2="203.2" y2="91.44" width="0.1524" layer="91"/>
@@ -13950,33 +13879,7 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <wire x1="218.44" y1="91.44" x2="246.38" y2="91.44" width="0.1524" layer="91"/>
 <junction x="218.44" y="91.44"/>
 <pinref part="U$8" gate="G$1" pin="CATODE4"/>
-</segment>
-</net>
-<net name="N$42" class="0">
-<segment>
-<pinref part="U$3" gate="G$1" pin="LOCK_01"/>
-<wire x1="149.86" y1="93.98" x2="144.78" y2="93.98" width="0.1524" layer="91"/>
-<wire x1="144.78" y1="93.98" x2="144.78" y2="101.6" width="0.1524" layer="91"/>
-<wire x1="144.78" y1="101.6" x2="236.22" y2="101.6" width="0.1524" layer="91"/>
-<pinref part="R17" gate="G$1" pin="2"/>
-<wire x1="144.78" y1="101.6" x2="144.78" y2="119.38" width="0.1524" layer="91"/>
-<junction x="144.78" y="101.6"/>
-<wire x1="236.22" y1="101.6" x2="236.22" y2="121.92" width="0.1524" layer="91"/>
-<wire x1="236.22" y1="121.92" x2="226.06" y2="121.92" width="0.1524" layer="91"/>
-<wire x1="246.38" y1="99.06" x2="243.84" y2="99.06" width="0.1524" layer="91"/>
-<wire x1="236.22" y1="101.6" x2="243.84" y2="101.6" width="0.1524" layer="91"/>
-<wire x1="243.84" y1="101.6" x2="243.84" y2="99.06" width="0.1524" layer="91"/>
-<junction x="236.22" y="101.6"/>
-<pinref part="U$8" gate="G$1" pin="CATODE1"/>
-<pinref part="IC1" gate="G$1" pin="SIM_PRESENCE"/>
-</segment>
-</net>
-<net name="N$43" class="0">
-<segment>
-<pinref part="R17" gate="G$1" pin="1"/>
-<wire x1="144.78" y1="129.54" x2="144.78" y2="147.32" width="0.1524" layer="91"/>
-<wire x1="144.78" y1="147.32" x2="165.1" y2="147.32" width="0.1524" layer="91"/>
-<pinref part="IC1" gate="G$1" pin="VDD_EXT"/>
+<pinref part="U$3" gate="G$1" pin="IO"/>
 </segment>
 </net>
 <net name="PWRKEY" class="0">
@@ -14098,7 +14001,7 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <segment>
 <wire x1="91.44" y1="22.86" x2="83.82" y2="22.86" width="0.1524" layer="91"/>
 <label x="83.82" y="22.86" size="1.778" layer="95"/>
-<pinref part="X2" gate="G$1" pin="2"/>
+<pinref part="X1" gate="G$1" pin="1"/>
 </segment>
 </net>
 <net name="GPRS_VBAT" class="0">
@@ -14186,7 +14089,7 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <wire x1="53.34" y1="22.86" x2="40.64" y2="22.86" width="0.1524" layer="91"/>
 <label x="43.18" y="22.86" size="1.778" layer="95"/>
 <pinref part="U$12" gate="G$1" pin="2V8"/>
-<pinref part="X1" gate="G$1" pin="4"/>
+<pinref part="X3" gate="G$1" pin="4"/>
 </segment>
 <segment>
 <pinref part="C17" gate="G$1" pin="2"/>
@@ -14259,6 +14162,17 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <pinref part="C19" gate="G$1" pin="1"/>
 <pinref part="U$22" gate="G$1" pin="2V8"/>
 <wire x1="243.84" y1="22.86" x2="243.84" y2="25.4" width="0.1524" layer="91"/>
+</segment>
+<segment>
+<pinref part="R8" gate="G$1" pin="1"/>
+<wire x1="40.64" y1="-7.62" x2="40.64" y2="-10.16" width="0.1524" layer="91"/>
+<pinref part="U$19" gate="G$1" pin="2V8"/>
+<wire x1="40.64" y1="-10.16" x2="45.72" y2="-10.16" width="0.1524" layer="91"/>
+<wire x1="45.72" y1="-10.16" x2="55.88" y2="-10.16" width="0.1524" layer="91"/>
+<wire x1="55.88" y1="-10.16" x2="55.88" y2="-5.08" width="0.1524" layer="91"/>
+<pinref part="R7" gate="G$1" pin="1"/>
+<wire x1="45.72" y1="-7.62" x2="45.72" y2="-10.16" width="0.1524" layer="91"/>
+<junction x="45.72" y="-10.16"/>
 </segment>
 </net>
 <net name="N$4" class="0">
