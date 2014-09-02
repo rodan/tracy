@@ -24,14 +24,6 @@
 
 #define GPSMAX 255
 
-#define GPS_ENABLE          P6OUT |= BIT0
-#define GPS_DISABLE         P6OUT &= ~BIT0
-#define GPS_BKP_ENABLE      P4OUT |= BIT6
-#define GPS_BKP_DISABLE     P4OUT &= ~BIT6
-
-#define CHARGE_ENABLE       P6OUT &= ~BIT1
-#define CHARGE_DISABLE      P6OUT |= BIT1
-
 const char gps_init[] = "$PMTK314,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*2A\r\n";
 //const char gps_init[] = "$PMTK314,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*2C\r\n";
 
@@ -110,8 +102,8 @@ static void parse_UI(enum sys_message msg)
 
 static void schedule(enum sys_message msg)
 {
-    uint16_t q_bat = 0;
-    //uint16_t q_raw = 0;
+    uint16_t q_bat = 0, q_raw = 0;
+    uint32_t v_bat, v_raw;
 
     //adc10_read(2, &q_raw, REFVSEL_1);
 
@@ -132,13 +124,43 @@ static void schedule(enum sys_message msg)
             gps_fix_shtd_ctr = 0;
             fix_next += fix_period;
             //s_status |= SIM900_INITIALIZED;
+
             adc10_read(3, &q_bat, REFVSEL_1);
-            if (q_bat > 700) {
-                // 700 is the equivalent of ~3.4v
+            adc10_read(2, &q_raw, REFVSEL_1);
+            v_bat = (uint32_t) q_bat * VREF_2_0_6_3 * DIV_BAT / 10000;
+            v_raw = (uint32_t) q_raw * VREF_2_0_6_2 * DIV_RAW / 10000;
+            stat.v_bat = v_bat;
+            stat.v_raw = v_raw;
+
+            if (stat.v_bat > 340) {
+                // if battery voltage is below ~3.4v
+                // the sim will most likely lock up while trying to TX
                 sim900_exec_default_task();
             }
         }
     }
+}
+#endif
+
+#ifdef CALIBRATION
+static void adc_calibration(enum sys_message msg)
+{
+    uint16_t q_bat = 0;
+    uint16_t q_raw = 0;
+
+    uint32_t v_bat, v_raw;
+
+    adc10_read(3, &q_bat, REFVSEL_1);
+    adc10_read(2, &q_raw, REFVSEL_1);
+
+    v_bat = (uint32_t) q_bat * VREF_2_0_6_3 * DIV_BAT / 10000;
+    v_raw = (uint32_t) q_raw * VREF_2_0_6_2 * DIV_RAW / 10000;
+
+    stat.v_bat = v_bat;
+    stat.v_raw = v_raw;
+
+    snprintf(str_temp, STR_LEN, "bat %u\t%u raw %u\t%u\r\n", q_bat, stat.v_bat, q_raw, stat.v_raw);
+    uart0_tx_str(str_temp, strlen(str_temp));
 }
 #endif
 
@@ -152,9 +174,14 @@ int main(void)
     sim900.next_state = SIM900_OFF;
 
     GPS_BKP_ENABLE;
-    CHARGE_ENABLE;
 
     settings_init(SEGMENT_B);
+
+    if (s.settings & CONF_ENABLE_CHARGING) {
+        CHARGE_ENABLE;
+    } else {
+        CHARGE_DISABLE;
+    }
 
     sys_messagebus_register(&parse_gprs, SYS_MSG_UART1_RX);
 #ifndef DEBUG_GPRS
@@ -162,6 +189,10 @@ int main(void)
     sys_messagebus_register(&schedule, SYS_MSG_RTC_SECOND);
 #else
     sys_messagebus_register(&parse_UI, SYS_MSG_UART0_RX);
+#endif
+
+#ifdef CALIBRATION
+    sys_messagebus_register(&adc_calibration, SYS_MSG_RTC_SECOND);
 #endif
 
     while (1) {

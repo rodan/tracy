@@ -20,11 +20,19 @@
 #define LED_ON          P1OUT |= BIT2
 #define LED_OFF         P1OUT &= ~BIT2
 
+#define GPS_ENABLE      P6OUT |= BIT0
+#define GPS_DISABLE     P6OUT &= ~BIT0
+#define GPS_BKP_ENABLE  P4OUT |= BIT6
+#define GPS_BKP_DISABLE P4OUT &= ~BIT6
+
+#define CHARGE_ENABLE   P6OUT &= ~BIT1
+#define CHARGE_DISABLE  P6OUT |= BIT1
+
 #define STR_LEN 64
 char str_temp[STR_LEN];
 
-#define VERSION             2   // must be incremented if struct settings_t changes
-#define FLASH_ADDR          SEGMENT_B
+#define VERSION         2   // must be incremented if struct settings_t changes
+#define FLASH_ADDR      SEGMENT_B
 
 // schedule status flags
 #define GPS_INITIALIZED     0x1
@@ -40,7 +48,9 @@ void settings_init(uint8_t * addr);
 #define MAX_PASS_LEN    20
 #define MAX_SERVER_LEN  20
 
-#define CONF_CELL_LOC   0x1
+#define CONF_SHOW_CELL_LOC   0x1
+#define CONF_SHOW_VOLTAGES   0x2
+#define CONF_ENABLE_CHARGING 0x4
 
 // this struct will end up written into an information flash segment
 // so it better not exceed 128bytes
@@ -66,7 +76,7 @@ struct tracy_settings_t s;
 
 static const struct tracy_settings_t defaults = {
     VERSION,                    // ver
-    CONF_CELL_LOC,              // settings
+    CONF_SHOW_CELL_LOC | CONF_SHOW_VOLTAGES | CONF_ENABLE_CHARGING,  // settings
     0,                          // ctrl_phone_len
     "",                         // ctrl_phone
     17,                         // gprs apn_name
@@ -79,5 +89,12 @@ static const struct tracy_settings_t defaults = {
     "www.simplex.ro",           // server
     80                          // port
 };
+
+struct tracy_stat_t {
+    uint16_t v_bat; // LiPo battery voltage multiplied by 100
+    uint16_t v_raw; // 5v rail voltage multiplied by 100
+};
+
+struct tracy_stat_t stat;
 
 #endif

@@ -8,6 +8,7 @@
 #include <string.h>
 #include <stdio.h>
 
+#include "proj.h"
 #include "sim900.h"
 #include "timer_a0.h"
 #include "uart1.h"
@@ -453,7 +454,12 @@ static void sim900_state_machine(enum sys_message msg)
                         } else {
                             sim900_tx_str("no_fix", 6);
                         }
-                        if (s.settings & CONF_CELL_LOC) {
+                        if (s.settings & CONF_SHOW_VOLTAGES) {
+                                    snprintf(str_temp, STR_LEN, "&vb=%u&v5=%u",
+                                            stat.v_bat, stat.v_raw);
+                                    sim900_tx_str(str_temp, strlen(str_temp));
+                        }
+                        if (s.settings & CONF_SHOW_CELL_LOC) {
                             // tower cell data
                             for (i=0;i<4;i++) {
                                 if (sim900.cell[i].cellid != 65535) {
@@ -1038,6 +1044,16 @@ uint8_t sim900_parse_sms(char *str, const uint16_t size)
             p += 4;
             extract_dec(p, &s.port);
             save = true;
+        } else if (strstr(str, "set")) {
+            p = strstr(str, "set");
+            p += 3;
+            extract_dec(p, &s.settings);
+            save = true;
+            if (s.settings & CONF_ENABLE_CHARGING) {
+                CHARGE_ENABLE;
+            } else {
+                CHARGE_DISABLE;
+            }
         }
     }
 
