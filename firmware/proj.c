@@ -16,7 +16,7 @@
 #include "drivers/uart0.h"
 #include "drivers/uart1.h"
 #include "drivers/adc.h"
-#include "drivers/nmea_parse.h"
+#include "drivers/gps.h"
 #include "drivers/sim900.h"
 #include "drivers/flash.h"
 #include "drivers/adc.h"

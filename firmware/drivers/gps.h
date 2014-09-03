@@ -1,5 +1,5 @@
-#ifndef __NMEA_PARSE_H__
-#define __NMEA_PARSE_H__
+#ifndef __GPS_H__
+#define __GPS_H__
 
 #include <inttypes.h>
 
@@ -29,22 +29,21 @@ struct nmea_gprmc_t mc_t;
 
 #ifdef CONFIG_GEOFENCE
 struct geofence_t {
-    double lat_home;
-    double lon_home;
-    double lat_cur;
-    double lon_cur;
-    double distance;
+    float lat_home;
+    float lon_home;
+    float lat_cur;
+    float lon_cur;
+    float distance;
+    int bearing;
 };
 
 struct geofence_t geo;
 #endif
 
 uint8_t nmea_parse(char *str, const uint8_t len);
-uint8_t str_to_uint32(char *str, uint32_t * out, const uint8_t seek,
-                      const uint8_t len, const uint32_t min, const uint32_t max);
-uint8_t str_to_uint16(char *str, uint16_t * out, const uint8_t seek,
-                      const uint8_t len, const uint16_t min, const uint16_t max);
-
-void haversine_km(struct geofence_t geofence);
+float nmea_to_float(const uint8_t deg, const uint8_t min, const uint8_t fr, const uint8_t suffix);
+//void haversine_km(struct geofence_t geofence);
+void distance_between(const float lat1, const float long1, const float lat2,
+                const float long2, float * distance, int * bearing);
 
 #endif

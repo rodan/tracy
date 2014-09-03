@@ -15,7 +15,7 @@
 #include "sys_messagebus.h"
 #include "flash.h"
 #include "rtc.h"
-#include "nmea_parse.h"
+#include "gps.h"
 
 #ifdef DEBUG_GPRS
 #include "uart0.h"
@@ -444,9 +444,18 @@ static void sim900_state_machine(enum sys_message msg)
                         timer_a0_delay_noblk_ccr2(_6sp);
                         sim900_tx_str("GET /scripts/t?i=", 17);
                         sim900_tx_str(sim900.imei, 15);
-                        sim900_tx_str("&l=", 3);
                         if (mc_f.fix) {
-                            snprintf(str_temp, STR_LEN, "%d %d.%04d%c %d %d.%04d%c&f=%ld",
+#ifdef CONFIG_GEOFENCE
+                            geo.lat_home = geo.lat_cur;
+                            geo.lon_home = geo.lon_cur;
+                            geo.lat_cur = nmea_to_float(mc_f.lat_deg, mc_f.lat_min, mc_f.lat_fr, mc_f.lat_suffix);
+                            geo.lon_cur = nmea_to_float(mc_f.lon_deg, mc_f.lon_min, mc_f.lon_fr, mc_f.lon_suffix);
+                            distance_between(geo.lat_home, geo.lon_home, geo.lat_cur, geo.lon_cur, &geo.distance, &geo.bearing);
+                            snprintf(str_temp, STR_LEN, "&gd=%ld&gb=%d",
+                                    (uint32_t) geo.distance, geo.bearing);
+                            sim900_tx_str(str_temp, strlen(str_temp));
+#endif
+                            snprintf(str_temp, STR_LEN, "&l=%d %d.%04d%c %d %d.%04d%c&f=%ld",
                             mc_f.lat_deg, mc_f.lat_min, mc_f.lat_fr, mc_f.lat_suffix,
                             mc_f.lon_deg, mc_f.lon_min, mc_f.lon_fr, mc_f.lon_suffix,
                             rtca_time.sys - mc_f.fixtime);

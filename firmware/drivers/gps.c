@@ -2,11 +2,13 @@
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
+
 #include "drivers/rtc.h"
-#include "drivers/nmea_parse.h"
+#include "drivers/gps.h"
+#include "drivers/helper.h"
 #include "proj.h"
 
-#define d2r 0.0174532925199433
+//#define d2r 0.0174532925199433
 
 /// function that parses one full nmea sentence
 /// input
@@ -157,11 +159,11 @@ uint8_t nmea_parse(char *s, const uint8_t len)
     return EXIT_SUCCESS;
 }
 
-double nmea_to_double(const uint8_t deg, const uint8_t min, const uint8_t fr, const uint8_t suffix)
+float nmea_to_float(const uint8_t deg, const uint8_t min, const uint8_t fr, const uint8_t suffix)
 {
-    double rv;
+    float rv;
 
-    rv = (double) deg + ((double) min + (double) fr / 10000.0) / 60.0;
+    rv = (float) deg + ((float) min + (float) fr / 10000.0) / 60.0;
 
     if ((suffix == 'S') || (suffix == 'W')) {
         rv *= -1.0;
@@ -170,62 +172,29 @@ double nmea_to_double(const uint8_t deg, const uint8_t min, const uint8_t fr, co
     return rv;
 }
 
-void haversine_km(struct geofence_t g)
-{
-    double dlong = (g.lon_cur - g.lon_home) * d2r;
-    double dlat = (g.lat_cur - g.lat_home) * d2r;
-    double a1 = sin(dlat/2.0);
-    double a2 = sin(dlong/2.0);
-    double a = (a1 * a1) + (cos(g.lat_home*d2r) * cos(g.lat_cur*d2r) * a2 * a2);
-    double c = 2.0 * atan2(sqrt(a), sqrt(1.0-a));
-    g.distance = 6367 * c;
+void distance_between(const float lat1, const float long1, const float lat2,
+                const float long2, float * distance, int * bearing) {
+        //courtesy of http://arduiniana.org/libraries/tinygps/
+        float delta = radians(long1 - long2);
+        float sdlong = _sin(delta);
+        float cdlong = _cos(delta);
+        float rlat1 = radians(lat1);
+        float rlat2 = radians(lat2);
+        float slat1 = _sin(rlat1);
+        float clat1 = _cos(rlat1);
+        float slat2 = _sin(rlat2);
+        float clat2 = _cos(rlat2);
+        delta = (clat1 * slat2) - (slat1 * clat2 * cdlong);
+        float x = delta ;
+        float y = sdlong * clat2;
+        delta = sq(delta);
+        delta += sq(clat2 * sdlong);
+        delta = _sqrt(delta);
+        float denom = (slat1 * slat2) + (clat1 * clat2 * cdlong);
+        delta = _atan2f(delta, denom);
+        *distance =  delta * 6372795;
+        x = (180.0 * (_atan2f(y, x)/PI)) ;
+        *bearing = ((int) -x + 360)%360 ;
 }
 
-uint8_t str_to_uint16(char *str, uint16_t * out, const uint8_t seek,
-                      const uint8_t len, const uint16_t min, const uint16_t max)
-{
-    uint16_t val = 0, pow = 1;
-    uint8_t i;
-
-    // pow() is missing in msp gcc, so we improvise
-    for (i = 0; i < len - 1; i++) {
-        pow *= 10;
-    }
-    for (i = 0; i < len; i++) {
-        if ((str[seek + i] > 47) && (str[seek + i] < 58)) {
-            val += (str[seek + i] - 48) * pow;
-        }
-        pow /= 10;
-    }
-    if ((val >= min) && (val <= max)) {
-        *out = val;
-        return EXIT_SUCCESS;
-    } else {
-        return EXIT_FAILURE;
-    }
-}
-
-uint8_t str_to_uint32(char *str, uint32_t * out, const uint8_t seek,
-                      const uint8_t len, const uint32_t min, const uint32_t max)
-{
-    uint32_t val = 0, pow = 1;
-    uint8_t i;
-
-    // pow() is missing in msp gcc, so we improvise
-    for (i = 0; i < len - 1; i++) {
-        pow *= 10;
-    }
-    for (i = 0; i < len; i++) {
-        if ((str[seek + i] > 47) && (str[seek + i] < 58)) {
-            val += (str[seek + i] - 48) * pow;
-        }
-        pow /= 10;
-    }
-    if ((val >= min) && (val <= max)) {
-        *out = val;
-        return EXIT_SUCCESS;
-    } else {
-        return EXIT_FAILURE;
-    }
-}
 

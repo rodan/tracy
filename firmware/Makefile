@@ -15,7 +15,7 @@ CC_DMACH	= -D__MSP430F5510__
 CFLAGS		+= $(CC_CMACH) $(CC_DMACH) -Wall -Wno-switch
 CFLAGS		+= -fno-force-addr -finline-limit=1 -fno-schedule-insns
 CFLAGS		+= -fshort-enums -Wl,-Map=output.map
-LDFLAGS		=
+LDFLAGS		= -lm
 
 CFLAGS_REL	+= -Os -fdata-sections -ffunction-sections -fomit-frame-pointer
 LDFLAGS_REL	+= -Wl,--gc-sections -Wl,-s
@@ -88,7 +88,7 @@ $(OBJS): $(PROJ).cflags
 $(PROJ).elf: $(OBJS)
 	@echo -e "\n>> Building $@ as target $(TARGET)"
 	@$(CC) $(CFLAGS) $(LDFLAGS) $(INCLUDES) -o $@ $+ && size $@
-	#@python tools/msp430-ram-usage $@
+	@#@python tools/msp430-ram-usage $@
 
 modinit.o: modinit.c
 	@echo "CC $<"
