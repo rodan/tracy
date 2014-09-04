@@ -24,8 +24,8 @@
 
 #define GPSMAX 255
 
-const char gps_init[] = "$PMTK314,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*2A\r\n";
-//const char gps_init[] = "$PMTK314,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*2C\r\n";
+//const char gps_init[] = "$PMTK314,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*2A\r\n";
+const char gps_init[] = "$PMTK314,0,2,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0*28\r\n";
 
 const uint32_t rtca_set_period = 86400;
 uint32_t rtca_set_next = 0;
@@ -33,8 +33,8 @@ uint32_t rtca_set_next = 0;
 uint16_t fix_period = 600; // period between 2 fix reports sent via gprs
 uint32_t fix_next = 2;           // fix timer   
 
-uint8_t gps_fix_shtd = 5;  // after how many fixes should the the gps be turned off
-uint16_t gps_retry_period = 300; // timeout period until a fix is expected
+uint8_t gps_fix_shtd = 10;  // after how many fixes should the the gps be turned off
+uint16_t gps_retry_period = 300; // timeout period (in seconds) until a fix is expected
 uint8_t gps_fix_shtd_ctr = 0;
 
 uint8_t s_status = 0;       // schedule status
@@ -46,7 +46,7 @@ static void parse_gps(enum sys_message msg)
     if ((nmea_parse((char *)uart0_rx_buf, uart0_p) == EXIT_SUCCESS) && (mc_f.fix)) {
         gps_fix_shtd_ctr++;
 
-#ifdef NEVER
+#ifdef DEBUG_GPS
         snprintf(str_temp, STR_LEN, "%d %d.%04d%c %d %d.%04d%c  %lds\r\n",
                  mc_f.lat_deg, mc_f.lat_min, mc_f.lat_fr, mc_f.lat_suffix,
                  mc_f.lon_deg, mc_f.lon_min, mc_f.lon_fr, mc_f.lon_suffix,
@@ -74,8 +74,9 @@ static void parse_gps(enum sys_message msg)
 
 static void parse_gprs(enum sys_message msg)
 {
+#ifdef DEBUG_GPRS
     uart0_tx_str((char *)uart1_rx_buf, uart1_p);
-
+#endif
     sim900_parse_rx((char *)uart1_rx_buf, uart1_p);
 }
 
@@ -102,11 +103,6 @@ static void parse_UI(enum sys_message msg)
 
 static void schedule(enum sys_message msg)
 {
-    uint16_t q_bat = 0, q_raw = 0;
-    uint32_t v_bat, v_raw;
-
-    //adc10_read(2, &q_raw, REFVSEL_1);
-
     // gps related
     if (rtca_time.sys > fix_next) {
         GPS_ENABLE;
@@ -118,8 +114,13 @@ static void schedule(enum sys_message msg)
             mc_f.fix = false;
         }
 
+#ifndef DEBUG_GPS
+    uint16_t q_bat = 0, q_raw = 0;
+    uint32_t v_bat, v_raw;
+
         if ((rtca_time.sys > fix_next + gps_retry_period) || (gps_fix_shtd_ctr >= gps_fix_shtd)) {
             GPS_DISABLE;
+
             s_status &= ~GPS_INITIALIZED;
             gps_fix_shtd_ctr = 0;
             fix_next += fix_period;
@@ -138,6 +139,7 @@ static void schedule(enum sys_message msg)
                 sim900_exec_default_task();
             }
         }
+#endif
     }
 }
 #endif
@@ -174,7 +176,6 @@ int main(void)
     sim900.next_state = SIM900_OFF;
 
     GPS_BKP_ENABLE;
-
     settings_init(SEGMENT_B);
 
     if (s.settings & CONF_ENABLE_CHARGING) {
@@ -183,16 +184,23 @@ int main(void)
         CHARGE_DISABLE;
     }
 
-    sys_messagebus_register(&parse_gprs, SYS_MSG_UART1_RX);
-#ifndef DEBUG_GPRS
-    sys_messagebus_register(&parse_gps, SYS_MSG_UART0_RX);
-    sys_messagebus_register(&schedule, SYS_MSG_RTC_SECOND);
-#else
-    sys_messagebus_register(&parse_UI, SYS_MSG_UART0_RX);
+#ifdef DEBUG_GPS
+    uart1_init(9600);
+    uart1_tx_str("gps debug state\r\n", 17);
 #endif
 
 #ifdef CALIBRATION
     sys_messagebus_register(&adc_calibration, SYS_MSG_RTC_SECOND);
+#else
+    sys_messagebus_register(&schedule, SYS_MSG_RTC_SECOND);
+    #ifndef DEBUG_GPRS
+        sys_messagebus_register(&parse_gps, SYS_MSG_UART0_RX);
+        #ifndef DEBUG_GPS
+            sys_messagebus_register(&parse_gprs, SYS_MSG_UART1_RX);
+        #endif
+    #else
+        sys_messagebus_register(&parse_UI, SYS_MSG_UART0_RX);
+    #endif
 #endif
 
     while (1) {
@@ -247,7 +255,8 @@ void main_init(void)
     PMAPPWD = 0x02D52;
     // set up UART port mappings
 
-    // there is only one debug uart so we either leave out the gps or the gprs module
+    // there is only one debug uart on (P4.1, P4.0)
+    // so we either leave out the gps (P4.2, P4.3) or the gprs (P4.4, P4.5) module
 
 #ifdef DEBUG_GPRS
     // debug interface
@@ -255,10 +264,16 @@ void main_init(void)
     P4MAP0 = PM_UCA0RXD;
     P4SEL |= 0x3;
 #else
-    // GPS module
+    // enable GPS module
     P4MAP2 = PM_UCA0TXD;
     P4MAP3 = PM_UCA0RXD;
     P4SEL |= 0xc;
+#endif
+#ifdef DEBUG_GPS
+    // debug interface
+    P4MAP1 = PM_UCA1TXD;
+    P4MAP0 = PM_UCA1RXD;
+    P4SEL |= 0x3;
 #endif
     PMAPPWD = 0;
 

@@ -8,8 +8,6 @@
 #include "drivers/helper.h"
 #include "proj.h"
 
-//#define d2r 0.0174532925199433
-
 /// function that parses one full nmea sentence
 /// input
 ///   s   - pointer to the beginning of the nmea string
@@ -153,6 +151,7 @@ uint8_t nmea_parse(char *s, const uint8_t len)
             }
             memset(&mc_t, 0, sizeof(mc_t));
         }
+    } else if (strstr(s, "$GPGSA")) {
     } else {
         return EXIT_FAILURE;
     }
