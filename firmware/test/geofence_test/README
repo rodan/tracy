@@ -1,0 +1,5 @@
+
+program used to test the calculated gps distances given by different math.h implementations.
+this is an x86 build, not msp430 specific.
+
+
