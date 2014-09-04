@@ -4,31 +4,42 @@
 #include "gps.h"
 #include "helper.h"
 
+char loc_str[LOC_MAX][STR_MAX] = {
+"44 25.9628N 26 1.8785E",
+"44 25.9836N 26 1.7893E",
+"44 25.9726N 26 1.8237E",
+"44 25.9838N 26 1.8191E",
+"44 26.0167N 26 1.8183E",
+"44 26.0094N 26 1.8337E",
+"44 26.0219N 26 1.8453E",
+"44 25.9773N 26 1.8476E"
+};
+
+
+void haversine_dbl(const double lat1, const double long1, const double lat2, const double long2, double * distance)
+{
+    #define d2r (M_PI / 180.0)
+
+    double dlong = (long2 - long1) * d2r;
+    double dlat = (lat2 - lat1) * d2r;
+    double a = pow(sin(dlat/2.0), 2) + cos(lat1*d2r) * cos(lat2*d2r) * pow(sin(dlong/2.0), 2);
+    double c = 2 * atan2(sqrt(a), sqrt(1-a));
+    * distance = 6372795 * c;
+}
+
+void haversine_f(const float lat1, const float long1, const float lat2, const float long2, float * distance)
+{
+    #define d2r (M_PI / 180.0)
+
+    float dlong = (long2 - long1) * d2r;
+    float dlat = (lat2 - lat1) * d2r;
+    float a = pow(sin(dlat/2.0), 2) + cos(lat1*d2r) * cos(lat2*d2r) * pow(sin(dlong/2.0), 2);
+    float c = 2 * atan2(sqrt(a), sqrt(1-a));
+    * distance = 6372795 * c;
+}
+
 int main()
 {
-    char loc_str[LOC_MAX][STR_MAX] = {
-"44 25.9822N 26 1.8231E",
-"44 25.9781N 26 1.8269E",
-"44 25.9779N 26 1.8404E",
-"44 25.9839N 26 1.8798E",
-"44 25.9695N 26 1.8581E",
-"44 25.9649N 26 1.8655E",
-"44 25.9736N 26 1.8708E",
-"44 25.9697N 26 1.8686E",
-"44 26.0184N 26 1.8377E",
-"44 25.9694N 26 1.8593E",
-"44 26.0228N 26 1.8454E",
-"44 25.9678N 26 1.8447E",
-"44 25.9795N 26 1.8527E",
-"44 25.9835N 26 1.8606E",
-"44 25.9873N 26 1.8827E",
-"44 25.9765N 26 1.8703E",
-"44 25.9856N 26 1.8722E",
-"44 26.0550N 26 1.8231E",
-"44 26.0565N 26 1.8316E",
-"44 26.0473N 26 1.8294E"
-    };    
-
     uint8_t i, j;
     char *p;
     uint16_t tmp16 = 0;
@@ -60,7 +71,9 @@ int main()
 
         }
 
-        distance_between(l.lat[0], l.lon[0], l.lat[1], l.lon[1], &l.dist_s_fl, &l.bearing_s_fl);
+        distance_between(l.lat[0], l.lon[0], l.lat[1], l.lon[1], &l.dist_s_f, &l.bearing_s_f);
+        haversine_dbl(l.lat[0], l.lon[0], l.lat[1], l.lon[1], &l.dist_math_dbl);
+        haversine_f(l.lat[0], l.lon[0], l.lat[1], l.lon[1], &l.dist_math_f);
 
         printf("{\r\n");
         printf("\tsrc: %s\r\n\tsrc: %02d %02d.%04d%c, %02d %02d.%04d%c\r\n", 
@@ -77,7 +90,9 @@ int main()
                 l.lat[0], l.lon[0],
                 l.lat[1], l.lon[1]
                 );
-        printf("\tdist_simple: %f m, %d\r\n", l.dist_s_fl, l.bearing_s_fl);
+        printf("\tdist_simple float:     %f m, bearing %d\r\n", l.dist_s_f, l.bearing_s_f);
+        printf("\tdist_haversine double: %f m\r\n", l.dist_math_dbl);
+        printf("\tdist_haversine float:  %f m\r\n", l.dist_math_f);
         printf("}\r\n");
     }
 

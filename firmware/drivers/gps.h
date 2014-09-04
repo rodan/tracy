@@ -34,7 +34,7 @@ struct geofence_t {
     float lat_cur;
     float lon_cur;
     float distance;
-    int bearing;
+    uint16_t bearing;
 };
 
 struct geofence_t geo;
