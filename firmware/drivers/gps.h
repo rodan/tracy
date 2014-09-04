@@ -41,9 +41,9 @@ struct geofence_t geo;
 #endif
 
 uint8_t nmea_parse(char *str, const uint8_t len);
-float nmea_to_float(const uint8_t deg, const uint8_t min, const uint8_t fr, const uint8_t suffix);
+float nmea_to_float(const uint8_t deg, const uint8_t min, const uint16_t fr, const uint8_t suffix);
 //void haversine_km(struct geofence_t geofence);
 void distance_between(const float lat1, const float long1, const float lat2,
-                const float long2, float * distance, int * bearing);
+                const float long2, float * distance, uint16_t * bearing);
 
 #endif

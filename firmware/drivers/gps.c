@@ -159,11 +159,11 @@ uint8_t nmea_parse(char *s, const uint8_t len)
     return EXIT_SUCCESS;
 }
 
-float nmea_to_float(const uint8_t deg, const uint8_t min, const uint8_t fr, const uint8_t suffix)
+float nmea_to_float(const uint8_t deg, const uint8_t min, const uint16_t fr, const uint8_t suffix)
 {
     float rv;
 
-    rv = (float) deg + ((float) min + (float) fr / 10000.0) / 60.0;
+    rv = (float) deg + ((float) min + ((float) fr / 10000.0)) / 60.0;
 
     if ((suffix == 'S') || (suffix == 'W')) {
         rv *= -1.0;
@@ -173,7 +173,7 @@ float nmea_to_float(const uint8_t deg, const uint8_t min, const uint8_t fr, cons
 }
 
 void distance_between(const float lat1, const float long1, const float lat2,
-                const float long2, float * distance, int * bearing) {
+                const float long2, float * distance, uint16_t * bearing) {
         //courtesy of http://arduiniana.org/libraries/tinygps/
         float delta = radians(long1 - long2);
         float sdlong = _sin(delta);
