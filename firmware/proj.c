@@ -24,7 +24,6 @@
 
 #define GPSMAX 255
 
-//const char gps_init[] = "$PMTK314,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*2A\r\n";
 const char gps_init[] = "$PMTK314,0,2,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0*28\r\n";
 
 const uint32_t rtca_set_period = 86400;
@@ -33,7 +32,7 @@ uint32_t rtca_set_next = 0;
 uint16_t fix_period = 600; // period between 2 fix reports sent via gprs
 uint32_t fix_next = 2;           // fix timer   
 
-uint8_t gps_fix_shtd = 10;  // after how many fixes should the the gps be turned off
+uint8_t gps_fix_shtd = 30;  // after how many fixes should the the gps be turned off
 uint16_t gps_retry_period = 300; // timeout period (in seconds) until a fix is expected
 uint8_t gps_fix_shtd_ctr = 0;
 
@@ -46,13 +45,13 @@ static void parse_gps(enum sys_message msg)
     if ((nmea_parse((char *)uart0_rx_buf, uart0_p) == EXIT_SUCCESS) && (mc_f.fix)) {
         gps_fix_shtd_ctr++;
 
-#ifdef DEBUG_GPS
+        /*
         snprintf(str_temp, STR_LEN, "%d %d.%04d%c %d %d.%04d%c  %lds\r\n",
                  mc_f.lat_deg, mc_f.lat_min, mc_f.lat_fr, mc_f.lat_suffix,
                  mc_f.lon_deg, mc_f.lon_min, mc_f.lon_fr, mc_f.lon_suffix,
                  rtca_time.sys - mc_f.fixtime);
         uart1_tx_str(str_temp, strlen(str_temp));
-#endif
+        */
 
         if ((rtca_time.sys > rtca_set_next) || (rtca_time.min != mc_f.minute)) {
             rtca_time.year = mc_f.year;
@@ -69,6 +68,7 @@ static void parse_gps(enum sys_message msg)
 
     uart0_p = 0;
     uart0_rx_enable = 1;
+    //LED_OFF;
 }
 #endif
 
@@ -119,8 +119,7 @@ static void schedule(enum sys_message msg)
     uint32_t v_bat, v_raw;
 
         if ((rtca_time.sys > fix_next + gps_retry_period) || (gps_fix_shtd_ctr >= gps_fix_shtd)) {
-            GPS_DISABLE;
-
+            //GPS_DISABLE;
             s_status &= ~GPS_INITIALIZED;
             gps_fix_shtd_ctr = 0;
             fix_next += fix_period;

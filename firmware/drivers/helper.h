@@ -20,5 +20,7 @@ uint8_t str_to_uint32(char *str, uint32_t * out, const uint8_t seek,
                       const uint8_t len, const uint32_t min, const uint32_t max);
 uint8_t str_to_uint16(char *str, uint16_t * out, const uint8_t seek,
                       const uint8_t len, const uint16_t min, const uint16_t max);
+uint8_t str_to_floaty_uint16(char *str, uint16_t * out, const uint8_t seek,
+                      const uint8_t len, const uint8_t precision, const uint16_t min, const uint16_t max);
 
 #endif

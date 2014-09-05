@@ -13,7 +13,6 @@ void uart0_init(void)
     UCA0IE |= UCRXIE;           // enable USCI_A0 RX interrupt
     uart0_p = 0;
     uart0_rx_enable = 1;
-    uart0_rx_err = 0;
 }
 
 uint16_t uart0_tx_str(char *str, const uint16_t size)
@@ -38,23 +37,21 @@ void USCI_A0_ISR(void)
     switch (iv) {
     case 2:
         rx = UCA0RXBUF;
-        if (uart0_rx_enable && !uart0_rx_err && (uart0_p < UART0_RXBUF_SZ-2)) {
+        if (uart0_rx_enable && (uart0_p < UART0_RXBUF_SZ-2)) {
             if (rx == 0x0a) {
                 return;
             } else if (rx == 0x0d) {
+                //LED_ON;
                 ev = UART0_EV_RX;
                 uart0_rx_buf[uart0_p] = 0;
-                uart0_rx_enable = 0;
-                //uart0_rx_err = 0;
+                uart0_rx_enable = false;
                 _BIC_SR_IRQ(LPM3_bits);
             } else {
                 uart0_rx_buf[uart0_p] = rx;
                 uart0_p++;
             }
         } else {
-            uart0_rx_err++;
             if ((rx == 0x0d) || (rx == 0x0a)) {
-                uart0_rx_err = 0;
                 uart0_p = 0;
             }
         }

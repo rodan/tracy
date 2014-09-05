@@ -4,6 +4,7 @@
 #include <inttypes.h>
 
 struct nmea_gprmc_t {
+    uint16_t pdop;     // position dilution of precision
     uint8_t hour;
     uint8_t minute;
     uint8_t second;

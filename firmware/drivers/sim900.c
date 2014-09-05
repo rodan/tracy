@@ -347,6 +347,7 @@ static void sim900_state_machine(enum sys_message msg)
         case CMD_OFF:
             switch (sim900.next_state) {
                 default:
+                    GPS_DISABLE;
                     sim900.next_state = SIM900_VBAT_OFF;
                     timer_a0_delay_noblk_ccr2(_3sp);
                     sim900_tx_cmd("AT+CPOWD=1\r", 11, _3s);
@@ -373,6 +374,7 @@ static void sim900_state_machine(enum sys_message msg)
         case CMD_SEND_GPRS:
             switch (sim900.next_state) {
                 case SIM900_IP_INITIAL:
+                    GPS_DISABLE;
                     sim900.next_state = SIM900_IP_START;
                     timer_a0_delay_noblk_ccr2(SM_R_DELAY);
                     sim900_tx_str("AT+CGDCONT=1,\"IP\",\"", 19);
@@ -455,10 +457,10 @@ static void sim900_state_machine(enum sys_message msg)
                                     (uint32_t) geo.distance, geo.bearing);
                             sim900_tx_str(str_temp, strlen(str_temp));
 #endif
-                            snprintf(str_temp, STR_LEN, "&l=%d %d.%04d%c %d %d.%04d%c&f=%ld",
+                            snprintf(str_temp, STR_LEN, "&l=%d %d.%04d%c %d %d.%04d%c&f=%ld&p=%d",
                             mc_f.lat_deg, mc_f.lat_min, mc_f.lat_fr, mc_f.lat_suffix,
                             mc_f.lon_deg, mc_f.lon_min, mc_f.lon_fr, mc_f.lon_suffix,
-                            rtca_time.sys - mc_f.fixtime);
+                            rtca_time.sys - mc_f.fixtime, mc_f.pdop);
                             sim900_tx_str(str_temp, strlen(str_temp));
                         } else {
                             sim900_tx_str("no_fix", 6);

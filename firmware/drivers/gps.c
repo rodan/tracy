@@ -26,8 +26,8 @@ uint8_t nmea_parse(char *s, const uint8_t len)
     uint16_t dlen, rlen;
     uint8_t *dst_p, *src_p;
 
-    if (strstr(s, "$GPRMC")) {
-        if (len < 68) {
+    if (strstr(s, "RMC")) {
+        if (len < 65) {
             return EXIT_FAILURE;
         }
         // time
@@ -142,7 +142,19 @@ uint8_t nmea_parse(char *s, const uint8_t len)
             mc_t.year = (tmp32 % 100) + 2000;
         }
 
-        if (mc_t.fix) {
+        /*
+        snprintf(str_temp, STR_LEN, "t %d %d.%04d%c %d %d.%04d%c  %lds %d\r\n",
+                 mc_t.lat_deg, mc_t.lat_min, mc_t.lat_fr, mc_t.lat_suffix,
+                 mc_t.lon_deg, mc_t.lon_min, mc_t.lon_fr, mc_t.lon_suffix,
+                 rtca_time.sys - mc_t.fixtime, mc_t.pdop);
+        uart1_tx_str(str_temp, strlen(str_temp));
+        */
+
+        if (mc_f.pdop == 0) {
+            mc_f.pdop = 9999;
+        }
+
+        if (mc_t.fix && ((mc_t.pdop <= mc_f.pdop) || (rtca_time.sys - mc_f.fixtime > 30))) {
             mc_t.fixtime = rtca_time.sys;
             src_p = (uint8_t *) & mc_t;
             dst_p = (uint8_t *) & mc_f;
@@ -151,7 +163,31 @@ uint8_t nmea_parse(char *s, const uint8_t len)
             }
             memset(&mc_t, 0, sizeof(mc_t));
         }
-    } else if (strstr(s, "$GPGSA")) {
+
+        /*
+        snprintf(str_temp, STR_LEN, "f %d %d.%04d%c %d %d.%04d%c  %lds %d\r\n",
+                 mc_f.lat_deg, mc_f.lat_min, mc_f.lat_fr, mc_f.lat_suffix,
+                 mc_f.lon_deg, mc_f.lon_min, mc_f.lon_fr, mc_f.lon_suffix,
+                 rtca_time.sys - mc_f.fixtime, mc_f.pdop);
+        uart1_tx_str(str_temp, strlen(str_temp));
+        */
+
+    } else if (strstr(s, "GSA")) {
+        uint8_t c = 0;
+        for (i=0;i<len;i++) {
+            if (*p == ',') {
+                c++;
+            }
+            p++;
+            if (c == 15) {
+                np = strchr(p, ',');
+                dlen = np - p;
+                if ((dlen > 0) && (dlen < 6)) {
+                    str_to_uint16(p, &mc_t.pdop, 0, dlen, 0, 9999);
+                }
+                break;
+            }
+        }
     } else {
         return EXIT_FAILURE;
     }

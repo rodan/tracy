@@ -122,18 +122,16 @@ float sq(const float x)
 uint8_t str_to_uint16(char *str, uint16_t * out, const uint8_t seek,
                       const uint8_t len, const uint16_t min, const uint16_t max)
 {
-    uint16_t val = 0, pow = 1;
+    uint16_t val = 0;//, pow = 1;
     uint8_t i;
+    char c;
 
-    // pow() is missing in msp gcc, so we improvise
-    for (i = 0; i < len - 1; i++) {
-        pow *= 10;
-    }
     for (i = 0; i < len; i++) {
-        if ((str[seek + i] > 47) && (str[seek + i] < 58)) {
-            val += (str[seek + i] - 48) * pow;
+        c = str[seek + i];
+        if ((c > 47) && (c < 58)) {
+            val *= 10;
+            val += c - 48;
         }
-        pow /= 10;
     }
     if ((val >= min) && (val <= max)) {
         *out = val;
