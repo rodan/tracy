@@ -111,7 +111,8 @@ static void schedule(enum sys_message msg)
             uart0_tx_str((char *)gps_init, 51);
             s_status |= GPS_INITIALIZED;
             // invalidate last fix
-            mc_f.fix = false;
+            //mc_f.fix = false;
+            memset(&mc_f, 0, sizeof(mc_f));
         }
 
 #ifndef DEBUG_GPS
