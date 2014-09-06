@@ -3,6 +3,8 @@
 
 #include <inttypes.h>
 
+#define FIX_INVALIDATE_PERIOD 240 // time in seconds after which the fix is no longer considered valid
+
 struct nmea_gprmc_t {
     uint16_t pdop;     // position dilution of precision
     uint8_t hour;

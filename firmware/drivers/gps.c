@@ -142,6 +142,8 @@ uint8_t nmea_parse(char *s, const uint8_t len)
             mc_t.year = (tmp32 % 100) + 2000;
         }
 
+        mc_t.fixtime = rtca_time.sys;
+
         /*
         snprintf(str_temp, STR_LEN, "t %d %d.%04d%c %d %d.%04d%c  %lds %d\r\n",
                  mc_t.lat_deg, mc_t.lat_min, mc_t.lat_fr, mc_t.lat_suffix,
@@ -154,8 +156,20 @@ uint8_t nmea_parse(char *s, const uint8_t len)
             mc_f.pdop = 9999;
         }
 
-        if (mc_t.fix && ((mc_t.pdop <= mc_f.pdop) || (rtca_time.sys - mc_f.fixtime > 30))) {
-            mc_t.fixtime = rtca_time.sys;
+        if (mc_t.fix && (mc_t.pdop < 300) && ((rtca_time.sys > rtca_set_next) || (rtca_time.min != mc_f.minute))) {
+            rtca_time.year = mc_t.year;
+            rtca_time.mon = mc_t.month;
+            rtca_time.day = mc_t.day;
+            rtca_time.hour = mc_t.hour;
+            rtca_time.min = mc_t.minute;
+            rtca_time.sec = mc_t.second;
+
+            rtca_set_time();
+            rtca_set_next += RTC_SET_PERIOD;
+        }
+
+        // store the new fix only if pdop is better or FIX_INVALIDATE_PERIOD since last fix has elapsed
+        if (mc_t.fix && ((mc_t.pdop <= mc_f.pdop) || (rtca_time.sys - mc_f.fixtime > FIX_INVALIDATE_PERIOD))) {
             src_p = (uint8_t *) & mc_t;
             dst_p = (uint8_t *) & mc_f;
             for (i = 0; i < sizeof(mc_t); i++) {

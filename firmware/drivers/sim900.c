@@ -463,7 +463,7 @@ static void sim900_state_machine(enum sys_message msg)
                             rtca_time.sys - mc_f.fixtime, mc_f.pdop);
                             sim900_tx_str(str_temp, strlen(str_temp));
                         } else {
-                            sim900_tx_str("no_fix", 6);
+                            sim900_tx_str("&l=no_fix", 9);
                         }
                         if (s.settings & CONF_SHOW_VOLTAGES) {
                                     snprintf(str_temp, STR_LEN, "&vb=%u&v5=%u",

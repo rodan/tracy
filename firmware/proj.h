@@ -31,12 +31,11 @@
 #define STR_LEN 64
 char str_temp[STR_LEN];
 
+#define RTC_SET_PERIOD  86400 // maximum period (in seconds) after which the local RTC is set using gps values
+uint32_t rtca_set_next;
+
 #define VERSION         2   // must be incremented if struct settings_t changes
 #define FLASH_ADDR      SEGMENT_B
-
-// schedule status flags
-#define GPS_INITIALIZED     0x1
-#define SIM900_INITIALIZED  0x2
 
 void main_init(void);
 void check_events(void);
@@ -96,5 +95,14 @@ struct tracy_stat_t {
 };
 
 struct tracy_stat_t stat;
+
+typedef enum {
+    MAIN_IDLE,
+    MAIN_START_GPS,
+    MAIN_INIT_GPS,
+    MAIN_START_GPRS
+} main_state_t;
+
+main_state_t main_next_state;
 
 #endif

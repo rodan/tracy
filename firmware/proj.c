@@ -26,49 +26,21 @@
 
 const char gps_init[] = "$PMTK314,0,2,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0*28\r\n";
 
-const uint32_t rtca_set_period = 86400;
 uint32_t rtca_set_next = 0;
 
-uint16_t fix_period = 600; // period between 2 fix reports sent via gprs
-uint32_t fix_next = 2;           // fix timer   
+uint32_t trigger_next = 0;
+uint16_t loop_period = 600; // period (in seconds) between 2 fix reports sent via gprs
+uint16_t gps_warmup = 120;  // period (in seconds) when only the gps antenna is active
 
-uint8_t gps_fix_shtd = 30;  // after how many fixes should the the gps be turned off
-uint16_t gps_retry_period = 300; // timeout period (in seconds) until a fix is expected
-uint8_t gps_fix_shtd_ctr = 0;
-
-uint8_t s_status = 0;       // schedule status
 
 #ifndef DEBUG_GPRS
 static void parse_gps(enum sys_message msg)
 {
-
-    if ((nmea_parse((char *)uart0_rx_buf, uart0_p) == EXIT_SUCCESS) && (mc_f.fix)) {
-        gps_fix_shtd_ctr++;
-
-        /*
-        snprintf(str_temp, STR_LEN, "%d %d.%04d%c %d %d.%04d%c  %lds\r\n",
-                 mc_f.lat_deg, mc_f.lat_min, mc_f.lat_fr, mc_f.lat_suffix,
-                 mc_f.lon_deg, mc_f.lon_min, mc_f.lon_fr, mc_f.lon_suffix,
-                 rtca_time.sys - mc_f.fixtime);
-        uart1_tx_str(str_temp, strlen(str_temp));
-        */
-
-        if ((rtca_time.sys > rtca_set_next) || (rtca_time.min != mc_f.minute)) {
-            rtca_time.year = mc_f.year;
-            rtca_time.mon = mc_f.month;
-            rtca_time.day = mc_f.day;
-            rtca_time.hour = mc_f.hour;
-            rtca_time.min = mc_f.minute;
-            rtca_time.sec = mc_f.second;
-
-            rtca_set_time();
-            rtca_set_next += rtca_set_period;
-        }
-    }
-
+    nmea_parse((char *)uart0_rx_buf, uart0_p);
+    
     uart0_p = 0;
     uart0_rx_enable = 1;
-    //LED_OFF;
+    LED_OFF;
 }
 #endif
 
@@ -103,43 +75,53 @@ static void parse_UI(enum sys_message msg)
 
 static void schedule(enum sys_message msg)
 {
-    // gps related
-    if (rtca_time.sys > fix_next) {
-        GPS_ENABLE;
-
-        if ((rtca_time.sys > fix_next + 2) && ((s_status & GPS_INITIALIZED) == 0)) {
-            uart0_tx_str((char *)gps_init, 51);
-            s_status |= GPS_INITIALIZED;
-            // invalidate last fix
-            //mc_f.fix = false;
-            memset(&mc_f, 0, sizeof(mc_f));
-        }
-
-#ifndef DEBUG_GPS
     uint16_t q_bat = 0, q_raw = 0;
     uint32_t v_bat, v_raw;
 
-        if ((rtca_time.sys > fix_next + gps_retry_period) || (gps_fix_shtd_ctr >= gps_fix_shtd)) {
-            //GPS_DISABLE;
-            s_status &= ~GPS_INITIALIZED;
-            gps_fix_shtd_ctr = 0;
-            fix_next += fix_period;
-            //s_status |= SIM900_INITIALIZED;
+    if (rtca_time.sys >= trigger_next) {
+        // time to act
+        switch (main_next_state) {
+            case MAIN_IDLE:
+                trigger_next += 2;
+                main_next_state = MAIN_START_GPS;
+            break;
 
-            adc10_read(3, &q_bat, REFVSEL_1);
-            adc10_read(2, &q_raw, REFVSEL_1);
-            v_bat = (uint32_t) q_bat * VREF_2_0_6_3 * DIV_BAT / 10000;
-            v_raw = (uint32_t) q_raw * VREF_2_0_6_2 * DIV_RAW / 10000;
-            stat.v_bat = v_bat;
-            stat.v_raw = v_raw;
+            case MAIN_START_GPS:
+                trigger_next += 1;
+                main_next_state = MAIN_INIT_GPS;
 
-            if (stat.v_bat > 340) {
-                // if battery voltage is below ~3.4v
-                // the sim will most likely lock up while trying to TX
-                sim900_exec_default_task();
-            }
-        }
+                GPS_ENABLE;
+            break;
+
+            case MAIN_INIT_GPS:
+                trigger_next += gps_warmup;
+                main_next_state = MAIN_START_GPRS;
+
+                uart0_tx_str((char *)gps_init, 51);
+                // invalidate last fix
+                memset(&mc_f, 0, sizeof(mc_f));
+            break;
+
+            case MAIN_START_GPRS:
+                trigger_next += loop_period - gps_warmup;
+                main_next_state = MAIN_IDLE;
+
+#ifndef DEBUG_GPS
+                adc10_read(3, &q_bat, REFVSEL_1);
+                adc10_read(2, &q_raw, REFVSEL_1);
+                v_bat = (uint32_t) q_bat * VREF_2_0_6_3 * DIV_BAT / 10000;
+                v_raw = (uint32_t) q_raw * VREF_2_0_6_2 * DIV_RAW / 10000;
+                stat.v_bat = v_bat;
+                stat.v_raw = v_raw;
+
+                if (stat.v_bat > 340) {
+                    // if battery voltage is below ~3.4v
+                    // the sim will most likely lock up while trying to TX
+                    sim900_exec_default_task();
+                }
 #endif
+            break;
+        }
     }
 }
 #endif
@@ -183,6 +165,9 @@ int main(void)
     } else {
         CHARGE_DISABLE;
     }
+
+    rtca_set_next = 0;
+    main_next_state = MAIN_IDLE;
 
 #ifdef DEBUG_GPS
     uart1_init(9600);
