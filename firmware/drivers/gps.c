@@ -8,6 +8,10 @@
 #include "drivers/helper.h"
 #include "proj.h"
 
+#ifdef DEBUG_GPS
+#include "drivers/uart1.h"
+#endif
+
 /// function that parses one full nmea sentence
 /// input
 ///   s   - pointer to the beginning of the nmea string
@@ -144,13 +148,39 @@ uint8_t nmea_parse(char *s, const uint8_t len)
 
         mc_t.fixtime = rtca_time.sys;
 
-        /*
-        snprintf(str_temp, STR_LEN, "t %d %d.%04d%c %d %d.%04d%c  %lds %d\r\n",
+#ifdef CONFIG_POSITION_AVERAGING
+        float tmp_f;
+
+        mean_pos.speed_samples++;
+        mean_pos.speed_sum += mc_t.speed;
+        mean_pos.speed = mean_pos.speed_sum / mean_pos.speed_samples;
+
+        if ((mc_t.speed < 1) && (mc_t.pdop < 400)) {
+            mean_pos.lat += nmea_to_float(mc_t.lat_deg, mc_t.lat_min, mc_t.lat_fr, mc_t.lat_suffix);
+            mean_pos.lon += nmea_to_float(mc_t.lon_deg, mc_t.lon_min, mc_t.lon_fr, mc_t.lon_suffix);
+            mean_pos.pdop += mc_t.pdop;
+            mean_pos.samples++;
+            tmp_f = 1000000.0 * mean_pos.lat / mean_pos.samples;
+            mc_t.lat_mean = (int32_t) tmp_f;
+            tmp_f = 1000000.0 * mean_pos.lon / mean_pos.samples;
+            mc_t.lon_mean = (int32_t) tmp_f;
+            tmp_f = mean_pos.pdop / mean_pos.samples;
+            mc_t.pdop_mean = (uint16_t) tmp_f; 
+        }
+
+        snprintf(str_temp, STR_LEN, "%u\t%u\tpos %ld %ld\r\n",
+                 mean_pos.samples, mean_pos.speed_sum,
+                 mc_t.lat_mean, mc_t.lon_mean);
+        uart1_tx_str(str_temp, strlen(str_temp));
+#endif
+
+#ifdef DEBUG_GPS
+        snprintf(str_temp, STR_LEN, "t %d %d.%04d%c %d %d.%04d%c  %lds %d %dkn\r\n",
                  mc_t.lat_deg, mc_t.lat_min, mc_t.lat_fr, mc_t.lat_suffix,
                  mc_t.lon_deg, mc_t.lon_min, mc_t.lon_fr, mc_t.lon_suffix,
-                 rtca_time.sys - mc_t.fixtime, mc_t.pdop);
+                 rtca_time.sys - mc_t.fixtime, mc_t.pdop, mc_t.speed);
         uart1_tx_str(str_temp, strlen(str_temp));
-        */
+#endif
 
         if (mc_f.pdop == 0) {
             mc_f.pdop = 9999;
@@ -178,13 +208,13 @@ uint8_t nmea_parse(char *s, const uint8_t len)
             memset(&mc_t, 0, sizeof(mc_t));
         }
 
-        /*
+#ifdef DEBUG_GPS
         snprintf(str_temp, STR_LEN, "f %d %d.%04d%c %d %d.%04d%c  %lds %d\r\n",
                  mc_f.lat_deg, mc_f.lat_min, mc_f.lat_fr, mc_f.lat_suffix,
                  mc_f.lon_deg, mc_f.lon_min, mc_f.lon_fr, mc_f.lon_suffix,
                  rtca_time.sys - mc_f.fixtime, mc_f.pdop);
         uart1_tx_str(str_temp, strlen(str_temp));
-        */
+#endif
 
     } else if (strstr(s, "GSA")) {
         uint8_t c = 0;

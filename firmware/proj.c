@@ -44,6 +44,7 @@ static void parse_gps(enum sys_message msg)
 }
 #endif
 
+#ifndef DEBUG_GPS
 static void parse_gprs(enum sys_message msg)
 {
 #ifdef DEBUG_GPRS
@@ -51,6 +52,7 @@ static void parse_gprs(enum sys_message msg)
 #endif
     sim900_parse_rx((char *)uart1_rx_buf, uart1_p);
 }
+#endif
 
 #ifdef DEBUG_GPRS
 static void parse_UI(enum sys_message msg)
@@ -75,8 +77,10 @@ static void parse_UI(enum sys_message msg)
 
 static void schedule(enum sys_message msg)
 {
+#ifndef DEBUG_GPS
     uint16_t q_bat = 0, q_raw = 0;
     uint32_t v_bat, v_raw;
+#endif
 
     if (rtca_time.sys >= trigger_next) {
         // time to act

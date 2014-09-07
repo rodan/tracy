@@ -18,6 +18,9 @@ struct nmea_gprmc_t {
     uint8_t lon_min;
     uint16_t lon_fr;
     uint8_t lon_suffix;
+    int32_t lat_mean;
+    int32_t lon_mean;
+    uint16_t pdop_mean;
     uint16_t speed;
     uint16_t heading;
     uint8_t day;
@@ -29,6 +32,20 @@ struct nmea_gprmc_t {
 
 struct nmea_gprmc_t mc_f;
 struct nmea_gprmc_t mc_t;
+
+#ifdef CONFIG_POSITION_AVERAGING
+struct mean_pos_t {
+    float lat;
+    float lon;
+    float pdop;
+    uint16_t samples;
+    float speed;
+    uint16_t speed_sum;
+    uint16_t speed_samples;
+};
+
+struct mean_pos_t mean_pos;
+#endif
 
 #ifdef CONFIG_GEOFENCE
 struct geofence_t {
