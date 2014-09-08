@@ -28,6 +28,9 @@
 #define CHARGE_ENABLE   P6OUT &= ~BIT1
 #define CHARGE_DISABLE  P6OUT |= BIT1
 
+#define DIV_RAW         91
+#define DIV_BAT         25
+
 #define STR_LEN 64
 char str_temp[STR_LEN];
 
@@ -69,6 +72,7 @@ struct tracy_settings_t {
     uint8_t server_len;
     char server[MAX_SERVER_LEN];
     uint16_t port;
+    uint8_t vref;
 };
 
 struct tracy_settings_t s;
@@ -86,7 +90,8 @@ static const struct tracy_settings_t defaults = {
     "vodafone",                 // gprs pass
     14,                         // server_len
     "www.simplex.ro",           // server
-    80                          // port
+    80,                         // port
+    200                         // adc vref
 };
 
 struct tracy_stat_t {

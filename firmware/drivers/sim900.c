@@ -977,6 +977,7 @@ uint8_t sim900_parse_sms(char *str, const uint16_t size)
     char sender[MAX_PHONE_LEN];
     uint8_t sender_len;
     uint8_t save = false;
+    uint16_t tmp;
     char code[4];
     char *p;
 
@@ -1065,6 +1066,12 @@ uint8_t sim900_parse_sms(char *str, const uint16_t size)
             } else {
                 CHARGE_DISABLE;
             }
+        } else if (strstr(str, "vref")) {
+            p = strstr(str, "vref");
+            p += 4;
+            extract_dec(p, &tmp);
+            s.vref = tmp;
+            save = true;
         }
     }
 

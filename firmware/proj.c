@@ -9,7 +9,6 @@
 #include <string.h>
 
 #include "proj.h"
-#include "calib.h"
 #include "drivers/sys_messagebus.h"
 #include "drivers/rtc.h"
 #include "drivers/timer_a0.h"
@@ -20,7 +19,6 @@
 #include "drivers/sim900.h"
 #include "drivers/flash.h"
 #include "drivers/adc.h"
-#include "calib.h"
 
 #define GPSMAX 255
 
@@ -113,8 +111,8 @@ static void schedule(enum sys_message msg)
 #ifndef DEBUG_GPS
                 adc10_read(3, &q_bat, REFVSEL_1);
                 adc10_read(2, &q_raw, REFVSEL_1);
-                v_bat = (uint32_t) q_bat * VREF_2_0_6_3 * DIV_BAT / 10000;
-                v_raw = (uint32_t) q_raw * VREF_2_0_6_2 * DIV_RAW / 10000;
+                v_bat = (uint32_t) q_bat * s.vref * DIV_BAT / 10000;
+                v_raw = (uint32_t) q_raw * s.vref * DIV_RAW / 10000;
                 stat.v_bat = v_bat;
                 stat.v_raw = v_raw;
 
