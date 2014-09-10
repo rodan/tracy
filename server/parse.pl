@@ -57,10 +57,11 @@ $v_raw /= 100;
 #
 #  binary representation:
 # 
-#  | 7 | 6 | 5  | 4 | 3 | 2 | 1 | 0 | 
-#                       | x   x   x | -> how many sim900.cell structures are present
-#                   | x |             -> geofence data is present
-#               | x |                 -> gps fix is present
+#  | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 | 
+#                      | x   x   x | -> how many sim900_cell_t structures are present
+#                  | x |             -> geofence data is present
+#              | x |                 -> gps fix is present
+#  | x   x   x |                     -> currently unused
 #
 
 my $cells = $payload_content_desc & 0x07;
