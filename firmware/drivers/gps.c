@@ -200,6 +200,10 @@ uint8_t nmea_parse(char *s, const uint8_t len)
 
         // store the new fix only if pdop is better or FIX_INVALIDATE_PERIOD since last fix has elapsed
         if (mc_t.fix && ((mc_t.pdop <= mc_f.pdop) || (rtca_time.sys - mc_f.fixtime > FIX_INVALIDATE_PERIOD))) {
+
+            mc_t.lat = nmea_to_float(mc_t.lat_deg, mc_t.lat_min, mc_t.lat_fr, mc_t.lat_suffix);
+            mc_t.lon = nmea_to_float(mc_t.lon_deg, mc_t.lon_min, mc_t.lon_fr, mc_t.lon_suffix);
+
             src_p = (uint8_t *) & mc_t;
             dst_p = (uint8_t *) & mc_f;
             for (i = 0; i < sizeof(mc_t); i++) {

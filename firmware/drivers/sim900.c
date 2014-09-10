@@ -25,6 +25,12 @@ uint8_t sm_c; // state machine internal counter
 
 char eom[2] = { 0x1a, 0x0 };
 
+uint16_t http_post_version = POST_VERSION;
+uint16_t http_msg_id = 0;
+
+uint16_t payload_size;          // size of data sent via CIPSEND without the HTTP header
+uint8_t payload_content_desc;   // 1 byte that describes what the payload contains
+
 // high level state machine
 // use this to send commands to sim900
 static void sim900_tasks(enum sys_message msg)
@@ -437,6 +443,7 @@ static void sim900_state_machine(enum sys_message msg)
                     if (sim900.rc == RC_STATE_IP_CONNECT) {
                         sim900.next_state = SIM900_IP_PUT;
                         timer_a0_delay_noblk_ccr2(SM_R_DELAY);
+#ifdef USE_HTTP_GET
                         sim900_tx_cmd("AT+CIPSEND\r", 11, REPLY_TMOUT);
                     }
                 break;
@@ -486,6 +493,95 @@ static void sim900_state_machine(enum sys_message msg)
                         sim900_tx_cmd(eom, 2, _6s);
                     }
                 break;
+#endif
+#ifdef USE_HTTP_POST
+                        // payload contains everything after the HTTP header
+                        //  - version (2 bytes), imei (15 bytes), settings (2 bytes), etc
+                        //
+                        //  message header + 1 byte suffix
+                        payload_size = 2 + 15 + 2 + 2 + 2 + 2 + 1 + 1;
+
+                        payload_content_desc = 0;
+
+                        if (s.settings & CONF_SHOW_CELL_LOC) {
+                            for (i=0;i<4;i++) {
+                                if (sim900.cell[i].cellid != 65535) {
+                                    payload_content_desc = i + 1;
+                                }
+                            }
+                        }
+
+                        payload_size += payload_content_desc * sizeof(sim900_cell_t);
+
+                        if (mc_f.fix) {
+                            payload_content_desc |= GPS_FIX_PRESENT;
+                            // first 25 bytes of the mc_f struct
+                            payload_size += 25;
+#ifdef CONFIG_GEOFENCE
+                            payload_content_desc |= GEOFENCE_PRESENT;
+                            // geofence data
+                            payload_size += 6;
+#endif
+                        }
+
+                        sim900_tx_str("AT+CIPSEND=", 11);
+                        // HTTP header is 27 + 34 + 25 = 86 bytes long
+                        // suffix is 1 byte long
+                        snprintf(str_temp, STR_LEN, "%d\r", 86 + payload_size);
+                        sim900_tx_cmd(str_temp, strlen(str_temp), REPLY_TMOUT);
+                    }
+                break;
+
+                case SIM900_IP_PUT:
+                    if (sim900.rc == RC_TEXT_INPUT) {
+                        sim900.next_state = SIM900_SEND_OK;
+                        timer_a0_delay_noblk_ccr2(_6sp);
+                        sim900_tx_str("POST /scripts/u1 HTTP/1.0\r\n", 27);
+                        sim900_tx_str("Content-Type: application/binary\r\n", 34);
+                        snprintf(str_temp, STR_LEN, "Content-Length: %05u\r\n\r\n", payload_size);
+                        sim900_tx_str(str_temp, strlen(str_temp));
+                        sim900_tx_str((char *) &http_post_version, 2);
+                        sim900_tx_str(sim900.imei, 15);
+                        sim900_tx_str((char *) &s.settings, 2);
+                        sim900_tx_str((char *) &stat.v_bat, 2);
+                        sim900_tx_str((char *) &stat.v_raw, 2);
+                        sim900_tx_str((char *) &http_msg_id, 2);
+                        sim900_tx_str((char *) &payload_content_desc, 1);
+
+                        if (mc_f.fix) {
+                            //sim900_tx_str((char *) &mc_f, 25); // epic fail, struct not continguous
+                            sim900_tx_str((char *) &mc_f.year, 2);
+                            sim900_tx_str((char *) &mc_f.month, 1);
+                            sim900_tx_str((char *) &mc_f.day, 1);
+                            sim900_tx_str((char *) &mc_f.hour, 1);
+                            sim900_tx_str((char *) &mc_f.minute, 1);
+                            sim900_tx_str((char *) &mc_f.second, 1);
+                            sim900_tx_str((char *) &mc_f.lat, 4);
+                            sim900_tx_str((char *) &mc_f.lon, 4);
+                            sim900_tx_str((char *) &mc_f.pdop, 2);
+                            sim900_tx_str((char *) &mc_f.speed, 2);
+                            sim900_tx_str((char *) &mc_f.heading, 2);
+                            sim900_tx_str((char *) &mc_f.fixtime, 4);
+#ifdef CONFIG_GEOFENCE
+                            geo.lat_home = geo.lat_cur;
+                            geo.lon_home = geo.lon_cur;
+                            geo.lat_cur = mc_f.lat;
+                            geo.lon_cur = mc_f.lon;
+                            distance_between(geo.lat_home, geo.lon_home, geo.lat_cur, geo.lon_cur, &geo.distance, &geo.bearing);
+                            sim900_tx_str((char *) &geo.distance, 4);
+                            sim900_tx_str((char *) &geo.bearing, 2);
+#endif
+                        }
+
+                        // tower cell data
+                        sim900_tx_str((char *) &sim900.cell[0], (payload_content_desc & 0x7) * sizeof(sim900_cell_t));
+
+                        // suffix
+                        i = 0xff;
+                        sim900_tx_cmd((char *) &i, 1, _6s);
+                    }
+                break;
+#endif
                 case SIM900_SEND_OK:
                     if (sim900.rc == RC_SEND_OK) {
                         sim900.next_state = SIM900_HTTP_REPLY;

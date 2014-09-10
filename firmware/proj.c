@@ -70,6 +70,7 @@ static void parse_UI(enum sys_message msg)
 
     uart0_p = 0;
     uart0_rx_enable = 1;
+    LED_OFF;
 }
 #else
 
@@ -176,18 +177,23 @@ int main(void)
     uart1_tx_str("gps debug state\r\n", 17);
 #endif
 
+#ifdef DEBUG_GPRS
+    uart0_tx_str("gprs debug state\r\n", 18);
+#endif
+
 #ifdef CALIBRATION
     sys_messagebus_register(&adc_calibration, SYS_MSG_RTC_SECOND);
 #else
-    sys_messagebus_register(&schedule, SYS_MSG_RTC_SECOND);
     #ifndef DEBUG_GPRS
+        sys_messagebus_register(&schedule, SYS_MSG_RTC_SECOND);
         sys_messagebus_register(&parse_gps, SYS_MSG_UART0_RX);
-        #ifndef DEBUG_GPS
-            sys_messagebus_register(&parse_gprs, SYS_MSG_UART1_RX);
-        #endif
     #else
         sys_messagebus_register(&parse_UI, SYS_MSG_UART0_RX);
     #endif
+    #ifndef DEBUG_GPS
+        sys_messagebus_register(&parse_gprs, SYS_MSG_UART1_RX);
+    #endif
+
 #endif
 
     while (1) {

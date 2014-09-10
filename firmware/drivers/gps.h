@@ -6,10 +6,18 @@
 #define FIX_INVALIDATE_PERIOD 240 // time in seconds after which the fix is no longer considered valid
 
 struct nmea_gprmc_t {
-    uint16_t pdop;     // position dilution of precision
+    uint16_t year;     // date and time received from the sattelites
+    uint8_t month;
+    uint8_t day;
     uint8_t hour;
     uint8_t minute;
     uint8_t second;
+    float lat;         // latitude
+    float lon;         // longitude
+    uint16_t pdop;     // position dilution of precision
+    uint16_t speed;    // speed in _knots_ ?!
+    uint16_t heading;  // heading in degrees
+    uint32_t fixtime;  // system time when the fix was received
     uint8_t lat_deg;
     uint8_t lat_min;
     uint16_t lat_fr;
@@ -18,16 +26,13 @@ struct nmea_gprmc_t {
     uint8_t lon_min;
     uint16_t lon_fr;
     uint8_t lon_suffix;
+    uint8_t fix;
+
+#ifdef CONFIG_POSITION_AVERAGING
     int32_t lat_mean;
     int32_t lon_mean;
     uint16_t pdop_mean;
-    uint16_t speed;
-    uint16_t heading;
-    uint8_t day;
-    uint8_t month;
-    uint16_t year;
-    uint8_t fix;
-    uint32_t fixtime;
+#endif
 };
 
 struct nmea_gprmc_t mc_f;

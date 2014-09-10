@@ -28,6 +28,8 @@
 #define CHARGE_ENABLE   P6OUT &= ~BIT1
 #define CHARGE_DISABLE  P6OUT |= BIT1
 
+// resistor divider ratio
+// calculated as (R1+R2)/R2 * 100 / 1023 * 100
 #define DIV_RAW         91
 #define DIV_BAT         25
 
@@ -82,7 +84,7 @@ static const struct tracy_settings_t defaults = {
     CONF_SHOW_CELL_LOC | CONF_SHOW_VOLTAGES | CONF_ENABLE_CHARGING,  // settings
     0,                          // ctrl_phone_len
     "",                         // ctrl_phone
-    17,                         // gprs apn_name
+    17,                         // gprs apn_len
     "live.vodafone.com",        // gprs apn
     4,                          // gprs user_len
     "live",                     // gprs user

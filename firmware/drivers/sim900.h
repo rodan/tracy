@@ -32,6 +32,8 @@
 #define SM_DELAY        _10ms * 20 // ~200ms
 #define SM_R_DELAY      _10ms * 130 // ~1.3s
 
+#define POST_VERSION            0x1
+
 // states that can be reached by the low level state machine
 typedef enum {
     SIM900_ON,
@@ -155,16 +157,18 @@ typedef enum {
     SMS_CODE_OK
 } sim900_sms_subj_t;
 
-#define RDY             BIT0
-#define PIN_RDY         BIT1
-#define CALL_RDY        BIT2
+#define TASK_MAX_RETRIES    3
+#define TASK_QUEUE_SIZE     5
+#define SMS_QUEUE_SIZE      4
 
-#define TASK_IDLE       BIT0
-#define TASK_ONGOING    BIT1
+// modem status
+#define RDY                 0x1
+#define PIN_RDY             0x2
+#define CALL_RDY            0x4
 
-#define TASK_MAX_RETRIES   3
-#define TASK_QUEUE_SIZE    5
-#define SMS_QUEUE_SIZE     4
+// HTTP payload content
+#define GEOFENCE_PRESENT    0x8
+#define GPS_FIX_PRESENT     0x10
 
 typedef struct {      // cell tower data
     uint16_t rxl;           // receive level

@@ -76,13 +76,11 @@ int main()
         haversine_f(l.lat[0], l.lon[0], l.lat[1], l.lon[1], &l.dist_math_f);
 
         printf("{\r\n");
-        printf("\tsrc: %s\r\n\tsrc: %02d %02d.%04d%c, %02d %02d.%04d%c\r\n", 
-                l.nmea[0],
+        printf("\tsrc: %02d %02d.%04d%c, %02d %02d.%04d%c\r\n", 
                 l.mc_t[0].lat_deg, l.mc_t[0].lat_min, l.mc_t[0].lat_fr, l.mc_t[0].lat_suffix,
                 l.mc_t[0].lon_deg, l.mc_t[0].lon_min, l.mc_t[0].lon_fr, l.mc_t[0].lon_suffix
                 );
-        printf("\tdst: %s\r\n\tdst: %02d %02d.%04d%c, %02d %02d.%04d%c\r\n", 
-                l.nmea[1],
+        printf("\tdst: %02d %02d.%04d%c, %02d %02d.%04d%c\r\n", 
                 l.mc_t[1].lat_deg, l.mc_t[1].lat_min, l.mc_t[1].lat_fr, l.mc_t[1].lat_suffix,
                 l.mc_t[1].lon_deg, l.mc_t[1].lon_min, l.mc_t[1].lon_fr, l.mc_t[1].lon_suffix
                 );

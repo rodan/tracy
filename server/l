@@ -14,7 +14,7 @@ print "Content-Type: text/html\n\n";
 
 print '<html><head><title>gps locations</title><link href="/css/main.css" rel="stylesheet" type="text/css"><
 /head><body>';
-print '<table class="content" summary="specificaţii tehnice ale aparatelor folosite">';
+print '<table class="content" summary="gps locations">';
 
 #my $imei = '013227009851738';
 my $imei = '013227002533879';
