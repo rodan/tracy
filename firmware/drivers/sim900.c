@@ -443,63 +443,22 @@ static void sim900_state_machine(enum sys_message msg)
                     if (sim900.rc == RC_STATE_IP_CONNECT) {
                         sim900.next_state = SIM900_IP_PUT;
                         timer_a0_delay_noblk_ccr2(SM_R_DELAY);
-#ifdef USE_HTTP_GET
-                        sim900_tx_cmd("AT+CIPSEND\r", 11, REPLY_TMOUT);
-                    }
-                break;
-                case SIM900_IP_PUT:
-                    if (sim900.rc == RC_TEXT_INPUT) {
-                        sim900.next_state = SIM900_SEND_OK;
-                        timer_a0_delay_noblk_ccr2(_6sp);
-                        sim900_tx_str("GET /scripts/t?i=", 17);
-                        sim900_tx_str(sim900.imei, 15);
-                        if (mc_f.fix) {
-#ifdef CONFIG_GEOFENCE
-                            geo.lat_home = geo.lat_cur;
-                            geo.lon_home = geo.lon_cur;
-                            geo.lat_cur = nmea_to_float(mc_f.lat_deg, mc_f.lat_min, mc_f.lat_fr, mc_f.lat_suffix);
-                            geo.lon_cur = nmea_to_float(mc_f.lon_deg, mc_f.lon_min, mc_f.lon_fr, mc_f.lon_suffix);
-                            distance_between(geo.lat_home, geo.lon_home, geo.lat_cur, geo.lon_cur, &geo.distance, &geo.bearing);
-                            snprintf(str_temp, STR_LEN, "&gd=%ld&gb=%d",
-                                    (uint32_t) geo.distance, geo.bearing);
-                            sim900_tx_str(str_temp, strlen(str_temp));
-#endif
-                            snprintf(str_temp, STR_LEN, "&l=%d %d.%04d%c %d %d.%04d%c&f=%ld&p=%d",
-                            mc_f.lat_deg, mc_f.lat_min, mc_f.lat_fr, mc_f.lat_suffix,
-                            mc_f.lon_deg, mc_f.lon_min, mc_f.lon_fr, mc_f.lon_suffix,
-                            rtca_time.sys - mc_f.fixtime, mc_f.pdop);
-                            sim900_tx_str(str_temp, strlen(str_temp));
-                        } else {
-                            sim900_tx_str("&l=no_fix", 9);
-                        }
-                        if (s.settings & CONF_SHOW_VOLTAGES) {
-                                    snprintf(str_temp, STR_LEN, "&vb=%u&v5=%u",
-                                            stat.v_bat, stat.v_raw);
-                                    sim900_tx_str(str_temp, strlen(str_temp));
-                        }
-                        if (s.settings & CONF_SHOW_CELL_LOC) {
-                            // tower cell data
-                            for (i=0;i<4;i++) {
-                                if (sim900.cell[i].cellid != 65535) {
-                                    snprintf(str_temp, STR_LEN, "&c%d=%u,%u,%u,%u,%u", 
-                                        i, sim900.cell[i].rxl, sim900.cell[i].mcc, 
-                                        sim900.cell[i].mnc, sim900.cell[i].cellid, 
-                                        sim900.cell[i].lac);
-                                    sim900_tx_str(str_temp, strlen(str_temp));
-                                }
-                            }
-                        }
-                        sim900_tx_str(" HTTP/1.1\r\n\r\n", 13);
-                        sim900_tx_cmd(eom, 2, _6s);
-                    }
-                break;
-#endif
-#ifdef USE_HTTP_POST
+
                         // payload contains everything after the HTTP header
                         //  - version (2 bytes), imei (15 bytes), settings (2 bytes), etc
                         //
                         //  message header + 1 byte suffix
-                        payload_size = 2 + 15 + 2 + 2 + 2 + 2 + 1 + 1;
+                        payload_size = 2 + 15 + 2 + 2 + 2 + 2 + 1 + 7 + 1;
+                        //           |   |    |   |   |   |   |   |   |   |
+                        //           | x |                                  -> version
+                        //               | x  |                             -> imei
+                        //                    | x |                         -> settings
+                        //                        | x |                     -> v_bat
+                        //                            | x |                 -> v_raw
+                        //                                | x |             -> msg_id
+                        //                                    | x |         -> content_desc
+                        //                                        | x |     -> timestamp
+                        //                                            | x | -> suffix
 
                         payload_content_desc = 0;
 
@@ -515,8 +474,8 @@ static void sim900_state_machine(enum sys_message msg)
 
                         if (mc_f.fix) {
                             payload_content_desc |= GPS_FIX_PRESENT;
-                            // first 25 bytes of the mc_f struct
-                            payload_size += 25;
+                            // parts of the mc_f struct
+                            payload_size += 18;
 #ifdef CONFIG_GEOFENCE
                             payload_content_desc |= GEOFENCE_PRESENT;
                             // geofence data
@@ -556,6 +515,7 @@ static void sim900_state_machine(enum sys_message msg)
                             sim900_tx_str((char *) &mc_f.hour, 1);
                             sim900_tx_str((char *) &mc_f.minute, 1);
                             sim900_tx_str((char *) &mc_f.second, 1);
+
                             sim900_tx_str((char *) &mc_f.lat, 4);
                             sim900_tx_str((char *) &mc_f.lon, 4);
                             sim900_tx_str((char *) &mc_f.pdop, 2);
@@ -571,6 +531,14 @@ static void sim900_state_machine(enum sys_message msg)
                             sim900_tx_str((char *) &geo.distance, 4);
                             sim900_tx_str((char *) &geo.bearing, 2);
 #endif
+                        } else {
+                            // since gps is not available RTC time will be used
+                            sim900_tx_str((char *) &rtca_time.year, 2);
+                            sim900_tx_str((char *) &rtca_time.mon, 1);
+                            sim900_tx_str((char *) &rtca_time.day, 1);
+                            sim900_tx_str((char *) &rtca_time.hour, 1);
+                            sim900_tx_str((char *) &rtca_time.min, 1);
+                            sim900_tx_str((char *) &rtca_time.sec, 1);
                         }
 
                         // tower cell data
@@ -581,7 +549,6 @@ static void sim900_state_machine(enum sys_message msg)
                         sim900_tx_cmd((char *) &i, 1, _6s);
                     }
                 break;
-#endif
                 case SIM900_SEND_OK:
                     if (sim900.rc == RC_SEND_OK) {
                         sim900.next_state = SIM900_HTTP_REPLY;
