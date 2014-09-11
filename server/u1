@@ -134,10 +134,11 @@ if (!$binstr) {
     die;
 }
 
-read( $io, $buf, 26 );
+read( $io, $buf, 33 );
 
-( $head->{'version'}, $head->{'imei'}, $head->{'settings'}, $head->{'v_bat'}, $head->{'v_raw'}, $head->{'msg_id'}, $head->{'payload_content_desc'} )
-  = unpack( "S A15 S4 C", $buf );
+( $head->{'version'}, $head->{'imei'}, $head->{'settings'}, $head->{'v_bat'}, $head->{'v_raw'}, $head->{'msg_id'}, $head->{'payload_content_desc'},
+  $mc_f->{'year'},     $mc_f->{'month'},     $mc_f->{'day'},  $mc_f->{'hour'},  $mc_f->{'minute'},  $mc_f->{'second'})
+  = unpack( "S A15 S4 C S C5", $buf );
 if ($head->{'imei'} =~ /[^0-9]/) {
         print "FAILED\r\n";
         if (!$filename) {
@@ -149,6 +150,7 @@ if ($head->{'imei'} =~ /[^0-9]/) {
     }
 $head->{'v_bat'} /= 100;
 $head->{'v_raw'} /= 100;
+$mc_f->{'timestamp'} = sprintf "%4d-%02d-%02d %02d:%02d:%02d", $mc_f->{'year'},$mc_f->{'month'},$mc_f->{'day'},$mc_f->{'hour'},$mc_f->{'minute'},$mc_f->{'second'};
 
 #  payload_content_desc is a byte that describes what info is present in the packet
 #
@@ -166,14 +168,12 @@ my $geofence = $head->{'payload_content_desc'} & 0x08;
 my $fix      = $head->{'payload_content_desc'} & 0x10;
 
 if ($fix) {
-    read( $io, $buf, 25 );
+    read( $io, $buf, 18 );
     (
-        $mc_f->{'year'},     $mc_f->{'month'},     $mc_f->{'day'},  $mc_f->{'hour'},  $mc_f->{'minute'},  $mc_f->{'second'},
         $mc_f->{'latitude'}, $mc_f->{'longitude'}, $mc_f->{'pdop'}, $mc_f->{'speed'}, $mc_f->{'heading'}, $mc_f->{'fixtime'}
-    ) = unpack( "S C5 f2 S3 L", $buf );
+    ) = unpack( "f2 S3 L", $buf );
     $mc_f->{'pdop'} /= 100.0;
 
-    $mc_f->{'timestamp'} = sprintf "%4d-%02d-%02d %02d:%02d:%02d", $mc_f->{'year'},$mc_f->{'month'},$mc_f->{'day'},$mc_f->{'hour'},$mc_f->{'minute'},$mc_f->{'second'};
 
     if ($geofence) {
         read( $io, $buf, 6 );
@@ -282,7 +282,7 @@ if ($verbose) {
     # for CLI mode
 
     # display all we got
-    say 'header {';
+    say ' * header {';
     say ' version:   ' . $head->{'version'};
     say ' imei:      ' . $head->{'imei'};
     say ' settings:  ' . $head->{'settings'};
@@ -290,25 +290,25 @@ if ($verbose) {
     say ' v_raw:     ' . $head->{'v_raw'};
     say ' msg_id:    ' . $head->{'msg_id'};
     say ' payload:   ' . $head->{'payload_content_desc'};
+    say ' timestamp: ' . $mc_f->{'timestamp'};
     say '}';
 
     if ($fix) {
-        say ' timestamp: ' . $mc_f->{'timestamp'};
         say ' loc: ' . $mc_f->{'latitude'} . ', ' . $mc_f->{'longitude'};
         say ' pdop: ' . $mc_f->{'pdop'} . ', speed: ' . $mc_f->{'speed'} . ' knots, heading: ' . $mc_f->{'heading'} . ' deg, uptime: ' . $mc_f->{'fixtime'};
         if ($geofence) {
-            say ' geofence distance: ' . $geo->{'distance'} . ' m, bearing: ' . $geo->{'bearing'} . ' deg';
+            say ' * geofence distance: ' . $geo->{'distance'} . ' m, bearing: ' . $geo->{'bearing'} . ' deg';
         }
         else {
-            say 'geofence data not present';
+            say ' - geofence data not present';
         }
     }
     else {
-        say 'gps fix not present';
+        say ' - gps fix not present';
     }
 
     if ($cells) {
-        say $cells . ' cells present:';
+        say ' * ' . $cells . ' cells present';
         for ( my $i = 0 ; $i < $cells ; $i++ ) {
             say 'cell #' . $i . ': {';
             say ' rxl        ' . $cell[$i]->{'rxl'};
