@@ -1,0 +1,328 @@
+#!/usr/bin/perl -T
+
+# perl script that parses POST packets that contain tracking information
+# 
+# it can be used as a CGI in which case it stores incoming packets into 
+# sqlite3 databases, or as a CLI to debug the binary data received.
+#
+# failed packets are stored on disk
+# 
+# TODO:
+#  - implement CRC checksum for packets
+#
+#  Authors:         Petre Rodan <petre.rodan@simplex.ro>
+#                   George Pătrășcan
+#  Available from:  https://github.com/rodan/tracy
+#  License:         GNU GPLv3
+#
+
+use strict;
+#use warnings;
+#no strict 'subs';
+
+use Getopt::Long;
+use IO::String;
+use File::Basename;
+use File::Temp qw/ :seekable /;
+use DBI;
+
+use feature ':5.10';
+
+#####################################################################
+#
+# configurable variables
+#
+
+# directory where the sqlite databases are kept
+my $db_dir = '/var/lib/tracking/';
+
+
+# for debug:
+
+# set save_pkt to 1 if you want incoming POST requests 
+# to also be saved into a file
+my $save_pkt = 0;
+my $dir      = '/tmp/';
+my $template = "XXXXXXXXX";
+
+
+#####################################################################
+#
+# end of configurable section, leave the rest unchanged
+#
+
+my $filename = undef;
+my $filesize = 0;
+my $verbose  = 0;
+my $dryrun = 0;
+
+GetOptions(
+    "file=s"  => \$filename,
+    "verbose" => \$verbose,
+    "dryrun"  => \$dryrun
+);
+
+my $buf;
+my $binstr;
+my $io = IO::String->new($binstr);
+my $fh;
+
+# HTTP POST header
+my $head;
+
+# HTTP POST packet ending byte
+my $suffix;
+
+# simplified equivalent to the nmea_gprmc_t struct present in the firmware
+my $mc_f;
+
+# geo struct equivalent
+my $geo;
+
+# sim900_cell_t struct equivalent
+my @cell;
+
+
+sub save_pkt{
+    $filename = File::Temp->new( UNLINK => 0, SUFFIX => '', TEMPLATE => $template, DIR => $dir );
+
+    open ($fh, '>', $filename);
+    binmode($fh);
+    syswrite ($fh, $binstr);
+    close ($fh);
+
+    if ($verbose) {
+        say  fileparse($filename) . ' created';
+    }
+}
+
+
+# fill $binstr scalar with the binary data using one of 3 ways
+
+if ($filename) {
+    # CLI mode, read file
+    $filesize = -s $filename;
+    open( $fh, '<', $filename ) or die "cannot open file $filename";
+    sysread($fh, $binstr, $filesize);
+    close($fh);
+} else {
+    # if pipe is from HTTP POST then we have the size of the packet
+    $filesize = $ENV{CONTENT_LENGTH};
+    binmode(STDIN);
+
+    if ($filesize) {
+        # HTTP POST
+        sysread(STDIN, $binstr, $filesize);
+    } else {
+        # CLI pipe
+        my $tmp;
+        while (sysread STDIN, $tmp, 200) {
+            $binstr .= $tmp;
+        }
+    }
+
+    if ($save_pkt) {
+        save_pkt();
+    }
+
+    print 'Content-Type: text/html' . "\n\n";
+}
+
+if (!$binstr) {
+    say 'FAILED, no data';
+    die;
+}
+
+read( $io, $buf, 26 );
+
+( $head->{'version'}, $head->{'imei'}, $head->{'settings'}, $head->{'v_bat'}, $head->{'v_raw'}, $head->{'msg_id'}, $head->{'payload_content_desc'} )
+  = unpack( "S A15 S4 C", $buf );
+if ($head->{'imei'} =~ /[^0-9]/) {
+        print "FAILED\r\n";
+        if (!$filename) {
+            # script is run as CGI so start panicking
+            $template = "err_imei_XXXXXXXXX";
+            save_pkt();
+            die;
+        }
+    }
+$head->{'v_bat'} /= 100;
+$head->{'v_raw'} /= 100;
+
+#  payload_content_desc is a byte that describes what info is present in the packet
+#
+#  binary representation:
+#
+#  | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
+#                      | x   x   x | -> how many sim900_cell_t structures are present
+#                  | x |             -> geofence data is present
+#              | x |                 -> gps fix is present
+#  | x   x   x |                     -> currently unused
+#
+
+my $cells    = $head->{'payload_content_desc'} & 0x07;
+my $geofence = $head->{'payload_content_desc'} & 0x08;
+my $fix      = $head->{'payload_content_desc'} & 0x10;
+
+if ($fix) {
+    read( $io, $buf, 25 );
+    (
+        $mc_f->{'year'},     $mc_f->{'month'},     $mc_f->{'day'},  $mc_f->{'hour'},  $mc_f->{'minute'},  $mc_f->{'second'},
+        $mc_f->{'latitude'}, $mc_f->{'longitude'}, $mc_f->{'pdop'}, $mc_f->{'speed'}, $mc_f->{'heading'}, $mc_f->{'fixtime'}
+    ) = unpack( "S C5 f2 S3 L", $buf );
+    $mc_f->{'pdop'} /= 100.0;
+
+    $mc_f->{'timestamp'} = sprintf "%4d-%02d-%02d %02d:%02d:%02d", $mc_f->{'year'},$mc_f->{'month'},$mc_f->{'day'},$mc_f->{'hour'},$mc_f->{'minute'},$mc_f->{'second'};
+
+    if ($geofence) {
+        read( $io, $buf, 6 );
+        ( $geo->{'distance'}, $geo->{'bearing'} ) = unpack( "f S", $buf );
+    }
+}
+
+if ($cells) {
+    for ( my $i = 0 ; $i < $cells ; $i++ ) {
+        read( $io, $buf, 10 );
+        (
+            $cell[$i]->{'rxl'},    $cell[$i]->{'mcc'}, $cell[$i]->{'mnc'},
+            $cell[$i]->{'id'}, $cell[$i]->{'lac'}
+        ) = unpack( "S5", $buf );
+    }
+}
+
+read( $io, $buf, 1 );
+$suffix = unpack( "C", $buf );
+
+if ( $suffix != 0xff ) {
+    $template = "err_suffix_XXXXXXXXX";
+    save_pkt();
+}
+
+if (!$dryrun) {
+    my $database = $db_dir . '/' . $head->{'imei'} . '.db';
+    my $dsn = "DBI:SQLite:database=$database";
+    my $username = undef;
+    my $password = undef;
+    my $dbh = DBI->connect($dsn, $username, $password, { RaiseError => 0, PrintError => $verbose, PrintWarn => $verbose});
+
+    if ( -z "$database" ) {
+        $dbh->do("CREATE TABLE live (row_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                 v_bat FLOAT,
+                                 v_raw FLOAT,
+                                 msg_id INTEGER,
+                                 payload INTEGER,
+                                 crc INTEGER,
+                                 timestamp DATE NOT NULL UNIQUE,
+                                 latitude FLOAT,
+                                 longitude FLOAT,
+                                 pdop FLOAT,
+                                 speed INTEGER,
+                                 heading INTEGER,
+                                 fixtime INTEGER,
+                                 geo_distance FLOAT,
+                                 geo_bearing INTEGER,
+                                 c0_rxl INTEGER,
+                                 c0_mcc INTEGER,
+                                 c0_mnc INTEGER,
+                                 c0_cellid INTEGER,
+                                 c0_lac INTEGER,
+                                 c1_rxl INTEGER,
+                                 c1_mcc INTEGER,
+                                 c1_mnc INTEGER,
+                                 c1_cellid INTEGER,
+                                 c1_lac INTEGER,
+                                 c2_rxl INTEGER,
+                                 c2_mcc INTEGER,
+                                 c2_mnc INTEGER,
+                                 c2_cellid INTEGER,
+                                 c2_lac INTEGER,
+                                 c3_rxl INTEGER,
+                                 c3_mcc INTEGER,
+                                 c3_mnc INTEGER,
+                                 c3_cellid INTEGER,
+                                 c3_lac INTEGER
+                                )");
+    }
+
+    my $stmt = qq(INSERT INTO live (v_bat, v_raw, msg_id, payload, crc, 
+                timestamp, latitude, longitude, 
+                pdop, speed, heading, 
+                fixtime, geo_distance, geo_bearing,
+                c0_rxl, c0_mcc, c0_mnc, c0_cellid, c0_lac,
+                c1_rxl, c1_mcc, c1_mnc, c1_cellid, c1_lac,
+                c2_rxl, c2_mcc, c2_mnc, c2_cellid, c2_lac,
+                c3_rxl, c3_mcc, c3_mnc, c3_cellid, c3_lac)
+      VALUES ( "$head->{'v_bat'}", "$head->{'v_raw'}", "$head->{'msg_id'}", "$head->{'payload_content_desc'}", "$suffix"
+                "$mc_f->{'timestamp'}", "$mc_f->{'latitude'}", "$mc_f->{'longitude'}", 
+                "$mc_f->{'pdop'}", "$mc_f->{'speed'}", "$mc_f->{'heading'}", 
+                "$mc_f->{'fixtime'}", "$geo->{'distance'}", "$geo->{'bearing'}", 
+                "$cell[0]->{'rxl'}", "$cell[0]->{'mcc'}", "$cell[0]->{'mnc'}",
+                "$cell[0]->{'id'}", "$cell[0]->{'lac'}", 
+                "$cell[1]->{'rxl'}", "$cell[1]->{'mcc'}", "$cell[1]->{'mnc'}",
+                "$cell[1]->{'id'}", "$cell[1]->{'lac'}", 
+                "$cell[2]->{'rxl'}", "$cell[2]->{'mcc'}", "$cell[2]->{'mnc'}",
+                "$cell[2]->{'id'}", "$cell[2]->{'lac'}", 
+                "$cell[3]->{'rxl'}", "$cell[3]->{'mcc'}", "$cell[3]->{'mnc'}",
+                "$cell[3]->{'id'}", "$cell[3]->{'lac'}" ));
+
+    if ($dbh->do($stmt)) {
+        print "SAVED\r\n";
+    } else {
+        print "FAILED\r\n";
+    }
+    $dbh->disconnect();
+
+}
+
+
+if ($verbose) {
+    # for CLI mode
+
+    # display all we got
+    say 'header {';
+    say ' version:   ' . $head->{'version'};
+    say ' imei:      ' . $head->{'imei'};
+    say ' settings:  ' . $head->{'settings'};
+    say ' v_bat:     ' . $head->{'v_bat'};
+    say ' v_raw:     ' . $head->{'v_raw'};
+    say ' msg_id:    ' . $head->{'msg_id'};
+    say ' payload:   ' . $head->{'payload_content_desc'};
+    say '}';
+
+    if ($fix) {
+        say ' timestamp: ' . $mc_f->{'timestamp'};
+        say ' loc: ' . $mc_f->{'latitude'} . ', ' . $mc_f->{'longitude'};
+        say ' pdop: ' . $mc_f->{'pdop'} . ', speed: ' . $mc_f->{'speed'} . ' knots, heading: ' . $mc_f->{'heading'} . ' deg, uptime: ' . $mc_f->{'fixtime'};
+        if ($geofence) {
+            say ' geofence distance: ' . $geo->{'distance'} . ' m, bearing: ' . $geo->{'bearing'} . ' deg';
+        }
+        else {
+            say 'geofence data not present';
+        }
+    }
+    else {
+        say 'gps fix not present';
+    }
+
+    if ($cells) {
+        say $cells . ' cells present:';
+        for ( my $i = 0 ; $i < $cells ; $i++ ) {
+            say 'cell #' . $i . ': {';
+            say ' rxl        ' . $cell[$i]->{'rxl'};
+            say ' mcc        ' . $cell[$i]->{'mcc'};
+            say ' mnc        ' . $cell[$i]->{'mnc'};
+            say ' id         ' . $cell[$i]->{'id'};
+            say ' lac        ' . $cell[$i]->{'lac'};
+            say '}';
+        }
+    }
+    else {
+        say 'no cell tower data';
+    }
+
+    if ( $suffix != 0xff ) {
+        say 'ERROR: mangled packet';
+        exit 1;
+    }
+}
+

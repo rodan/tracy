@@ -8,6 +8,7 @@
 #  License:         GNU GPLv3
 #
 
+
 use strict;
 use CGI;
 use CGI qw(:standard);
@@ -32,6 +33,12 @@ my ($c2_rxl, $c2_mcc, $c2_mnc, $c2_cellid, $c2_lac) = split(',', $c2, 5);
 my $c3 = $WF->param('c3');
 my ($c3_rxl, $c3_mcc, $c3_mnc, $c3_cellid, $c3_lac) = split(',', $c3, 5);
 
+my $v_bat = $WF->param('vb') / 100;
+my $v_5 = $WF->param('v5') / 100;
+my $pdop = $WF->param('p') / 100;
+my $geo_distance = $WF->param('gd');
+my $geo_bearing = $WF->param('gb');
+
 my $database = "/var/lib/tracking/$imei.db";
 my $dsn = "DBI:SQLite:database=$database";
 my $username = undef;
@@ -42,7 +49,12 @@ if ( -z "$database" ) {
     $dbh->do("CREATE TABLE live (row_id INTEGER PRIMARY KEY AUTOINCREMENT,
                                  date DATE NOT NULL,
                                  loc VARCHAR(20) NOT NULL,
+                                 pdop FLOAT,
                                  fixtime INTEGER,
+                                 geo_distance INTEGER,
+                                 geo_bearing INTEGER,
+                                 v_bat FLOAT,
+                                 v_5 FLOAT,
                                  c0_rxl INTEGER,
                                  c0_mcc INTEGER,
                                  c0_mnc INTEGER,
@@ -71,12 +83,14 @@ my $stmt = qq(INSERT INTO live (date, loc, fixtime,
     c0_rxl, c0_mcc, c0_mnc, c0_cellid, c0_lac,
     c1_rxl, c1_mcc, c1_mnc, c1_cellid, c1_lac,
     c2_rxl, c2_mcc, c2_mnc, c2_cellid, c2_lac,
-    c3_rxl, c3_mcc, c3_mnc, c3_cellid, c3_lac)
+    c3_rxl, c3_mcc, c3_mnc, c3_cellid, c3_lac,
+    v_bat, v_5, pdop, geo_distance, geo_bearing)
       VALUES ("$timestamp", "$loc", "$fixtime",
                 "$c0_rxl", "$c0_mcc", "$c0_mnc", "$c0_cellid", "$c0_lac",
                 "$c1_rxl", "$c1_mcc", "$c1_mnc", "$c1_cellid", "$c1_lac",
                 "$c2_rxl", "$c2_mcc", "$c2_mnc", "$c2_cellid", "$c2_lac",
-                "$c3_rxl", "$c3_mcc", "$c3_mnc", "$c3_cellid", "$c3_lac" ));
+                "$c3_rxl", "$c3_mcc", "$c3_mnc", "$c3_cellid", "$c3_lac",
+                "$v_bat", "$v_5", "$pdop", "$geo_distance", "$geo_bearing" ));
 my $rv = $dbh->do($stmt) or die $DBI::errstr;
 
 $dbh->disconnect();

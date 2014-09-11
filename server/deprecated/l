@@ -1,0 +1,159 @@
+#!/usr/bin/perl
+
+# perl CGI script that displays sqlite tracking data
+#
+#  Author:          Petre Rodan <petre.rodan@simplex.ro>
+#  Available from:  https://github.com/rodan/tracy
+#  License:         GNU GPLv3
+#
+
+use strict;
+use warnings;
+use DBI;
+use POSIX;
+
+my $imei = '013227009851738';
+#my $imei = '013227002533879';
+
+my $database = "/var/lib/tracking/$imei.db";
+my $dsn = "DBI:SQLite:database=$database";
+my $username = undef;
+my $password = undef;
+my $dbh = DBI->connect($dsn, $username, $password, { RaiseError => 1 }) or die $DBI::errstr;
+
+my $database_cell = "/var/lib/tracking/cell_cache.db";
+my $dsn_cell = "DBI:SQLite:database=$database_cell";
+my $dbh_cell = DBI->connect($dsn_cell, $username, $password, { RaiseError => 1 }) or die $DBI::errstr;
+
+sub cell_pos {
+    my ($cell_id, $lac, $mcc, $mnc) = @_;
+
+    # try to get the values from local cache db
+    my $sth = $dbh_cell->prepare("SELECT lat, long FROM live where cell_id = '$cell_id' and lac = '$lac' and mnc = '$mnc' and mcc = '$mcc';");
+    $sth->execute();
+
+    my $row_cell = $sth->fetchrow_arrayref();
+
+    if (!$row_cell) {
+        #my $coord_cell = `/bin/bash ./foo.sh`;
+        my $coord_cell = `python ./cellpos.py $cell_id $lac $mcc $mnc`;
+        $coord_cell =~ s/[()]//g;
+        (@$row_cell[0], @$row_cell[1]) = split(', ', $coord_cell, 2);
+
+        if ($row_cell) {
+            # insert into local cache
+            my $u = time;
+            my $sth = $dbh_cell->prepare("INSERT INTO live (date, cell_id, lac, mnc, mcc, lat, long) VALUES ('$u', '$cell_id', '$lac', '$mnc', '$mcc', '@$row_cell[0]', '@$row_cell[1]')");
+            $sth->execute();
+        }
+    }
+
+    return (@$row_cell[0], @$row_cell[1]);
+}
+
+
+
+if ( -z "$database" ) {
+    $dbh->do("CREATE TABLE live (row_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                 date DATE NOT NULL,
+                                 loc VARCHAR(20) NOT NULL,
+                                 pdop FLOAT,
+                                 fixtime INTEGER,
+                                 geo_distance INTEGER,
+                                 geo_bearing INTEGER,
+                                 v_bat FLOAT,
+                                 v_5 FLOAT,
+                                 c0_rxl INTEGER,
+                                 c0_mcc INTEGER,
+                                 c0_mnc INTEGER,
+                                 c0_cellid INTEGER,
+                                 c0_lac INTEGER,
+                                 c1_rxl INTEGER,
+                                 c1_mcc INTEGER,
+                                 c1_mnc INTEGER,
+                                 c1_cellid INTEGER,
+                                 c1_lac INTEGER,
+                                 c2_rxl INTEGER,
+                                 c2_mcc INTEGER,
+                                 c2_mnc INTEGER,
+                                 c2_cellid INTEGER,
+                                 c2_lac INTEGER,
+                                 c3_rxl INTEGER,
+                                 c3_mcc INTEGER,
+                                 c3_mnc INTEGER,
+                                 c3_cellid INTEGER,
+                                 c3_lac INTEGER
+                                )");
+} 
+
+if ( -z "$database_cell" ) {
+    $dbh_cell->do("CREATE TABLE live (row_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                 date DATE NOT NULL,
+                                 hits INTEGER,
+                                 cell_id INTEGER NOT NULL,
+                                 lac INTEGER NOT NULL,
+                                 mnc INTEGER NOT NULL,
+                                 mcc INTEGER NOT NULL,
+                                 lat FLOAT NOT NULL,
+                                 long FLOAT NOT NULL
+                                )");
+} 
+
+print "Content-Type: text/html\n\n";
+print '<html><head><title>gps locations</title><link href="/css/main.css" rel="stylesheet" type="text/css"></head><body>';
+print "device imei: $imei<br><br>";
+print '<table class="content2" summary="tracking data">';
+print '<tr><td class="title">id</td><td class="title">rcv timestamp (GMT)</td><td class="title">gps fix</td><td class="title">PDOP</td><td class="title">delay</td><td class="title">gd</td><td class="title">gb</td><td class="title">V</td><td class="title">rxl</td><td class="title">cellid</td><td class="title">mcc</td><td class="title">mnc</td><td class="title">lac</td><td class="title">tower coord</td></tr>';
+
+
+my $sth = $dbh->prepare("SELECT row_id, date, loc, fixtime, c0_rxl, c0_mcc, c0_mnc, c0_cellid, c0_lac, c1_rxl, c1_mcc, c1_mnc, c1_cellid, c1_lac, c2_rxl, c2_mcc, c2_mnc, c2_cellid, c2_lac, c3_rxl, c3_mcc, c3_mnc, c3_cellid, c3_lac, v_bat, v_5, geo_distance, geo_bearing, pdop FROM live order by row_id DESC LIMIT 25");
+#my $sth = $dbh->prepare("SELECT * FROM live where row_id > 200 and row_id < 250 order by row_id");
+$sth->execute();
+
+my $row;
+while ($row = $sth->fetchrow_arrayref()) {
+    if ( "@$row[2]" eq "no_fix" ) {
+        print "<tr><td>@$row[0]</td><td>@$row[1]</td><td>@$row[2]</td><td></td><td></td><td></td><td></td>";
+    } else {
+        my $urlloc = "@$row[2]";
+        $urlloc =~ s/\s/%20/g;
+        print "<tr><td>@$row[0]</td><td>@$row[1]</td><td><a href='https://www.google.com/maps/place/$urlloc'>@$row[2]</a></td><td>@$row[28]</td><td>@$row[3]</td><td>@$row[26]</td><td>@$row[27]</td>\r\n";
+    }
+
+    if ( "@$row[24]" eq "0" ) {
+        print "<td></td>";
+    } else {
+        print "<td>@$row[24] @$row[25]</td>";
+    }
+
+    my ($cell_lat, $cell_long) = cell_pos(@$row[7], @$row[8], @$row[6], @$row[5]);
+    my $urlloc = "$cell_lat%20$cell_long";
+    print "<td>@$row[4]</td><td>@$row[7]</td><td>@$row[5]</td><td>@$row[6]</td><td>@$row[8]</td><td><a href='https://www.google.com/maps/place/$urlloc'>$cell_lat $cell_long</a></td></tr>\r\n";
+
+    if (( "@$row[12]" != "65535") && ("@$row[12]" != "0")) {
+        my ($cell_lat, $cell_long) = cell_pos(@$row[12], @$row[13], @$row[11], @$row[10]);
+        my $urlloc = "$cell_lat%20$cell_long";
+        print "<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td>@$row[9]</td><td>@$row[12]</td><td>@$row[10]</td><td>@$row[11]</td><td>@$row[13]</td><td><a href='https://www.google.com/maps/place/$urlloc'>$cell_lat $cell_long</a></td></tr>\r\n";
+    }
+
+    if (( "@$row[17]" != "65535") && ("@$row[17]" != "0")) {
+        my ($cell_lat, $cell_long) = cell_pos(@$row[17], @$row[18], @$row[16], @$row[15]);
+        my $urlloc = "$cell_lat%20$cell_long";
+        print "<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td>@$row[14]</td><td>@$row[17]</td><td>@$row[15]</td><td>@$row[16]</td><td>@$row[18]</td><td><a href='https://www.google.com/maps/place/$urlloc'>$cell_lat $cell_long</a></td></tr>\r\n";
+    }
+
+    if (( "@$row[22]" != "65535") && ("@$row[22]" != "0")) {
+        my ($cell_lat, $cell_long) = cell_pos(@$row[22], @$row[23], @$row[21], @$row[20]);
+        my $urlloc = "$cell_lat%20$cell_long";
+        print "<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td>@$row[19]</td><td>@$row[22]</td><td>@$row[20]</td><td>@$row[21]</td><td>@$row[23]</td><td><a href='https://www.google.com/maps/place/$urlloc'>$cell_lat $cell_long</a></td></tr>\r\n";
+    }
+
+}
+
+$sth->finish();
+$dbh->disconnect();
+$dbh_cell->disconnect();
+
+print '</body></html>'
+
+

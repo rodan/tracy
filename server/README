@@ -1,25 +1,13 @@
 
-'t' is a CGI script that runs on a webserver.
-it records it's calling arguments into an sqlite3 database.
+perl CGI scripts that run on the webserver and receive data from the tracking device
+
+u1 - stores data received by HTTP POST into an sqlite database
+l  - displays that data in a table
 
  source:       https://github.com/rodan/tracy 
  author:       Petre Rodan <petre.rodan@simplex.ro>
  license:      GNU GPLv3
 
-the tracking device sends a HTTP GET request that looks like this:
-
-GET /scripts/t?i=123456789012345&l=no_fix&f=12
-
-parameters:
- i      - sim900 IMEI code (15 bytes)
- l      - location - either 
-            'no_fix' - in case there there is no satellite reception or
-            '%d %d.%04d%c %d %d.%04d%c' - lat degrees, lat minutes, lat fractional, lat suffix
-                                          lon degrees, lon minutes, lon fractional, lon suffix
- f      - time elapsed (in seconds) since when that location fix was received
-
-
-so this script has to be placed into '$document_root/scripts/' and inside 'scripts' the webserver must be allowed to execute.
 
 when nginx with fastcgi is used, this is the recommended config snippet:
 
@@ -51,5 +39,24 @@ when nginx with fastcgi is used, this is the recommended config snippet:
             more_clear_headers 'Transfer-Encoding';
             more_clear_headers 'Connection';
         }
+
+these scripts are to be placed into '$document_root/scripts/' and inside 'scripts' the webserver must be allowed to execute files.
+
+
+old unused scripts:
+
+ deprecated/t	- stores text input received via HTTP GET
+ deprecated/l   - displays data stored by t 
+
+
+GET /scripts/t?i=123456789012345&l=no_fix&f=12[..]
+
+parameters:
+ i      - sim900 IMEI code (15 bytes)
+ l      - location - either 
+            'no_fix' - in case there there is no satellite reception or
+            '%d %d.%04d%c %d %d.%04d%c' - lat degrees, lat minutes, lat fractional, lat suffix
+                                          lon degrees, lon minutes, lon fractional, lon suffix
+ f      - time elapsed (in seconds) since when that location fix was received
 
 
