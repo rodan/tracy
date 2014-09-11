@@ -72,6 +72,7 @@ my $head;
 
 # HTTP POST packet ending byte
 my $suffix;
+my $crc_ok = 1;
 
 # simplified equivalent to the nmea_gprmc_t struct present in the firmware
 my $mc_f;
@@ -196,6 +197,8 @@ $suffix = unpack( "C", $buf );
 if ( $suffix != 0xff ) {
     $template = "err_suffix_XXXXXXXXX";
     save_pkt();
+} else {
+    $crc_ok = 0;
 }
 
 if (!$dryrun) {
@@ -252,7 +255,7 @@ if (!$dryrun) {
                 c1_rxl, c1_mcc, c1_mnc, c1_cellid, c1_lac,
                 c2_rxl, c2_mcc, c2_mnc, c2_cellid, c2_lac,
                 c3_rxl, c3_mcc, c3_mnc, c3_cellid, c3_lac)
-      VALUES ( "$head->{'v_bat'}", "$head->{'v_raw'}", "$head->{'msg_id'}", "$head->{'payload_content_desc'}", "$suffix"
+      VALUES ( "$head->{'v_bat'}", "$head->{'v_raw'}", "$head->{'msg_id'}", "$head->{'payload_content_desc'}", "$crc_ok",
                 "$mc_f->{'timestamp'}", "$mc_f->{'latitude'}", "$mc_f->{'longitude'}", 
                 "$mc_f->{'pdop'}", "$mc_f->{'speed'}", "$mc_f->{'heading'}", 
                 "$mc_f->{'fixtime'}", "$geo->{'distance'}", "$geo->{'bearing'}", 
