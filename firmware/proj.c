@@ -117,11 +117,11 @@ static void schedule(enum sys_message msg)
                 stat.v_bat = v_bat;
                 stat.v_raw = v_raw;
 
-                if (stat.v_bat > 340) {
+                //if (stat.v_bat > 340) {
                     // if battery voltage is below ~3.4v
                     // the sim will most likely lock up while trying to TX
                     sim900_exec_default_task();
-                }
+                //}
 #endif
             break;
         }

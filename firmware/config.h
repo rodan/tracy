@@ -4,7 +4,6 @@
 #define USE_WATCHDOG
 #define CONFIG_GEOFENCE
 
-#define USE_HTTP_POST
 //#define CONFIG_RTC_DST
 //#define CONFIG_RTC_DST_ZONE 4
 //
@@ -19,8 +18,5 @@
 //#define DEBUG_GPS
 //#define DEBUG_GPRS
 //#define CONFIG_DEBUG
-
-// soon to be deprecated
-//#define USE_HTTP_GET
 
 #endif

@@ -398,6 +398,10 @@ static void sim900_state_machine(enum sys_message msg)
                         sim900_tx_str("\",\"", 3);
                         sim900_tx_str(s.pass, s.pass_len);
                         sim900_tx_cmd("\";+CIPSTATUS\r", 13, REPLY_TMOUT);
+                    } else {
+                        sim900.next_state = SIM900_IP_SHUT;
+                        sim900.task_rv = SUBTASK_SEND_FIX_GPRS_FAIL;
+                        timer_a0_delay_noblk_ccr2(SM_STEP_DELAY);
                     }
                 break;
                 case SIM900_IP_GPRSACT:
@@ -407,7 +411,9 @@ static void sim900_state_machine(enum sys_message msg)
                         sim900_tx_cmd("AT+CIICR;+CIPSTATUS\r", 20, _3s);
                     } else {
                         sim900.err |= ERR_GPRS_NO_IP_START;
-                        timer_a0_delay_noblk_ccr1(SM_STEP_DELAY);
+                        sim900.next_state = SIM900_IP_SHUT;
+                        sim900.task_rv = SUBTASK_SEND_FIX_GPRS_FAIL;
+                        timer_a0_delay_noblk_ccr2(SM_STEP_DELAY);
                     }
                 break;
                 case SIM900_IP_STATUS:
@@ -415,6 +421,10 @@ static void sim900_state_machine(enum sys_message msg)
                         sim900.next_state = SIM900_IP_CONNECT;
                         timer_a0_delay_noblk_ccr2(_3sp);
                         sim900_tx_cmd("AT+CIFSR;+CIPHEAD=1;+CIPSTATUS\r", 31, _3s);
+                    } else {
+                        sim900.next_state = SIM900_IP_SHUT;
+                        sim900.task_rv = SUBTASK_SEND_FIX_GPRS_FAIL;
+                        timer_a0_delay_noblk_ccr2(SM_STEP_DELAY);
                     }
                 break;
                 case SIM900_IP_CONNECT:
@@ -425,6 +435,10 @@ static void sim900_state_machine(enum sys_message msg)
                         sim900_tx_str(s.server, s.server_len);
                         snprintf(str_temp, STR_LEN, "\",\"%u\"\r", s.port);
                         sim900_tx_cmd(str_temp, strlen(str_temp), REPLY_TMOUT);
+                    } else {
+                        sim900.next_state = SIM900_IP_SHUT;
+                        sim900.task_rv = SUBTASK_SEND_FIX_GPRS_FAIL;
+                        timer_a0_delay_noblk_ccr2(SM_STEP_DELAY);
                     }
                 break;
                 case SIM900_IP_CONNECT_OK:
@@ -488,9 +502,12 @@ static void sim900_state_machine(enum sys_message msg)
                         // suffix is 1 byte long
                         snprintf(str_temp, STR_LEN, "%d\r", 86 + payload_size);
                         sim900_tx_cmd(str_temp, strlen(str_temp), REPLY_TMOUT);
+                    } else {
+                        sim900.next_state = SIM900_IP_CLOSE;
+                        sim900.task_rv = SUBTASK_SEND_FIX_GPRS_FAIL;
+                        timer_a0_delay_noblk_ccr2(SM_STEP_DELAY);
                     }
                 break;
-
                 case SIM900_IP_PUT:
                     if (sim900.rc == RC_TEXT_INPUT) {
                         sim900.next_state = SIM900_SEND_OK;
@@ -547,6 +564,10 @@ static void sim900_state_machine(enum sys_message msg)
                         // suffix
                         i = 0xff;
                         sim900_tx_cmd((char *) &i, 1, _6s);
+                    } else {
+                        sim900.next_state = SIM900_IP_CLOSE;
+                        sim900.task_rv = SUBTASK_SEND_FIX_GPRS_FAIL;
+                        timer_a0_delay_noblk_ccr2(SM_STEP_DELAY);
                     }
                 break;
                 case SIM900_SEND_OK:
@@ -558,12 +579,20 @@ static void sim900_state_machine(enum sys_message msg)
                         sim900.console = TTY_RX_WAIT;
                         timer_a0_delay_noblk_ccr3(_3s);
                         timer_a0_delay_noblk_ccr2(_3sp);
+                    } else {
+                        sim900.next_state = SIM900_IP_CLOSE;
+                        sim900.task_rv = SUBTASK_SEND_FIX_GPRS_FAIL;
+                        timer_a0_delay_noblk_ccr2(SM_STEP_DELAY);
                     }
                 break;
                 case SIM900_HTTP_REPLY:
                     if (sim900.rc == RC_200_OK) {
                         sim900.next_state = SIM900_IP_CLOSE;
                         timer_a0_delay_noblk_ccr2(SM_DELAY);
+                    } else {
+                        sim900.next_state = SIM900_IP_CLOSE;
+                        sim900.task_rv = SUBTASK_SEND_FIX_GPRS_FAIL;
+                        timer_a0_delay_noblk_ccr2(SM_STEP_DELAY);
                     }
                 break;
                 case SIM900_IP_CLOSE:
@@ -578,8 +607,10 @@ static void sim900_state_machine(enum sys_message msg)
                 break;
                 case SIM900_CLOSE_CMD:
                     sim900.next_state = SIM900_IDLE;
-                    sim900.task_rv = SUBTASK_SEND_FIX_GPRS_OK;
-                    timer_a0_delay_noblk_ccr1(SM_R_DELAY); // signal high level sm
+                    if (sim900.task_rv != SUBTASK_SEND_FIX_GPRS_FAIL) {
+                        sim900.task_rv = SUBTASK_SEND_FIX_GPRS_OK;
+                    }
+                    timer_a0_delay_noblk_ccr1(SM_STEP_DELAY); // signal high level sm
                 break;
                 default:
                 break;
