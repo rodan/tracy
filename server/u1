@@ -41,7 +41,7 @@ my $db_dir = '/var/lib/tracking/';
 
 # set save_pkt to 1 if you want incoming POST requests 
 # to also be saved into a file
-my $save_pkt = 0;
+my $save_pkt = 1;
 my $dir      = '/tmp/';
 my $template = "XXXXXXXXX";
 
@@ -55,11 +55,13 @@ my $filename = undef;
 my $filesize = 0;
 my $verbose  = 0;
 my $dryrun = 0;
+my $nosave = 0;
 
 GetOptions(
     "file=s"  => \$filename,
     "verbose" => \$verbose,
-    "dryrun"  => \$dryrun
+    "dryrun"  => \$dryrun,
+    "nosave"  => \$nosave
 );
 
 my $buf;
@@ -85,6 +87,11 @@ my @cell;
 
 
 sub save_pkt{
+
+    if ($nosave) {
+        return;
+    }
+
     $filename = File::Temp->new( UNLINK => 0, SUFFIX => '', TEMPLATE => $template, DIR => $dir );
 
     open ($fh, '>', $filename);
@@ -243,7 +250,24 @@ if (!$dryrun) {
                                  c3_mcc INTEGER,
                                  c3_mnc INTEGER,
                                  c3_cellid INTEGER,
-                                 c3_lac INTEGER
+                                 c3_lac INTEGER,
+                                 calc_status INTEGER,
+                                 c0_latitude FLOAT,
+                                 c0_longitude FLOAT,
+                                 c1_latitude FLOAT,
+                                 c1_longitude FLOAT,
+                                 c2_latitude FLOAT,
+                                 c2_longitude FLOAT,
+                                 c3_latitude FLOAT,
+                                 c3_longitude FLOAT,
+                                 avg_latitude FLOAT,
+                                 avg_longitude FLOAT,
+                                 wavg_latitude FLOAT,
+                                 wavg_longitude FLOAT,
+                                 cp_latitude FLOAT,
+                                 cp_longitude FLOAT,
+                                 wcp_latitude FLOAT,
+                                 wcp_longitude FLOAT
                                 )");
     }
 
