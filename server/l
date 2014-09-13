@@ -79,16 +79,21 @@ while ($row = $sth->fetchrow_arrayref()) {
         }
     }
 
-
-    my $lat = sprintf( '%.6f', $i->{'avg_latitude'});
-    my $lon = sprintf( '%.6f', $i->{'avg_longitude'});
-
     print '<td>' . $cell[0]->{'rxl'} . '</td><td>' . $cell[0]->{'id'} . '</td><td>' . $cell[0]->{'mcc'} . 
         '</td><td>' . $cell[0]->{'mnc'} . '</td><td>' . $cell[0]->{'lac'} . 
-        '</td><td><a href="https://www.google.com/maps/place/' . $cell[0]->{'latitude'} . '%20' . $cell[0]->{'longitude'} . 
-        '">' . $cell[0]->{'latitude'} . ' ' . $cell[0]->{'longitude'} . '</a></td><td><a href="https://www.google.com/maps/place/' . 
-        $lat . '%20' . $lon . '">' .
-        $lat . ' ' . $lon . '</a></td></tr>';
+        '</td>';
+
+    if ($i->{'avg_latitude'}) {
+        my $lat = sprintf( '%.6f', $i->{'avg_latitude'});
+        my $lon = sprintf( '%.6f', $i->{'avg_longitude'});
+
+        print '<td><a href="https://www.google.com/maps/place/' . $cell[0]->{'latitude'} . '%20' . $cell[0]->{'longitude'} . 
+                '">' . $cell[0]->{'latitude'} . ' ' . $cell[0]->{'longitude'} . '</a></td><td><a href="https://www.google.com/maps/place/' . 
+                $lat . '%20' . $lon . '">' .
+                $lat . ' ' . $lon . '</a></td></tr>';
+    } else {
+        print '<td></td></tr>';
+    }
 
     for (my $j = 1; $j < ($i->{'payload'} & 0x7); $j++) {
 
@@ -108,3 +113,4 @@ $sth->finish();
 $dbh->disconnect();
 
 print '</table></body></html>'
+
