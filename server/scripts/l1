@@ -1,0 +1,357 @@
+#!/usr/bin/perl -T
+
+# perl CGI script that displays sqlite tracking data
+#
+#  Author:          Petre Rodan <petre.rodan@simplex.ro>
+#  Available from:  https://github.com/rodan/tracy
+#  License:         GNU GPLv3
+#
+
+use strict;
+use warnings;
+use DBI;
+use CGI;
+use HTML::Table;
+
+my $CGI = new CGI;
+my $input;
+my $clean;
+$input->{'imei'} = $CGI->param('i');
+$input->{'onlyrow'} = $CGI->param('r');
+$input->{'maptype'} = $CGI->param('m');
+
+print "Content-Type: text/html\n\n";
+
+if ($input->{'imei'} =~ /^([0-9]{1,15})$/) {
+   $clean->{'imei'} = sprintf "%015d", $1;
+}
+else {
+    print 'error: invalid imei';
+    die;
+}
+
+if ($input->{'onlyrow'}) {
+    if ($input->{'onlyrow'} =~ /^([0-9]{1,15})$/) {
+       $clean->{'onlyrow'} = $1;
+    }
+}
+
+if ($input->{'maptype'}) {
+    if ($input->{'maptype'} =~ /^([a-z]{1,10})$/) {
+       $clean->{'maptype'} = $1;
+    }
+}
+
+my $i;
+my @cell;
+
+my $database = '/var/lib/tracking/' . $clean->{'imei'} . '.db';
+my $dsn = 'DBI:SQLite:database=' . $database;
+my $username = undef;
+my $password = undef;
+my $sth;
+my $table;
+
+$ENV{PATH} = '';
+system('/usr/bin/perl -T centroid.pl --db=' . $database);
+
+print '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">' . "\n";
+
+if ( ! -e "$database" ) {
+    die 'error: no such db';
+} 
+
+my $dbh = DBI->connect($dsn, $username, $password, { RaiseError => 0 }) or die $DBI::errstr;
+
+
+if ($clean->{'onlyrow'} && !$clean->{'maptype'}) {
+
+    $sth = $dbh->prepare('SELECT row_id, v_bat, v_raw, settings, errors, msg_id, payload, crc, timestamp, latitude, longitude, pdop, speed, heading, fixtime, geo_distance, geo_bearing, c0_rxl, c0_mcc, c0_mnc, c0_cellid, c0_lac, c0_latitude, c0_longitude, c1_rxl, c1_mcc, c1_mnc, c1_cellid, c1_lac, c1_latitude, c1_longitude, c2_rxl, c2_mcc, c2_mnc, c2_cellid, c2_lac, c2_latitude, c2_longitude, c3_rxl, c3_mcc, c3_mnc, c3_cellid, c3_lac, c3_latitude, c3_longitude, avg_latitude, avg_longitude, wavg_latitude, wavg_longitude FROM live WHERE row_id is ' . $clean->{'onlyrow'});
+    $sth->execute();
+
+    my $row;
+    while ($row = $sth->fetchrow_arrayref()) {
+
+        ($i->{'row_id'}, $i->{'v_bat'}, $i->{'v_raw'}, $i->{'settings'}, $i->{'errors'}, $i->{'msg_id'}, $i->{'payload'}, $i->{'crc'}, 
+            $i->{'timestamp'}, $i->{'latitude'}, $i->{'longitude'}, 
+            $i->{'pdop'}, $i->{'speed'}, $i->{'heading'}, $i->{'fixtime'}, $i->{'geo_distance'}, $i->{'geo_bearing'},
+            $cell[0]->{'rxl'}, $cell[0]->{'mcc'}, $cell[0]->{'mnc'}, $cell[0]->{'id'}, $cell[0]->{'lac'}, $cell[0]->{'latitude'}, $cell[0]->{'longitude'},  
+            $cell[1]->{'rxl'}, $cell[1]->{'mcc'}, $cell[1]->{'mnc'}, $cell[1]->{'id'}, $cell[1]->{'lac'}, $cell[1]->{'latitude'}, $cell[1]->{'longitude'},
+            $cell[2]->{'rxl'}, $cell[2]->{'mcc'}, $cell[2]->{'mnc'}, $cell[2]->{'id'}, $cell[2]->{'lac'}, $cell[2]->{'latitude'}, $cell[2]->{'longitude'},
+            $cell[3]->{'rxl'}, $cell[3]->{'mcc'}, $cell[3]->{'mnc'}, $cell[3]->{'id'}, $cell[3]->{'lac'}, $cell[3]->{'latitude'}, $cell[3]->{'longitude'},
+            $i->{'avg_latitude'}, $i->{'avg_longitude'}, $i->{'wavg_latitude'}, $i->{'wavg_longitude'}) = @$row;
+    }
+
+
+    print '<html><head><title>gps locations</title><link href="/css/main.css" rel="stylesheet" type="text/css">' . 
+            '<meta http-equiv="Content-Type" content="text/html; charset=utf-8"></head>' . "\n" . '<body>';
+    print '<p>device imei: <a href="/scripts/l1?i=' . $clean->{'imei'} . '">' . $clean->{'imei'} . '</a></p>' . "\n";
+
+    print '<p>packet header</p>';
+    $table = HTML::Table->new( -cols => 8, -class => "fixed" );
+    $table->addSectionRow ( 'tbody', 0, 'row_id', 'v_bat', 'v_raw', 'settings', 'errors', 'msg_id', 'payload', 'crc' );
+    $table->setRowClass ( 1, 'title' );
+    $table->addRow($i->{'row_id'}, $i->{'v_bat'}, $i->{'v_raw'}, $i->{'settings'}, $i->{'errors'}, $i->{'msg_id'}, $i->{'payload'}, $i->{'crc'});
+    $table->print;
+    
+    if ($i->{'payload'} > 0) {
+    
+        print '<p>settings bitwise representation</p>';
+        my $n = $i->{'settings'};
+    
+        $table = HTML::Table->new( -cols => 8, -class => "fixed" );
+        $table->addSectionRow ( 'tbody', 0, 'bit 7', 'bit 6', 'bit 5', 'bit 4', 'bit 3', 'bit 2', 'bit 1', 'bit 0');
+        $table->setRowClass ( 1, 'title' );
+        $table->addRow( ($n & 0x80) >> 7 , ($n & 0x40) >> 6, ($n & 0x20) >> 5, ($n & 0x10) >> 4, ($n & 0x8) >> 3, ($n & 0x4) >> 2, ($n & 0x2) >> 1, $n & 0x1);
+        $table->addRow( '-', '-', '-', '-', '-', 'enable cont. charging', 'show voltages' , 'show cell location' );
+        $table->print;
+    }
+    
+    
+    if ($i->{'payload'} > 0) {
+   
+        print '<p>payload bitwise representation</p>';
+        my $n = $i->{'payload'};
+    
+        $table = HTML::Table->new( -cols => 8, -class => "fixed" );
+        $table->addSectionRow ( 'tbody', 0, 'bit 7', 'bit 6', 'bit 5', 'bit 4', 'bit 3', 'bit 2', 'bit 1', 'bit 0');
+        $table->setRowClass ( 1, 'title' );
+        $table->addRow( ($n & 0x80) >> 7 , ($n & 0x40) >> 6, ($n & 0x20) >> 5, ($n & 0x10) >> 4, ($n & 0x8) >> 3, ($n & 0x4) >> 2, ($n & 0x2) >> 1, $n & 0x1);
+        $table->addRow( '-', '-', '-', 'gps fix present', 'geo present' , 'no of cells = ' . ($n & 0x7) );
+        $table->print;
+    }
+    
+    if ($i->{'payload'} & 0x8) {
+        my $lat = sprintf( '%.6f', $i->{'latitude'});
+        my $lon = sprintf( '%.6f', $i->{'longitude'});
+        my $gd = sprintf( '%.0f', $i->{'geo_distance'});
+    
+        print '<p>gps data</p>';
+        $table = HTML::Table->new( -cols => 9, -class => "content2" );
+        $table->addSectionRow ( 'tbody', 0, 'timestamp', 'latitude', 'longitude', 'pdop', 'speed', 'heading', 'fixtime', 'geo_distance', 'geo_bearing');
+        $table->setRowClass ( 1, 'title' );
+        $table->addRow($i->{'timestamp'}, $lat, $lon,
+            $i->{'pdop'}, $i->{'speed'}, $i->{'heading'}, $i->{'fixtime'}, $gd, $i->{'geo_bearing'});
+        $table->print;
+     }
+    
+     if (($i->{'payload'} & 0x7) > 1) {
+        print '<p>gsm cell tower data</p>';
+    
+        $table = HTML::Table->new( -cols => 8, -class => "content2" );
+        $table->addSectionRow ( 'tbody', 0, 'num', 'rxl', 'id', 'mcc', 'mnc', 'lac', 'latitude', 'longitude');
+        $table->setRowClass ( 1, 'title' );
+    
+        for (my $j = 0; $j < ($i->{'payload'} & 0x7); $j++) {
+    
+            if (( "$cell[$j]->{'id'}" != "65535") && ("$cell[$j]->{'id'}" != "0")) {
+                $table->addRow( $j, $cell[$j]->{'rxl'}, $cell[$j]->{'id'}, $cell[$j]->{'mcc'}, $cell[$j]->{'mnc'}, $cell[$j]->{'lac'},
+                $cell[$j]->{'latitude'}, $cell[$j]->{'longitude'});
+    
+            }
+        }
+        $table->print;
+    
+        my $avg_lat = sprintf( '%.6f', $i->{'avg_latitude'});
+        my $avg_lon = sprintf( '%.6f', $i->{'avg_longitude'});
+    
+        $table = HTML::Table->new( -cols => 4, -class => "content2" );
+        $table->addSectionRow ( 'tbody', 0, 'avg_latitude', 'avg_longitude', 'wavg_latitude', 'wavg_longitude');
+        $table->setRowClass ( 1, 'title' );
+        $table->addRow($avg_lat, $avg_lon, $i->{'wavg_latitude'}, $i->{'wavg_longitude'});
+        $table->print;
+    }
+
+    print '<p><a href="/scripts/l1?i=' . $clean->{'imei'} . '&amp;r=' . $i->{'row_id'} . '&amp;m=google"> generate google map </a></p>';
+
+
+} elsif ($clean->{'onlyrow'} && ($clean->{'maptype'} eq 'google')) {
+
+    $sth = $dbh->prepare('SELECT payload, latitude, longitude, pdop, c0_latitude, c0_longitude, c1_latitude, c1_longitude, c2_latitude, c2_longitude, c3_latitude, c3_longitude, avg_latitude, avg_longitude FROM live WHERE row_id is ' . $clean->{'onlyrow'});
+    $sth->execute();
+
+    my $row;
+    while ($row = $sth->fetchrow_arrayref()) {
+        ($i->{'payload'}, $i->{'latitude'}, $i->{'longitude'}, $i->{'pdop'}, 
+            $cell[0]->{'latitude'}, $cell[0]->{'longitude'},  
+            $cell[1]->{'latitude'}, $cell[1]->{'longitude'},
+            $cell[2]->{'latitude'}, $cell[2]->{'longitude'},
+            $cell[3]->{'latitude'}, $cell[3]->{'longitude'},
+            $i->{'avg_latitude'}, $i->{'avg_longitude'}) = @$row;
+    }
+
+    print <<EOF_googlemap1;
+
+<html>
+  <head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <title>map visualization for entry #$clean->{'onlyrow'} </title>
+    <style>
+      html, body, #map-canvas {
+        width: 1024px;
+        height: 700px;
+      }
+    </style>
+    <script src='https://maps.googleapis.com/maps/api/js?v=3.exp'></script>
+    <script>
+function initialize() {
+
+  var img_tower = '/img/tower.png';
+
+  var mapOptions = {
+    zoom: 16,
+EOF_googlemap1
+
+if ($i->{'payload'} & 0x10) {
+    print 'center: new google.maps.LatLng(' . $i->{'latitude'} . ', ' . $i->{'longitude'} . '),';
+} else {
+    print 'center: new google.maps.LatLng(' . $i->{'avg_latitude'} . ', ' . $i->{'avg_longitude'} . '),';
+}
+
+    print <<EOF_googlemap2;
+    mapTypeId: google.maps.MapTypeId.HYBRID
+  }
+  var map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
+EOF_googlemap2
+
+    for (my $j = 0; $j < ($i->{'payload'} & 0x7); $j++) {
+        print 'var marker = new google.maps.Marker({';
+        print '    icon: img_tower,';
+        print '    map: map,';
+        print '    position: new google.maps.LatLng(' . $cell[$j]->{'latitude'} . ', ' . $cell[$j]->{'longitude'} . '),';
+        print '    title: "cell ' . $j . '"';
+        print '});';
+    }
+
+    my $avg_lat = sprintf( '%.6f', $i->{'avg_latitude'});
+    my $avg_lon = sprintf( '%.6f', $i->{'avg_longitude'});
+
+    print <<EOF_googlemap3;
+
+  var marker = new google.maps.Marker({
+      position: new google.maps.LatLng($avg_lat, $avg_lon),
+      map: map,
+      title: 'avg cell'
+  });
+
+  avgcellCircle = new google.maps.Circle({
+    strokeColor: '#222222',
+    strokeOpacity: 0.3,
+    strokeWeight: 2,
+    fillColor: '#0000FF',
+    fillOpacity: 0.1,
+    map: map,
+    center: new google.maps.LatLng($avg_lat, $avg_lon),
+    radius: 200
+
+  });
+
+EOF_googlemap3
+
+
+if ($i->{'payload'} & 0x10) {
+    print <<EOF_googlemap4;
+  var marker = new google.maps.Marker({
+      position: new google.maps.LatLng($i->{'latitude'}, $i->{'longitude'}),
+      map: map,
+      title: 'gps'
+  });
+
+  gpsCircle = new google.maps.Circle({
+    strokeColor: '#222222',
+    strokeOpacity: 0.4,
+    strokeWeight: 2,
+    fillColor: '#00FF00',
+    fillOpacity: 0.3,
+    map: map,
+    center: new google.maps.LatLng($i->{'latitude'}, $i->{'longitude'}),
+    radius: 50
+  });
+EOF_googlemap4
+}
+
+    print <<EOF_googlemap5
+
+  map.setTilt(0);
+
+}
+
+google.maps.event.addDomListener(window, 'load', initialize);
+
+    </script>
+  </head>
+  <body>
+    <div id="map-canvas"></div>
+EOF_googlemap5
+
+
+} elsif ($clean->{'onlyrow'} && ($clean->{'maptype'} eq 'wiki')) {
+    # XXX not working. script never reaches this point
+    print 'kiwi';
+
+} else {
+
+    print '<html><head><title>gps locations</title><link href="/css/main.css" rel="stylesheet" type="text/css">' . 
+        '<meta http-equiv="Content-Type" content="text/html; charset=utf-8"></head>' . "\n" . '<body>';
+    print '<p>device imei: <a href="/scripts/l1?i=' . $clean->{'imei'} . '">' . $clean->{'imei'} . '</a></p>' . "\n";
+
+    print '<table class="content2" summary="tracking data">' . "\n";
+    print '<tr><td class="title">id</td><td class="title">timestamp (GMT)</td><td class="title">latitude</td><td class="title">longitude</td><td class="title">map</td><td class="title">PDOP</td><td class="title">gd</td><td class="title">V</td><td class="title">avg cell coord</td></tr>' . "\n";
+
+
+    $sth = $dbh->prepare('SELECT row_id, v_bat, v_raw, payload, timestamp, latitude, longitude, pdop, geo_distance, avg_latitude, avg_longitude FROM live order by row_id DESC LIMIT 25');
+    $sth->execute();
+
+    my $row;
+    while ($row = $sth->fetchrow_arrayref()) {
+
+        ($i->{'row_id'}, $i->{'v_bat'}, $i->{'v_raw'}, $i->{'payload'}, $i->{'timestamp'}, $i->{'latitude'}, $i->{'longitude'}, 
+            $i->{'pdop'}, $i->{'geo_distance'}, $i->{'avg_latitude'}, $i->{'avg_longitude'}) = @$row;
+
+        print '<tr><td><a href="/scripts/l1?i=' . $clean->{'imei'} . '&amp;r=' . $i->{'row_id'} . '">' . $i->{'row_id'} . '</a></td><td>' . $i->{'timestamp'} . '</td>';
+
+        if ( "$i->{'latitude'}" eq "" ) {
+            print '<td></td><td></td><td></td><td></td><td></td>';
+        } else {
+            my $lat = sprintf( '%.6f', $i->{'latitude'});
+            my $lon = sprintf( '%.6f', $i->{'longitude'});
+            my $gd = sprintf( '%.1f', $i->{'geo_distance'});
+
+            print '<td>' . $lat . '</td><td>' . $lon . 
+            '</td><td><a href="https://www.google.com/maps/place/' . $lat . '%20' . $lon . '">g</a>' . 
+            '<a href="http://wikimapia.org/#lang=en&amp;lat=' . $lat . '&amp;lon=' . $lon . '&amp;z=16&amp;m=w">w</a>' . 
+            '<a href="http://www.openstreetmap.org/search?query=' . $lat . '%20' . $lon .'">o</a>' . 
+            '</td><td>' . $i->{'pdop'}. '</td><td>' . $gd . '</td>';
+        }
+
+        if ( "$i->{'v_bat'}" eq "" ) {
+            print '<td></td>';
+        } else {
+            if ( "$i->{'v_raw'}" < 1 ) {
+                print '<td>' . $i->{'v_bat'} . '</td>';
+            } else {
+                print '<td>' . $i->{'v_bat'} . ' ' . $i->{'v_raw'} .'</td>';
+            }
+        }
+
+        if ($i->{'avg_latitude'}) {
+            my $lat = sprintf( '%.6f', $i->{'avg_latitude'});
+            my $lon = sprintf( '%.6f', $i->{'avg_longitude'});
+
+            print '<td><a href="https://www.google.com/maps/place/' . 
+                    $lat . '%20' . $lon . '">' . $lat . ' ' . $lon . '</a></td></tr>' . "\n";
+        } else {
+            print '<td></td></tr>' . "\n";
+        }
+
+    }
+
+    print '</table>';
+}
+
+$sth->finish();
+$dbh->disconnect();
+
+print '</body></html>'
+

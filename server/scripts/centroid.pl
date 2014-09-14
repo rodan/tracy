@@ -129,14 +129,20 @@ while ($row = $sth->fetchrow_arrayref()) {
         $cell[2]->{'rxl'}, $cell[2]->{'mcc'}, $cell[2]->{'mnc'}, $cell[2]->{'id'}, $cell[2]->{'lac'}, 
         $cell[3]->{'rxl'}, $cell[3]->{'mcc'}, $cell[3]->{'mnc'}, $cell[3]->{'id'}, $cell[3]->{'lac'}) = @$row;
 
-    print $tr->{'row_id'} . ' {';
+    if ($verbose) {
+        print $tr->{'row_id'} . ' {';
+    }
 
     for (my $i = 0; $i < ($tr->{'payload'} & 0x7); $i++) {
         ($cell[$i]->{'latitude'}, $cell[$i]->{'longitude'}) = cell_tower_pos($cell[$i]->{'id'}, $cell[$i]->{'lac'}, $cell[$i]->{'mcc'}, $cell[$i]->{'mnc'});
-        print '+';
+        if ($verbose) {
+            print '+';
+        }
     }
         ($tr->{'avg_latitude'}, $tr->{'avg_longitude'}) = avg_coord();
-        print '}, ';
+        if ($verbose) {
+            print '}, ';
+        }
         $sth_update = $dbh->prepare('UPDATE live SET c0_latitude = "' . $cell[0]->{'latitude'} . '", c0_longitude = "' . $cell[0]->{'longitude'} .
                 '", c1_latitude = "' . $cell[1]->{'latitude'} . '", c1_longitude = "' . $cell[1]->{'longitude'} .
                 '", c2_latitude = "' . $cell[2]->{'latitude'} . '", c2_longitude = "' . $cell[2]->{'longitude'} .

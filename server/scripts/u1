@@ -36,14 +36,13 @@ use feature ':5.10';
 # directory where the sqlite databases are kept
 my $db_dir = '/var/lib/tracking/';
 
-
-# for debug:
-
-# set save_pkt to 1 if you want incoming POST requests 
-# to also be saved into a file
-my $save_pkt = 1;
+# disk location where invalid packets are stored
 my $dir      = '/tmp/';
 my $template = "XXXXXXXXX";
+
+# set save_pkt to 1 if you want ALL incoming POST requests 
+# to be stored on disk
+my $save_pkt = 1;
 
 
 #####################################################################
@@ -137,17 +136,20 @@ if ($filename) {
 }
 
 if (!$binstr) {
-    say 'FAILED, no data';
+    say 'FAILED: no data';
     die;
 }
 
-read( $io, $buf, 33 );
+# microcontroller expects this string once the data is received by server
+print 'RCVD OK' . "\r\n";
 
-( $head->{'version'}, $head->{'imei'}, $head->{'settings'}, $head->{'v_bat'}, $head->{'v_raw'}, $head->{'msg_id'}, $head->{'payload_content_desc'},
+read( $io, $buf, 35 );
+
+( $head->{'version'}, $head->{'imei'}, $head->{'settings'}, $head->{'v_bat'}, $head->{'v_raw'}, $head->{'errors'}, $head->{'msg_id'}, $head->{'payload_content_desc'},
   $mc_f->{'year'},     $mc_f->{'month'},     $mc_f->{'day'},  $mc_f->{'hour'},  $mc_f->{'minute'},  $mc_f->{'second'})
-  = unpack( "S A15 S4 C S C5", $buf );
+  = unpack( "S A15 S5 C S C5", $buf );
 if ($head->{'imei'} =~ /[^0-9]/) {
-        print "FAILED\r\n";
+        print "FAILED: imei invalid\r\n";
         if (!$filename) {
             # script is run as CGI so start panicking
             $template = "err_imei_XXXXXXXXX";
@@ -216,9 +218,11 @@ if (!$dryrun) {
     my $dbh = DBI->connect($dsn, $username, $password, { RaiseError => 0, PrintError => $verbose, PrintWarn => $verbose});
 
     if ( -z "$database" ) {
-        $dbh->do("CREATE TABLE live (row_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        $dbh->do('CREATE TABLE live (row_id INTEGER PRIMARY KEY AUTOINCREMENT,
                                  v_bat FLOAT,
                                  v_raw FLOAT,
+                                 settings INTEGER,
+                                 errors INTEGER,
                                  msg_id INTEGER,
                                  payload INTEGER,
                                  crc INTEGER,
@@ -263,15 +267,12 @@ if (!$dryrun) {
                                  avg_latitude FLOAT,
                                  avg_longitude FLOAT,
                                  wavg_latitude FLOAT,
-                                 wavg_longitude FLOAT,
-                                 cp_latitude FLOAT,
-                                 cp_longitude FLOAT,
-                                 wcp_latitude FLOAT,
-                                 wcp_longitude FLOAT
-                                )");
+                                 wavg_longitude FLOAT
+                                )');
     }
 
-    my $stmt = qq(INSERT INTO live (v_bat, v_raw, msg_id, payload, crc, 
+    my $stmt = qq(INSERT INTO live (v_bat, v_raw, settings, errors, msg_id, 
+                payload, crc, 
                 timestamp, latitude, longitude, 
                 pdop, speed, heading, 
                 fixtime, geo_distance, geo_bearing,
@@ -279,7 +280,8 @@ if (!$dryrun) {
                 c1_rxl, c1_mcc, c1_mnc, c1_cellid, c1_lac,
                 c2_rxl, c2_mcc, c2_mnc, c2_cellid, c2_lac,
                 c3_rxl, c3_mcc, c3_mnc, c3_cellid, c3_lac)
-      VALUES ( "$head->{'v_bat'}", "$head->{'v_raw'}", "$head->{'msg_id'}", "$head->{'payload_content_desc'}", "$crc_ok",
+      VALUES ( "$head->{'v_bat'}", "$head->{'v_raw'}", "$head->{'settings'}", "$head->{'errors'}" , "$head->{'msg_id'}", 
+                "$head->{'payload_content_desc'}", "$crc_ok",
                 "$mc_f->{'timestamp'}", "$mc_f->{'latitude'}", "$mc_f->{'longitude'}", 
                 "$mc_f->{'pdop'}", "$mc_f->{'speed'}", "$mc_f->{'heading'}", 
                 "$mc_f->{'fixtime'}", "$geo->{'distance'}", "$geo->{'bearing'}", 
@@ -295,7 +297,7 @@ if (!$dryrun) {
     if ($dbh->do($stmt)) {
         print "SAVED\r\n";
     } else {
-        print "FAILED\r\n";
+        print "FAILED: db insert\r\n";
     }
     $dbh->disconnect();
 
@@ -312,6 +314,7 @@ if ($verbose) {
     say ' settings:  ' . $head->{'settings'};
     say ' v_bat:     ' . $head->{'v_bat'};
     say ' v_raw:     ' . $head->{'v_raw'};
+    say ' errors:    ' . $head->{'errors'};
     say ' msg_id:    ' . $head->{'msg_id'};
     say ' payload:   ' . $head->{'payload_content_desc'};
     say ' timestamp: ' . $mc_f->{'timestamp'};
@@ -348,8 +351,7 @@ if ($verbose) {
     }
 
     if ( $suffix != 0xff ) {
-        say 'ERROR: mangled packet';
-        exit 1;
+        die 'FAILED: mangled packet';
     }
 }
 
