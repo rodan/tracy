@@ -117,7 +117,7 @@ static void sim900_tasks(enum sys_message msg)
                         sim900.next_state = SIM900_IP_INITIAL;
                         sim900.task_counter++;
                         timer_a0_delay_noblk_ccr2(SM_STEP_DELAY);
-                        timer_a0_delay_noblk_ccr1(_14s);
+                        timer_a0_delay_noblk_ccr1(_30s);
                     } else if (sim900.task_rv == SUBTASK_SEND_FIX_GPRS_OK) {
                         sim900.task_next_state = SUBTASK_SWITCHER;
                         timer_a0_delay_noblk_ccr1(SM_STEP_DELAY);
@@ -462,17 +462,18 @@ static void sim900_state_machine(enum sys_message msg)
                         //  - version (2 bytes), imei (15 bytes), settings (2 bytes), etc
                         //
                         //  message header + 1 byte suffix
-                        payload_size = 2 + 15 + 2 + 2 + 2 + 2 + 1 + 7 + 1;
+                        payload_size = 2 + 15 + 2 + 2 + 2 + 2 + 2 + 1 + 7 + 1;
                         //           |   |    |   |   |   |   |   |   |   |
-                        //           | x |                                  -> version
-                        //               | x  |                             -> imei
-                        //                    | x |                         -> settings
-                        //                        | x |                     -> v_bat
-                        //                            | x |                 -> v_raw
-                        //                                | x |             -> msg_id
-                        //                                    | x |         -> content_desc
-                        //                                        | x |     -> timestamp
-                        //                                            | x | -> suffix
+                        //           | x |                                      -> version
+                        //               | x  |                                 -> imei
+                        //                    | x |                             -> settings
+                        //                        | x |                         -> v_bat
+                        //                            | x |                     -> v_raw
+                        //                                | x |                 -> errors
+                        //                                    | x |             -> msg_id
+                        //                                        | x |         -> content_desc
+                        //                                            | x |     -> timestamp
+                        //                                                | x | -> suffix
 
                         payload_content_desc = 0;
 
@@ -498,9 +499,9 @@ static void sim900_state_machine(enum sys_message msg)
                         }
 
                         sim900_tx_str("AT+CIPSEND=", 11);
-                        // HTTP header is 27 + 34 + 25 = 86 bytes long
+                        // HTTP header is 19 + 6 + s.server_len + 2 + 34 + 25 = 86 bytes + s.server_len
                         // suffix is 1 byte long
-                        snprintf(str_temp, STR_LEN, "%d\r", 86 + payload_size);
+                        snprintf(str_temp, STR_LEN, "%d\r", 86 + s.server_len + payload_size);
                         sim900_tx_cmd(str_temp, strlen(str_temp), REPLY_TMOUT);
                     } else {
                         sim900.next_state = SIM900_IP_CLOSE;
@@ -511,8 +512,11 @@ static void sim900_state_machine(enum sys_message msg)
                 case SIM900_IP_PUT:
                     if (sim900.rc == RC_TEXT_INPUT) {
                         sim900.next_state = SIM900_SEND_OK;
-                        timer_a0_delay_noblk_ccr2(_6sp);
-                        sim900_tx_str("POST /scripts/u1 HTTP/1.0\r\n", 27);
+                        timer_a0_delay_noblk_ccr2(_10sp);
+                        sim900_tx_str("POST /u1 HTTP/1.0\r\n", 19);
+                        sim900_tx_str("Host: ", 6);
+                        sim900_tx_str(s.server, s.server_len);
+                        sim900_tx_str("\r\n", 2);
                         sim900_tx_str("Content-Type: application/binary\r\n", 34);
                         snprintf(str_temp, STR_LEN, "Content-Length: %05u\r\n\r\n", payload_size);
                         sim900_tx_str(str_temp, strlen(str_temp));
@@ -521,6 +525,7 @@ static void sim900_state_machine(enum sys_message msg)
                         sim900_tx_str((char *) &s.settings, 2);
                         sim900_tx_str((char *) &stat.v_bat, 2);
                         sim900_tx_str((char *) &stat.v_raw, 2);
+                        sim900_tx_str((char *) &sim900.err, 2);
                         sim900_tx_str((char *) &http_msg_id, 2);
                         sim900_tx_str((char *) &payload_content_desc, 1);
 
@@ -563,7 +568,7 @@ static void sim900_state_machine(enum sys_message msg)
 
                         // suffix
                         i = 0xff;
-                        sim900_tx_cmd((char *) &i, 1, _6s);
+                        sim900_tx_cmd((char *) &i, 1, _10s);
                     } else {
                         sim900.next_state = SIM900_IP_CLOSE;
                         sim900.task_rv = SUBTASK_SEND_FIX_GPRS_FAIL;
@@ -586,7 +591,10 @@ static void sim900_state_machine(enum sys_message msg)
                     }
                 break;
                 case SIM900_HTTP_REPLY:
-                    if (sim900.rc == RC_200_OK) {
+                    // instead of waiting for '200 OK' maybe focus on 
+                    // the 'RCVD OK' string sent from the application?
+                    //if (sim900.rc == RC_200_OK) {
+                    if (sim900.rc == RC_RCVD_OK) {
                         sim900.next_state = SIM900_IP_CLOSE;
                         timer_a0_delay_noblk_ccr2(SM_DELAY);
                     } else {
@@ -603,7 +611,7 @@ static void sim900_state_machine(enum sys_message msg)
                 case SIM900_IP_SHUT:
                     sim900.next_state = SIM900_CLOSE_CMD;
                     timer_a0_delay_noblk_ccr2(SM_R_DELAY);
-                    sim900_tx_cmd("AT+CIPSHUT\r", 11, REPLY_TMOUT);
+                    sim900_tx_cmd("AT+CIPSHUT\r", 11, _3s);
                 break;
                 case SIM900_CLOSE_CMD:
                     sim900.next_state = SIM900_IDLE;
@@ -680,6 +688,11 @@ static void sim900_state_machine(enum sys_message msg)
                             break;
                             case SMS_CODE_OK:
                                 sim900_tx_str("code ok\r", 8);
+                            break;
+                            case SMS_VREF:
+                                snprintf(str_temp, STR_LEN, "vref %d vbat %d.%02dV\r",
+                                    s.vref, stat.v_bat/100, stat.v_bat%100 );
+                                sim900_tx_str(str_temp, strlen(str_temp));
                             break;
                         }
                         sim900_tx_cmd(eom, 2, _5s);
@@ -925,6 +938,9 @@ uint8_t sim900_parse_rx(char *str, const uint16_t size)
         } else if (strstr(str, "SEND OK")) {
             // '\r\nSEND OK\r\n'
             sim900.rc = RC_SEND_OK;
+        } else if (strstr(str, "RCVD OK")) {
+            // 'HTTP/1.1 200 OK\r\nConnection: close\r\n\r\nRCVD OK\r\n'
+            sim900.rc = RC_RCVD_OK;
         } else if (strstr(str, "200 OK")) {
             // '\r\n+IPD,141:HTTP/1.1 200 OK\r\n'
             sim900.rc = RC_200_OK;
@@ -1164,8 +1180,13 @@ uint8_t sim900_parse_sms(char *str, const uint16_t size)
             p = strstr(str, "vref");
             p += 4;
             extract_dec(p, &tmp);
-            s.vref = tmp;
-            save = true;
+            if ((tmp < 210) && (tmp > 190)) {
+                s.vref = tmp;
+                save = true;
+                adc_read();
+                // send the received value back in a sms reply
+                sim900_add_subtask(SUBTASK_SEND_SMS, SMS_VREF);
+            }
         }
     }
 

@@ -140,6 +140,7 @@ typedef enum {
     RC_STATE_IP_SHUT,
     RC_SEND_OK,
     RC_200_OK,
+    RC_RCVD_OK,
     RC_CENG_RCVD
 } sim900_rc_t;
 
@@ -155,6 +156,7 @@ typedef enum {
     SMS_SETUP,
     SMS_GPRS_SETUP,
     SMS_ERRORS,
+    SMS_VREF,
     SMS_CODE_OK
 } sim900_sms_subj_t;
 

@@ -17,6 +17,7 @@
 #define _10s            _1s * 10
 #define _10sp           _10s + SM_STEP_DELAY
 #define _14s            _1s * 14
+#define _30s            _1s * 30
 #define _60s            _1s * 60
 #define _75s            _1s * 75
 

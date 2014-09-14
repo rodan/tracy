@@ -45,6 +45,7 @@ uint32_t rtca_set_next;
 void main_init(void);
 void check_events(void);
 void settings_init(uint8_t * addr);
+void adc_read(void);
 
 #define MAX_PHONE_LEN   16
 #define MAX_APN_LEN     20
@@ -91,7 +92,7 @@ static const struct tracy_settings_t defaults = {
     8,                          // gprs pass_len
     "vodafone",                 // gprs pass
     14,                         // server_len
-    "www.simplex.ro",           // server
+    "trk.simplex.ro",           // server
     80,                         // port
     200                         // adc vref
 };

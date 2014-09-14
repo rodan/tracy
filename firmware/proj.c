@@ -76,10 +76,6 @@ static void parse_UI(enum sys_message msg)
 
 static void schedule(enum sys_message msg)
 {
-#ifndef DEBUG_GPS
-    uint16_t q_bat = 0, q_raw = 0;
-    uint32_t v_bat, v_raw;
-#endif
 
     if (rtca_time.sys >= trigger_next) {
         // time to act
@@ -109,19 +105,17 @@ static void schedule(enum sys_message msg)
                 trigger_next += loop_period - gps_warmup;
                 main_next_state = MAIN_IDLE;
 
-#ifndef DEBUG_GPS
-                adc10_read(3, &q_bat, REFVSEL_1);
-                adc10_read(2, &q_raw, REFVSEL_1);
-                v_bat = (uint32_t) q_bat * s.vref * DIV_BAT / 10000;
-                v_raw = (uint32_t) q_raw * s.vref * DIV_RAW / 10000;
-                stat.v_bat = v_bat;
-                stat.v_raw = v_raw;
+                adc_read();
 
-                //if (stat.v_bat > 340) {
+#ifndef DEBUG_GPS
+                if (stat.v_bat > 340) {
                     // if battery voltage is below ~3.4v
                     // the sim will most likely lock up while trying to TX
                     sim900_exec_default_task();
-                //}
+                } else {
+                    // force charging
+                    CHARGE_ENABLE;
+                }
 #endif
             break;
         }
@@ -140,8 +134,8 @@ static void adc_calibration(enum sys_message msg)
     adc10_read(3, &q_bat, REFVSEL_1);
     adc10_read(2, &q_raw, REFVSEL_1);
 
-    v_bat = (uint32_t) q_bat * VREF_2_0_6_3 * DIV_BAT / 10000;
-    v_raw = (uint32_t) q_raw * VREF_2_0_6_2 * DIV_RAW / 10000;
+    v_bat = (uint32_t) q_bat * s.vref * DIV_BAT / 10000;
+    v_raw = (uint32_t) q_raw * s.vref * DIV_RAW / 10000;
 
     stat.v_bat = v_bat;
     stat.v_raw = v_raw;
@@ -337,3 +331,15 @@ void settings_init(uint8_t * addr)
     }
 }
 
+void adc_read()
+{
+    uint16_t q_bat = 0, q_raw = 0;
+    uint32_t v_bat, v_raw;
+
+    adc10_read(3, &q_bat, REFVSEL_1);
+    adc10_read(2, &q_raw, REFVSEL_1);
+    v_bat = (uint32_t) q_bat * s.vref * DIV_BAT / 10000;
+    v_raw = (uint32_t) q_raw * s.vref * DIV_RAW / 10000;
+    stat.v_bat = v_bat;
+    stat.v_raw = v_raw;
+}
