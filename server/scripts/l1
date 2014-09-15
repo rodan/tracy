@@ -89,12 +89,12 @@ if ($clean->{'onlyrow'} && !$clean->{'maptype'}) {
 
     print '<p>packet header</p>';
     $table = HTML::Table->new( -cols => 8, -class => "fixed" );
-    $table->addSectionRow ( 'tbody', 0, 'row_id', 'v_bat', 'v_raw', 'settings', 'errors', 'msg_id', 'payload', 'crc' );
+    $table->addSectionRow ( 'tbody', 0, 'row_id', 'timestamp', 'v_bat', 'v_raw', 'settings', 'errors', 'msg_id', 'payload', 'crc' );
     $table->setRowClass ( 1, 'title' );
-    $table->addRow($i->{'row_id'}, $i->{'v_bat'}, $i->{'v_raw'}, $i->{'settings'}, $i->{'errors'}, $i->{'msg_id'}, $i->{'payload'}, $i->{'crc'});
+    $table->addRow($i->{'row_id'}, $i->{'timestamp'}, $i->{'v_bat'}, $i->{'v_raw'}, $i->{'settings'}, $i->{'errors'}, $i->{'msg_id'}, $i->{'payload'}, $i->{'crc'});
     $table->print;
     
-    if ($i->{'payload'} > 0) {
+    if ($i->{'settings'} > 0) {
     
         print '<p>settings bitwise representation</p>';
         my $n = $i->{'settings'};
@@ -103,10 +103,23 @@ if ($clean->{'onlyrow'} && !$clean->{'maptype'}) {
         $table->addSectionRow ( 'tbody', 0, 'bit 7', 'bit 6', 'bit 5', 'bit 4', 'bit 3', 'bit 2', 'bit 1', 'bit 0');
         $table->setRowClass ( 1, 'title' );
         $table->addRow( ($n & 0x80) >> 7 , ($n & 0x40) >> 6, ($n & 0x20) >> 5, ($n & 0x10) >> 4, ($n & 0x8) >> 3, ($n & 0x4) >> 2, ($n & 0x2) >> 1, $n & 0x1);
-        $table->addRow( '-', '-', '-', '-', '-', 'enable cont. charging', 'show voltages' , 'show cell location' );
+        $table->addRow( '-', '-', '-', '-', '-', 'enable cont. charging', 'minimal interference' , 'get cell location' );
         $table->print;
     }
+ 
+    if ($i->{'errors'} > 0) {
     
+        print '<p>errors bitwise representation</p>';
+        my $n = $i->{'errors'};
+    
+        $table = HTML::Table->new( -cols => 16, -class => "fixed" );
+        $table->addSectionRow ( 'tbody', 0, 'bit 15', 'bit 14', 'bit 13', 'bit 12', 'bit 11', 'bit 10', 'bit 9', 'bit 8', 'bit 7', 'bit 6', 'bit 5', 'bit 4', 'bit 3', 'bit 2', 'bit 1', 'bit 0');
+        $table->setRowClass ( 1, 'title' );
+        $table->addRow( ($n & 0x8000) >> 15 , ($n & 0x4000) >> 14 , ($n & 0x2000) >> 13 , ($n & 0x1000) >> 12 , ($n & 0x800) >> 11 , ($n & 0x400) >> 10 , ($n & 0x200) >> 9 , ($n & 0x100) >> 8 , ($n & 0x80) >> 7 , ($n & 0x40) >> 6, ($n & 0x20) >> 5, ($n & 0x10) >> 4, ($n & 0x8) >> 3, ($n & 0x4) >> 2, ($n & 0x2) >> 1, $n & 0x1);
+        $table->addRow( '-', '-', '-', '-', '-', '-', '-' , '-' , '-' , 'CENG PARSE' , 'GPRS IP_START' , 'TX SMS' , 'TX GPRS' , 'IMEI UNK' , 'CALL RDY' , 'PIN RDY' );
+        $table->print;
+    }
+   
     
     if ($i->{'payload'} > 0) {
    
@@ -127,15 +140,14 @@ if ($clean->{'onlyrow'} && !$clean->{'maptype'}) {
         my $gd = sprintf( '%.0f', $i->{'geo_distance'});
     
         print '<p>gps data</p>';
-        $table = HTML::Table->new( -cols => 9, -class => "content2" );
-        $table->addSectionRow ( 'tbody', 0, 'timestamp', 'latitude', 'longitude', 'pdop', 'speed', 'heading', 'fixtime', 'geo_distance', 'geo_bearing');
+        $table = HTML::Table->new( -cols => 8, -class => "content2" );
+        $table->addSectionRow ( 'tbody', 0, 'latitude', 'longitude', 'pdop', 'speed', 'heading', 'fixtime', 'geo_distance', 'geo_bearing');
         $table->setRowClass ( 1, 'title' );
-        $table->addRow($i->{'timestamp'}, $lat, $lon,
-            $i->{'pdop'}, $i->{'speed'}, $i->{'heading'}, $i->{'fixtime'}, $gd, $i->{'geo_bearing'});
+        $table->addRow($lat, $lon, $i->{'pdop'}, $i->{'speed'}, $i->{'heading'}, $i->{'fixtime'}, $gd, $i->{'geo_bearing'});
         $table->print;
      }
     
-     if (($i->{'payload'} & 0x7) > 1) {
+     if (($i->{'payload'} & 0x7) > 0) {
         print '<p>gsm cell tower data</p>';
     
         $table = HTML::Table->new( -cols => 8, -class => "content2" );
@@ -189,8 +201,9 @@ if ($clean->{'onlyrow'} && !$clean->{'maptype'}) {
     <title>map visualization for entry #$clean->{'onlyrow'} </title>
     <style>
       html, body, #map-canvas {
-        width: 1024px;
-        height: 700px;
+        height: 100%;
+        margin: 0px;
+        padding: 0px
       }
     </style>
     <script src='https://maps.googleapis.com/maps/api/js?v=3.exp'></script>
@@ -210,7 +223,7 @@ if ($i->{'payload'} & 0x10) {
 }
 
     print <<EOF_googlemap2;
-    mapTypeId: google.maps.MapTypeId.HYBRID
+    mapTypeId: google.maps.MapTypeId.ROADMAP
   }
   var map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
 EOF_googlemap2
@@ -229,15 +242,9 @@ EOF_googlemap2
 
     print <<EOF_googlemap3;
 
-  var marker = new google.maps.Marker({
-      position: new google.maps.LatLng($avg_lat, $avg_lon),
-      map: map,
-      title: 'avg cell'
-  });
-
   avgcellCircle = new google.maps.Circle({
     strokeColor: '#222222',
-    strokeOpacity: 0.3,
+    strokeOpacity: 0.1,
     strokeWeight: 2,
     fillColor: '#0000FF',
     fillOpacity: 0.1,
@@ -286,9 +293,7 @@ google.maps.event.addDomListener(window, 'load', initialize);
 EOF_googlemap5
 
 
-} elsif ($clean->{'onlyrow'} && ($clean->{'maptype'} eq 'wiki')) {
-    # XXX not working. script never reaches this point
-    print 'kiwi';
+} elsif ($clean->{'onlyrow'} && ($clean->{'maptype'} eq 'wikimapia')) {
 
 } else {
 

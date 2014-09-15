@@ -1,8 +1,10 @@
 
-perl CGI scripts that run on the webserver and receive data from the tracking device
+perl CGI scripts that run on the webserver and process data received from the tracking device
 
 u1 - stores data received by HTTP POST into an sqlite database
-l  - displays that data in a table
+l1 - displays that data in a table
+centroid - perl script that calculates the geometric center of the polygon defined by GSM cell tower coordinates
+
 
  source:       https://github.com/rodan/tracy 
  author:       Petre Rodan <petre.rodan@simplex.ro>

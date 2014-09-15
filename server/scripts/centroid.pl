@@ -1,5 +1,7 @@
 #!/usr/bin/perl
 
+# perl script that calculates the geometric center of the polygon 
+# defined by GSM cell tower coordinates
 #
 #  Author:          Petre Rodan <petre.rodan@simplex.ro>
 #  Available from:  https://github.com/rodan/tracy
@@ -14,6 +16,8 @@ use Math::Trig;
 use DBI;
 
 use feature ':5.10';
+
+$ENV{PATH}='';
 
 my $database = undef;
 my $database_cell = "/var/lib/tracking/cell_cache.db";
@@ -54,7 +58,7 @@ sub cell_tower_pos {
     my $row_cell = $sth->fetchrow_arrayref();
 
     if (!$row_cell) {
-        my $coord_cell = `python ./cellpos.py $cell_id $lac $mcc $mnc`;
+        my $coord_cell = `/usr/bin/python ./cellpos.py $cell_id $lac $mcc $mnc`;
         $coord_cell =~ s/[()]//g;
         (@$row_cell[0], @$row_cell[1]) = split(', ', $coord_cell, 2);
 
@@ -117,7 +121,7 @@ if ( -z "$database_cell" ) {
 } 
 
 
-$sth = $dbh->prepare('SELECT row_id, payload, calc_status, c0_rxl, c0_mcc, c0_mnc, c0_cellid, c0_lac, c1_rxl, c1_mcc, c1_mnc, c1_cellid, c1_lac, c2_rxl, c2_mcc, c2_mnc, c2_cellid, c2_lac, c3_rxl, c3_mcc, c3_mnc, c3_cellid, c3_lac FROM live WHERE calc_status IS NULL');
+$sth = $dbh->prepare('SELECT row_id, payload, calc_status, c0_rxl, c0_mcc, c0_mnc, c0_cellid, c0_lac, c1_rxl, c1_mcc, c1_mnc, c1_cellid, c1_lac, c2_rxl, c2_mcc, c2_mnc, c2_cellid, c2_lac, c3_rxl, c3_mcc, c3_mnc, c3_cellid, c3_lac FROM live WHERE calc_status is NULL');
 $sth->execute();
 
 my @list = ();
@@ -132,6 +136,12 @@ while ($row = $sth->fetchrow_arrayref()) {
     if ($verbose) {
         print $tr->{'row_id'} . ' {';
     }
+
+    for (my $i = 0; $i < 4; $i++) {
+        ($cell[$i]->{'latitude'}, $cell[$i]->{'longitude'}) = ('', '');
+    }
+
+    ($tr->{'avg_latitude'}, $tr->{'avg_longitude'}) = ('', '');
 
     for (my $i = 0; $i < ($tr->{'payload'} & 0x7); $i++) {
         ($cell[$i]->{'latitude'}, $cell[$i]->{'longitude'}) = cell_tower_pos($cell[$i]->{'id'}, $cell[$i]->{'lac'}, $cell[$i]->{'mcc'}, $cell[$i]->{'mnc'});
