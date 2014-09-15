@@ -229,6 +229,9 @@ static void sim900_state_machine(enum sys_message msg)
                     P1DIR |= 0x48;
                     uart1_init(9600);
 
+                    if (CONF_MIN_INTERFERENCE) {
+                        GPS_DISABLE;
+                    }
                     sim900.next_state = SIM900_PWRKEY_ACT;
                     timer_a0_delay_noblk_ccr2(_500ms);
                 break;
@@ -597,6 +600,7 @@ static void sim900_state_machine(enum sys_message msg)
                     if (sim900.rc == RC_RCVD_OK) {
                         sim900.next_state = SIM900_IP_CLOSE;
                         timer_a0_delay_noblk_ccr2(SM_DELAY);
+                        sim900.err = 0;
                     } else {
                         sim900.next_state = SIM900_IP_CLOSE;
                         sim900.task_rv = SUBTASK_SEND_FIX_GPRS_FAIL;
@@ -682,6 +686,7 @@ static void sim900_state_machine(enum sys_message msg)
                                 if (sim900.err) {
                                     snprintf(str_temp, STR_LEN, "err 0x%04x\r", sim900.err);
                                     sim900_tx_str(str_temp, strlen(str_temp));
+                                    sim900.err = 0;
                                 } else {
                                     sim900_tx_str("no errors\r", 10);
                                 }
@@ -1171,7 +1176,7 @@ uint8_t sim900_parse_sms(char *str, const uint16_t size)
             p += 3;
             extract_dec(p, &s.settings);
             save = true;
-            if (s.settings & CONF_ENABLE_CHARGING) {
+            if (s.settings & CONF_ALWAYS_CHARGE) {
                 CHARGE_ENABLE;
             } else {
                 CHARGE_DISABLE;

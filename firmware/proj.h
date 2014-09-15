@@ -53,9 +53,9 @@ void adc_read(void);
 #define MAX_PASS_LEN    20
 #define MAX_SERVER_LEN  20
 
-#define CONF_SHOW_CELL_LOC   0x1
-#define CONF_SHOW_VOLTAGES   0x2
-#define CONF_ENABLE_CHARGING 0x4
+#define CONF_SHOW_CELL_LOC     0x1
+#define CONF_MIN_INTERFERENCE  0x2
+#define CONF_ALWAYS_CHARGE     0x4
 
 // this struct will end up written into an information flash segment
 // so it better not exceed 128bytes
@@ -82,7 +82,7 @@ struct tracy_settings_t s;
 
 static const struct tracy_settings_t defaults = {
     VERSION,                    // ver
-    CONF_SHOW_CELL_LOC | CONF_SHOW_VOLTAGES | CONF_ENABLE_CHARGING,  // settings
+    CONF_SHOW_CELL_LOC | CONF_MIN_INTERFERENCE | CONF_ALWAYS_CHARGE,  // settings
     0,                          // ctrl_phone_len
     "",                         // ctrl_phone
     17,                         // gprs apn_len

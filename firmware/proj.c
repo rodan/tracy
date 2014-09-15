@@ -157,7 +157,7 @@ int main(void)
     GPS_BKP_ENABLE;
     settings_init(SEGMENT_B);
 
-    if (s.settings & CONF_ENABLE_CHARGING) {
+    if (s.settings & CONF_ALWAYS_CHARGE) {
         CHARGE_ENABLE;
     } else {
         CHARGE_DISABLE;
