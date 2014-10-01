@@ -74,7 +74,10 @@ static void parse_UI(enum sys_message msg)
         uart0_tx_str("fm write\r\n", 10);
         fm24_write(data, 0x1e631, 10);
     } else if (f == 'r') {
-        fm24_read((uint8_t *)&str_temp, 0x1e631, 10);
+        //fm24_read_from((uint8_t *)&str_temp, 0x1e631, 10);
+
+        fm24_seek(0x1e631);
+        fm24_read((uint8_t *)&str_temp, 10);
 
         for (i=0;i<10;i++) {
             snprintf(in, 3, "%02x", str_temp[i]);

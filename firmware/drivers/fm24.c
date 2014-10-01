@@ -11,13 +11,59 @@
 
 #include "serial_bitbang.h"
 
-int8_t fm24_seek(const uint32_t pos)
+int8_t fm24_seek(const uint32_t addr)
 {
+    uint8_t rv = 0;
 
-    return 0;
+    rv = i2cm_start();
+
+    if (rv != I2C_OK) {
+        return 0;
+    }
+
+    rv = i2cm_tx(FM24V10_BA | (addr >> 16), I2C_WRITE);
+
+    if (rv == I2C_ACK) {
+        // f-ram memory address
+        i2cm_tx((addr & 0xff00) >> 8, I2C_NO_ADDR_SHIFT);
+        i2cm_tx(addr & 0xff, I2C_NO_ADDR_SHIFT);
+    }
+
+    i2cm_stop();
+
+    if (rv != I2C_ACK) {
+        return 0;
+    }
+
+    return 1;
 }
 
-uint32_t fm24_read(uint8_t *buf, const uint32_t addr, const uint32_t nbyte)
+uint32_t fm24_read(uint8_t *buf, const uint32_t nbyte)
+{
+    uint8_t rv = 0;
+
+    rv = i2cm_start();
+
+    if (rv != I2C_OK) {
+        return 0;
+    }
+
+    rv = i2cm_tx(FM24V10_BA, I2C_READ);
+
+    if (rv == I2C_ACK) {
+        rv = i2cm_rx(buf, nbyte, I2C_LAST_NAK);
+    }
+
+    i2cm_stop();
+
+    if (rv != I2C_ACK) {
+        return 0;
+    }
+
+    return nbyte;
+}
+
+uint32_t fm24_read_from(uint8_t *buf, const uint32_t addr, const uint32_t nbyte)
 {
     uint8_t rv = 0;
 
@@ -48,6 +94,7 @@ uint32_t fm24_read(uint8_t *buf, const uint32_t addr, const uint32_t nbyte)
 
     return nbyte;
 }
+
 
 uint32_t fm24_write(const uint8_t *buf, const uint32_t addr, const uint32_t nbyte)
 {

@@ -116,7 +116,12 @@ uint8_t i2cm_rx(uint8_t * buf, const uint16_t length, const uint8_t options)
         }
 
         if ((j == length - 1) && (options & I2C_LAST_NAK)) {
-            // no need for ack
+            // send nack
+            sda_high;
+            delay_c;
+            scl_high;
+            delay_c;
+            scl_low;
         } else {
             // send ack
             scl_high;

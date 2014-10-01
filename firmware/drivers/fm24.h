@@ -11,8 +11,9 @@
 #define FM_LA   0x1FFFF     // last addressable address
 #endif
 
-int8_t fm24_seek(const uint32_t pos);
-uint32_t fm24_read(uint8_t *buf, const uint32_t addr, const uint32_t nbyte);
+int8_t fm24_seek(const uint32_t addr);
+uint32_t fm24_read(uint8_t *buf, const uint32_t nbyte);
+uint32_t fm24_read_from(uint8_t *buf, const uint32_t addr, const uint32_t nbyte);
 uint32_t fm24_write(const uint8_t *buf, const uint32_t addr, const uint32_t nbyte);
 
 #endif
