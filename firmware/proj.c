@@ -57,7 +57,7 @@ static void parse_gprs(enum sys_message msg)
 static void parse_UI(enum sys_message msg)
 {
     uint8_t i;
-    char in[3];
+    //char in[3];
     uint8_t data[10];
     char f = uart0_rx_buf[0];
 
@@ -69,22 +69,21 @@ static void parse_UI(enum sys_message msg)
         sim900_halt();
     } else if (f == 'w') {
         for (i=0;i<10;i++) {
-            data[i] = i;
+            data[i] = 0xff - i;
         }
-        uart0_tx_str("fm write\r\n", 10);
-        fm24_write(data, 0x1e631, 10);
+        fm24_write(data, 0x1fffb, 10);
     } else if (f == 'r') {
-        //fm24_read_from((uint8_t *)&str_temp, 0x1e631, 10);
+        fm24_read_from((uint8_t *)&str_temp, 0x1fffb, 10);
 
-        fm24_seek(0x1e631);
-        fm24_read((uint8_t *)&str_temp, 10);
-
+        /*
         for (i=0;i<10;i++) {
             snprintf(in, 3, "%02x", str_temp[i]);
             uart0_tx_str(in, strlen(in));
             uart0_tx_str(" ", 1);
         }
-
+        */
+    } else if (f == 's') {
+        fm24_sleep();
     } else {
         sim900_tx_str((char *)uart0_rx_buf, uart0_p);
         sim900_tx_str("\r", 1);
