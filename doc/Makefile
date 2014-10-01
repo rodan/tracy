@@ -19,6 +19,7 @@ $(foreach subdir,$(SUBDIRS), \
 
 $(PROJ).pdf: $(SRCS)
 	@pdflatex $(SRCS)
+	@pdflatex $(SRCS)
 	#@echo -e "\n>> Building $@ as target $(TARGET)"
 	#@$(CC) $(CFLAGS) $(LDFLAGS) $(INCLUDES) -o $@ $+ && size $@
 	#@#@python tools/msp430-ram-usage $@

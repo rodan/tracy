@@ -1,4 +1,11 @@
 
+// minimal NMEA parser library. decodes GPRMC and GPGSA sentences
+// checksum is ignored
+//
+//   author:          Petre Rodan <petre.rodan@simplex.ro>
+//   available from:  https://github.com/rodan/
+//   license:         GNU GPLv3
+
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
@@ -19,7 +26,6 @@
 /// returns
 ///   EXIT_FAILURE - if string is malformed or too short to contain valid fix
 ///   EXIT_SUCCESS - if all went well
-/// the only sentence currently decoded is $GPRMC. checksum is ignored
 uint8_t nmea_parse(char *s, const uint8_t len)
 {
     char *p = s;
