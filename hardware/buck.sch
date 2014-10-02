@@ -13336,7 +13336,7 @@ will be further integrated into the Sparkfun Library for other footprints.  It c
 </class>
 </classes>
 <parts>
-<part name="IC1" library="Simplex-ICs" deviceset="LM2674" device=""/>
+<part name="IC1" library="Simplex-ICs" deviceset="LM2674" device="" value="LM2675M-ADJ"/>
 <part name="GND1" library="supply1" deviceset="GND" device=""/>
 <part name="R1" library="rcl" deviceset="R-EU_" device="R0805W" value="1.5K 1%"/>
 <part name="R2" library="rcl" deviceset="R-EU_" device="R0805W" value="4.75k 1%"/>
@@ -13350,7 +13350,7 @@ will be further integrated into the Sparkfun Library for other footprints.  It c
 <part name="GND6" library="supply1" deviceset="GND" device=""/>
 <part name="C3" library="rcl" deviceset="CPOL-EU" device="D" value="100uF, 16V"/>
 <part name="GND7" library="supply1" deviceset="GND" device=""/>
-<part name="L2" library="inductors" deviceset="DR125" device=""/>
+<part name="L2" library="inductors" deviceset="DR125" device="" value="68uH 1.5A"/>
 <part name="JP1" library="SparkFun-Connectors" deviceset="M02" device="PTH"/>
 <part name="X1" library="Simplex-Connectors" deviceset="MOLEX_4" device="HORIZONTAL"/>
 <part name="R3" library="rcl" deviceset="R-EU_" device="R0805W" value="100k DNP"/>

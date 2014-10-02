@@ -12827,7 +12827,7 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <part name="GND35" library="SparkFun" deviceset="GND" device=""/>
 <part name="GND47" library="SparkFun" deviceset="GND" device=""/>
 <part name="R22" library="rcl" deviceset="R-EU_" device="R0805W" value="2M"/>
-<part name="R24" library="rcl" deviceset="R-EU_" device="R0805W" value="240K"/>
+<part name="R24" library="rcl" deviceset="R-EU_" device="R0805W" value="620K"/>
 <part name="GND34" library="SparkFun" deviceset="GND" device=""/>
 <part name="GND27" library="SparkFun" deviceset="GND" device=""/>
 <part name="R34" library="rcl" deviceset="R-EU_" device="R0805W" value="47k"/>
@@ -12839,7 +12839,7 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <part name="GND13" library="SparkFun" deviceset="GND" device=""/>
 <part name="C9" library="rcl" deviceset="C-EU" device="C0805" value="100nF"/>
 <part name="GND10" library="SparkFun" deviceset="GND" device=""/>
-<part name="C18" library="rcl" deviceset="C-EU" device="C0805" value="47nF"/>
+<part name="C18" library="rcl" deviceset="C-EU" device="C0805" value="100nF"/>
 <part name="GND38" library="SparkFun" deviceset="GND" device=""/>
 <part name="GND39" library="SparkFun" deviceset="GND" device=""/>
 <part name="U$5" library="Simplex-rlc" deviceset="INDUCTOR" device="" value="bead"/>

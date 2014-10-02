@@ -11,6 +11,10 @@
 \usepackage{graphicx} 
 %\usepackage{subfigure}
 
+\usepackage{gensymb}
+\usepackage[stable]{footmisc}
+\usepackage{multirow}
+
 \usepackage{hyperref}
 \hypersetup{
     colorlinks,
@@ -57,6 +61,10 @@ stringstyle=\color{Purple}, % Strings are purple
 tabsize=2, % Number of spaces per tab in the code
 }
 
+\renewcommand*{\familydefault}{\sfdefault}
+%\renewcommand*{\familydefault}{\rmdefault}
+%\renewcommand*{\familydefault}{\ttdefault}
+%\renewcommand*{\familydefault}{\rmdefault{ppl}}
 
 \begin{document}
 \title{gps tracking module with gprs connectivity}
@@ -72,7 +80,7 @@ this module can be used to track goods wherever gsm signal is present. it is opt
 \tableofcontents
 \newpage
 
-\section{principles of opperation}
+\section{principles of operation}
 geographic coordinates are obtained by decoding NMEA sentences received from the GPS chipset and then transmitted via the mobile phone network to a web server. the server stores the received information into a database and provides it on demand to the end-user.
 
 cell tower identifiers are also transmitted in the same packet and this allows approximate localization when the gps signal is obstructed. when the gsm signal is missing data is being stored on the device and it's transmission will resume once connection is re-established.
@@ -100,12 +108,11 @@ provided scripts have the following runtime dependencies (some are optional):
 and in order to modify the software one needs:
 
 \begin{itemize}
-    \item msp430-gcc (4.6.3\_p20120406)
+    \item msp430-gcc (ver 4.6.3\_p20120406 has been used)
     \item msp430-binutils (2.22\_p20120911)
     \item msp430-libc (20120716)
     \item msp430mcu (20120716)
     \item mspdebug (0.22)
-    \item minicom (2.7)
 \end{itemize}
 
 
@@ -146,10 +153,40 @@ and in order to modify the software one needs:
     \end{itemize}
 \marginlabel{accu}
     \begin{itemize}
-        \item 1 cell LiPo battery for standalone opperation
+        \item 1 cell LiPo battery for standalone operation
     \end{itemize}
 
+\subsubsection{absolute maximum ratings}
+
+\begin{tabular}{ |c|c|l|c|c|c| }
+    \hline
+    \multicolumn{3}{|c|}{} & \multicolumn{2}{|c|}{value} & unit \\ \cline{4-6}
+    \multicolumn{3}{|c|}{} & min & max & \\ \hline
+    \multicolumn{1}{|c|}{\multirow{2}{*}{$V_{I}$}} & \multicolumn{1}{|c|}{\multirow{2}{*}{input voltage}} &    IN (with respect to VSS) & -0.3    & 28  & V \\ \cline{3-6}
+                &                       &  VBAT (with respect to VSS)   & -0.3  & 5   & V \\ \hline
+    $V_{IO}$ & \multicolumn{2}{|l|}{IO voltage thru the debug connector}                      & -0.3  & 3.1 & V \\ \hline
+    $T_{stg}$   & \multicolumn{2}{|l|}{storage temperature}             & -65   & 150 & \degree C \\  \hline
+    $T_{op}$   & \multicolumn{2}{|l|}{operating temperature}          & 0     & 125 & \degree C \\  \hline
+\end{tabular}
+
+Stresses above those listed in absolute maximum ratings may cause permanent damage to the device. This is a stress rating only, functional operation of the device at these or any other conditions above those indicated in the operational section of this specification is not implied. Exposure to absolute maximum rating conditions for extended periods may affect device reliability.
 \newpage
+
+\subsubsection{electrical characteristics}
+
+\begin{tabular}{ |c|l|c|c|c|c| }
+    \hline
+    \multicolumn{2}{|c|}{} & \multicolumn{3}{|c|}{value} & unit \\ \cline{3-6}
+    \multicolumn{2}{|c|}{} & min & typ & max & \\ \hline
+    $V_{I}$ & input voltage range                      & 4.35  & 5     & 6.4  & V \\ \hline
+    $I_{I}$ & input current                            & X     & X     & 1.5  & A \\ \hline
+    $V_{BAT}$ & battery voltage range                  & 3.4   &       & 4.1  & V \\ \hline
+    $I_{BAT}$ & battery current while discharging      & X     & X     & 2000 & mA \\ \hline
+    $I_{CHG}$ & battery charging current \footnotemark &       & 0.3   &   & A \\ \hline
+    $V_{IO}$ & IO voltage thru the debug connector     & 0     &       & 2.8  & V \\ \hline
+\end{tabular}
+
+\footnotetext{The charging current is configurable by changing the value of R11. See the module schematic and the bq24072 datasheet for details}
 
 \section{connectors}
 for all pin connectors, pin 1 is marked by a small triangle in the silkscreen
@@ -377,7 +414,7 @@ in case STRING is missing, an empty password is used  \\ \hline
 \begin{lstlisting}
 srv STRING
 \end{lstlisting} \\
-        default & www.simplex.ro \\
+        default & trk.simplex.ro \\
         action & 
 what server to contact in order to send the tracking data \\ \hline
 \end{tabular}
@@ -416,6 +453,8 @@ err
         action & 
 shows a hex value in case there were any errors logged in the device. this value gets reset when all power is lost, when an 'err' command is replied to or after a HTTP POST packet is sent out/stored to FRAM. only used for debug  \\ \hline
 \end{tabular}
+
+
 
 
 ADC - analog to digital converter
