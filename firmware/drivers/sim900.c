@@ -331,15 +331,16 @@ static void sim900_state_machine(enum sys_message msg)
                     if (sm_c > 15) {
                         // something terribly wrong, stop sim900
                         sim900.cmd = CMD_OFF;
-                        timer_a0_delay_noblk_ccr2(SM_STEP_DELAY);
+                        timer_a0_delay_noblk_ccr2(SM_DELAY);
                     }
                 break;
                 case SIM900_WAITREPLY:
                     if (sim900.rc == RC_OK) {
-                        // use the wrong password, thus trigger a reset
-                        WDTCTL = WDTHOLD; 
-                        sim900.cmd = CMD_NULL;
-                        sim900.next_state = SIM900_IDLE;
+                        sim900.cmd = CMD_OFF;
+                        timer_a0_delay_noblk_ccr2(SM_DELAY);
+                        sim900.rdy |= NEED_SYSTEM_REBOOT;
+                        //sim900.cmd = CMD_NULL;
+                        //sim900.next_state = SIM900_IDLE;
                     } else {
                         sim900.cmd = CMD_OFF;
                         timer_a0_delay_noblk_ccr2(SM_DELAY);
@@ -363,7 +364,6 @@ static void sim900_state_machine(enum sys_message msg)
                 break;
                 case SIM900_VBAT_OFF:
                     sim900.next_state = SIM900_OFF;
-                    sim900.rdy = 0;
                     sim900.checks = 0;
                     sim900.cmd = CMD_NULL;
                     P1DIR &= 0xb7; // make RTS, DTR inputs
@@ -371,6 +371,12 @@ static void sim900_state_machine(enum sys_message msg)
                     P4DIR &= 0xcf;
                     SIM900_VBAT_DISABLE;
                     SIM900_PWRKEY_HIGH;
+                    if (sim900.rdy & NEED_SYSTEM_REBOOT) {
+                        // use the wrong watchdog password, thus trigger a 
+                        // full system reset
+                        WDTCTL = WDTHOLD; 
+                    }
+                    sim900.rdy = 0;
                 break;
             }
         break;

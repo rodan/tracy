@@ -168,6 +168,7 @@ typedef enum {
 #define RDY                 0x1
 #define PIN_RDY             0x2
 #define CALL_RDY            0x4
+#define NEED_SYSTEM_REBOOT  0x8
 
 // HTTP payload content
 #define GEOFENCE_PRESENT    0x8

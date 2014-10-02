@@ -175,7 +175,10 @@ int main(void)
     sim900_init_messagebus();
     sim900.next_state = SIM900_OFF;
 
+    // rev2 hardwires the gps backup power
+#ifdef PCB_REV1
     GPS_BKP_ENABLE;
+#endif
     settings_init(SEGMENT_B);
 
     if (s.settings & CONF_ALWAYS_CHARGE) {

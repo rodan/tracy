@@ -22,8 +22,11 @@
 
 #define GPS_ENABLE      P6OUT |= BIT0
 #define GPS_DISABLE     P6OUT &= ~BIT0
+
+#ifdef PCB_REV1
 #define GPS_BKP_ENABLE  P4OUT |= BIT6
 #define GPS_BKP_DISABLE P4OUT &= ~BIT6
+#endif
 
 #define CHARGE_ENABLE   P6OUT &= ~BIT1
 #define CHARGE_DISABLE  P6OUT |= BIT1
@@ -109,6 +112,13 @@ struct tracy_stat_t {
 };
 
 struct tracy_stat_t stat;
+
+struct mem_mgmt_t {
+    uint32_t last_write;
+    uint32_t last_tx;
+};
+
+struct mem_mgmt_t m;
 
 typedef enum {
     MAIN_IDLE,
