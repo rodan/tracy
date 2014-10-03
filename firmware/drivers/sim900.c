@@ -17,6 +17,10 @@
 #include "rtc.h"
 #include "gps.h"
 
+#ifdef PCB_REV2
+#include "fm24.h"
+#endif
+
 #ifdef DEBUG_GPRS
 #include "uart0.h"
 #endif
@@ -25,10 +29,7 @@ uint8_t sm_c; // state machine internal counter
 
 char eom[2] = { 0x1a, 0x0 };
 
-uint16_t http_post_version = POST_VERSION;
-uint16_t http_msg_id = 0;
-
-uint16_t payload_size;          // size of data sent via CIPSEND without the HTTP header
+uint32_t payload_size;
 uint8_t payload_content_desc;   // 1 byte that describes what the payload contains
 
 // high level state machine
@@ -136,6 +137,8 @@ static void sim900_tasks(enum sys_message msg)
                         timer_a0_delay_noblk_ccr2(SM_STEP_DELAY);
                         timer_a0_delay_noblk_ccr1(_14s); // timeout in 14s+
                     } else if (sim900.task_rv == SUBTASK_PARSE_CENG_OK) {
+                        // create a new packet with tower cell data
+                        store_pkt();
                         sim900.task_next_state = SUBTASK_SWITCHER;
                         timer_a0_delay_noblk_ccr1(SM_STEP_DELAY);
                     } else if (sim900.task_counter == TASK_MAX_RETRIES) {
@@ -199,7 +202,7 @@ static void sim900_tasks(enum sys_message msg)
 // low level state machine
 static void sim900_state_machine(enum sys_message msg)
 {
-    uint8_t i;
+    uint32_t i;
 
     switch (sim900.cmd) {
 
@@ -462,6 +465,8 @@ static void sim900_state_machine(enum sys_message msg)
                         timer_a0_delay_noblk_ccr2(_3sp);
                     }
                 break;
+
+#ifdef PCB_REV1
                 case SIM900_IP_SEND:
                     if (sim900.rc == RC_STATE_IP_CONNECT) {
                         sim900.next_state = SIM900_IP_PUT;
@@ -529,6 +534,7 @@ static void sim900_state_machine(enum sys_message msg)
                         sim900_tx_str("Content-Type: application/binary\r\n", 34);
                         snprintf(str_temp, STR_LEN, "Content-Length: %05u\r\n\r\n", payload_size);
                         sim900_tx_str(str_temp, strlen(str_temp));
+
                         sim900_tx_str((char *) &http_post_version, 2);
                         sim900_tx_str(sim900.imei, 15);
                         sim900_tx_str((char *) &s.settings, 2);
@@ -554,11 +560,7 @@ static void sim900_state_machine(enum sys_message msg)
                             sim900_tx_str((char *) &mc_f.heading, 2);
                             sim900_tx_str((char *) &mc_f.fixtime, 4);
 #ifdef CONFIG_GEOFENCE
-                            geo.lat_home = geo.lat_cur;
-                            geo.lon_home = geo.lon_cur;
-                            geo.lat_cur = mc_f.lat;
-                            geo.lon_cur = mc_f.lon;
-                            distance_between(geo.lat_home, geo.lon_home, geo.lat_cur, geo.lon_cur, &geo.distance, &geo.bearing);
+                            geofence_calc();
                             sim900_tx_str((char *) &geo.distance, 4);
                             sim900_tx_str((char *) &geo.bearing, 2);
 #endif
@@ -584,6 +586,54 @@ static void sim900_state_machine(enum sys_message msg)
                         timer_a0_delay_noblk_ccr2(SM_STEP_DELAY);
                     }
                 break;
+#endif // PCB_REV1
+#ifdef PCB_REV2
+                case SIM900_IP_SEND:
+                    if (sim900.rc == RC_STATE_IP_CONNECT) {
+                        sim900.next_state = SIM900_IP_PUT;
+                        timer_a0_delay_noblk_ccr2(SM_R_DELAY);
+
+                        // payload contains everything after the HTTP header
+                        //  - version (2 bytes), imei (15 bytes), settings (2 bytes), etc
+                        payload_size = fm24_ntx_data_size();
+
+                        sim900_tx_str("AT+CIPSEND=", 11);
+                        // HTTP header is 19 + 6 + s.server_len + 2 + 34 + 25 = 86 bytes + s.server_len
+                        // suffix is 1 byte long
+                        snprintf(str_temp, STR_LEN, "%lu\r", 86 + s.server_len + payload_size);
+                        sim900_tx_cmd(str_temp, strlen(str_temp), REPLY_TMOUT);
+                    } else {
+                        sim900.next_state = SIM900_IP_CLOSE;
+                        sim900.task_rv = SUBTASK_SEND_FIX_GPRS_FAIL;
+                        timer_a0_delay_noblk_ccr2(SM_STEP_DELAY);
+                    }
+                break;
+                case SIM900_IP_PUT:
+                    if (sim900.rc == RC_TEXT_INPUT) {
+                        sim900.next_state = SIM900_SEND_OK;
+                        timer_a0_delay_noblk_ccr2(_10sp);
+                        sim900_tx_str("POST /u1 HTTP/1.0\r\n", 19);
+                        sim900_tx_str("Host: ", 6);
+                        sim900_tx_str(s.server, s.server_len);
+                        sim900_tx_str("\r\n", 2);
+                        sim900_tx_str("Content-Type: application/binary\r\n", 34);
+                        snprintf(str_temp, STR_LEN, "Content-Length: %05lu\r\n\r\n", payload_size);
+                        sim900_tx_str(str_temp, strlen(str_temp));
+
+                        for (i=0; i<payload_size; i++) {
+                            fm24_read_from((uint8_t *)str_temp, m.ntx + i, 1);
+                            sim900_tx_str(str_temp, 1); 
+                        }
+
+                        i = 0xee;
+                        sim900_tx_cmd((char *) &i, 1, _10s);
+                    } else {
+                        sim900.next_state = SIM900_IP_CLOSE;
+                        sim900.task_rv = SUBTASK_SEND_FIX_GPRS_FAIL;
+                        timer_a0_delay_noblk_ccr2(SM_STEP_DELAY);
+                    }
+                break;
+#endif // PCB_REV2
                 case SIM900_SEND_OK:
                     if (sim900.rc == RC_SEND_OK) {
                         sim900.next_state = SIM900_HTTP_REPLY;
@@ -607,6 +657,12 @@ static void sim900_state_machine(enum sys_message msg)
                         sim900.next_state = SIM900_IP_CLOSE;
                         timer_a0_delay_noblk_ccr2(SM_DELAY);
                         sim900.err = 0;
+#ifdef PCB_REV2
+                        m.ntx += fm24_ntx_data_size() + 1;
+                        if (m.ntx > FM_LA) {
+                            m.ntx -= FM_LA + 1;
+                        }
+#endif
                     } else {
                         sim900.next_state = SIM900_IP_CLOSE;
                         sim900.task_rv = SUBTASK_SEND_FIX_GPRS_FAIL;
@@ -1254,7 +1310,9 @@ void sim900_exec_default_task(void)
     sim900.last_sms = 0;
     sim900_add_subtask(SUBTASK_PARSE_SMS, SMS_NULL);
     sim900_add_subtask(SUBTASK_PARSE_CENG, SMS_NULL);
-    sim900_add_subtask(SUBTASK_SEND_FIX_GPRS, SMS_NULL);
+    if (send_fix_gprs()) {
+        sim900_add_subtask(SUBTASK_SEND_FIX_GPRS, SMS_NULL);
+    }
     timer_a0_delay_noblk_ccr1(SM_STEP_DELAY);
 }
 
@@ -1262,6 +1320,22 @@ void sim900_exec_default_task(void)
 //
 // helper functions
 //
+
+// function that decides if a gprs fix needs to be sent out 
+// returns:
+//    true
+//    false
+
+uint8_t send_fix_gprs(void)
+{
+    uint8_t rv = false;
+
+    if (fm24_ntx_data_size() > 10) {
+        rv = true;
+    }
+
+    return rv;
+}
 
 uint8_t extract_dec(char *str, uint16_t *rv)
 {

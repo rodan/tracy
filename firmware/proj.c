@@ -28,15 +28,14 @@ const char gps_init[] = "$PMTK314,0,2,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0*28\r\n";
 uint32_t rtca_set_next = 0;
 
 uint32_t trigger_next = 0;
-uint16_t loop_period = 600; // period (in seconds) between 2 fix reports sent via gprs
-uint16_t gps_warmup = 120;  // period (in seconds) when only the gps antenna is active
-
+uint16_t loop_period = 600;     // period (in seconds) between 2 fix reports sent via gprs
+uint16_t gps_warmup = 120;      // period (in seconds) when only the gps antenna is active
 
 #ifndef DEBUG_GPRS
 static void parse_gps(enum sys_message msg)
 {
     nmea_parse((char *)uart0_rx_buf, uart0_p);
-    
+
     uart0_p = 0;
     uart0_rx_enable = 1;
     LED_OFF;
@@ -67,21 +66,24 @@ static void parse_UI(enum sys_message msg)
         sim900_start();
     } else if (f == ')') {
         sim900_halt();
+    } else if (f == 's') {
+        adc_read();
+        store_pkt();
     } else if (f == 'w') {
-        for (i=0;i<10;i++) {
+        for (i = 0; i < 10; i++) {
             data[i] = 0xff - i;
         }
         fm24_write(data, 0x1fffb, 10);
     } else if (f == 'r') {
-        fm24_read_from((uint8_t *)&str_temp, 0x1fffb, 10);
+        fm24_read_from((uint8_t *) & str_temp, 0x1fffb, 10);
 
         /*
-        for (i=0;i<10;i++) {
-            snprintf(in, 3, "%02x", str_temp[i]);
-            uart0_tx_str(in, strlen(in));
-            uart0_tx_str(" ", 1);
-        }
-        */
+           for (i=0;i<10;i++) {
+           snprintf(in, 3, "%02x", str_temp[i]);
+           uart0_tx_str(in, strlen(in));
+           uart0_tx_str(" ", 1);
+           }
+         */
     } else if (f == 's') {
         fm24_sleep();
     } else {
@@ -101,44 +103,56 @@ static void schedule(enum sys_message msg)
     if (rtca_time.sys >= trigger_next) {
         // time to act
         switch (main_next_state) {
-            case MAIN_IDLE:
-                trigger_next += 2;
-                main_next_state = MAIN_START_GPS;
-            break;
+        case MAIN_IDLE:
+            trigger_next += 2;
+            main_next_state = MAIN_START_GPS;
+            adc_read();
+        break;
 
-            case MAIN_START_GPS:
-                trigger_next += 1;
-                main_next_state = MAIN_INIT_GPS;
+        case MAIN_START_GPS:
+            trigger_next += 1;
+            main_next_state = MAIN_INIT_GPS;
+            GPS_ENABLE;
+        break;
 
-                GPS_ENABLE;
-            break;
+        case MAIN_INIT_GPS:
+            trigger_next += gps_warmup;
+            main_next_state = MAIN_SWITCHER;
+            uart0_tx_str((char *)gps_init, 51);
+            // invalidate last fix
+            memset(&mc_f, 0, sizeof(mc_f));
+        break;
 
-            case MAIN_INIT_GPS:
-                trigger_next += gps_warmup;
+        case MAIN_SWITCHER:
+            if (stat.v_bat < 340) {
+                // force charging
+                CHARGE_ENABLE;
+            }
+
+            // save all info to f-ram
+            store_pkt();
+
+            if (send_fix_gprs()) {
                 main_next_state = MAIN_START_GPRS;
-
-                uart0_tx_str((char *)gps_init, 51);
-                // invalidate last fix
-                memset(&mc_f, 0, sizeof(mc_f));
-            break;
-
-            case MAIN_START_GPRS:
+            } else {
+                // send ICs to sleep
                 trigger_next += loop_period - gps_warmup;
                 main_next_state = MAIN_IDLE;
+            }
+        break;
 
-                adc_read();
+        case MAIN_START_GPRS:
+            trigger_next += loop_period - gps_warmup;
+            main_next_state = MAIN_IDLE;
 
 #ifndef DEBUG_GPS
-                if (stat.v_bat > 340) {
-                    // if battery voltage is below ~3.4v
-                    // the sim will most likely lock up while trying to TX
-                    sim900_exec_default_task();
-                } else {
-                    // force charging
-                    CHARGE_ENABLE;
-                }
+            if (stat.v_bat > 340) {
+                // if battery voltage is below ~3.4v
+                // the sim will most likely lock up while trying to TX
+                sim900_exec_default_task();
+            }
 #endif
-            break;
+        break;
         }
     }
 }
@@ -155,13 +169,14 @@ static void adc_calibration(enum sys_message msg)
     adc10_read(3, &q_bat, REFVSEL_1);
     adc10_read(2, &q_raw, REFVSEL_1);
 
-    v_bat = (uint32_t) q_bat * s.vref * DIV_BAT / 10000;
-    v_raw = (uint32_t) q_raw * s.vref * DIV_RAW / 10000;
+    v_bat = (uint32_t) q_bat *s.vref * DIV_BAT / 10000;
+    v_raw = (uint32_t) q_raw *s.vref * DIV_RAW / 10000;
 
     stat.v_bat = v_bat;
     stat.v_raw = v_raw;
 
-    snprintf(str_temp, STR_LEN, "bat %u\t%u raw %u\t%u\r\n", q_bat, stat.v_bat, q_raw, stat.v_raw);
+    snprintf(str_temp, STR_LEN, "bat %u\t%u raw %u\t%u\r\n", q_bat, stat.v_bat,
+             q_raw, stat.v_raw);
     uart0_tx_str(str_temp, strlen(str_temp));
 }
 #endif
@@ -180,6 +195,11 @@ int main(void)
     GPS_BKP_ENABLE;
 #endif
     settings_init(SEGMENT_B);
+
+    m.e = 0;
+    m.ntx = 0;
+    stat.http_post_version = POST_VERSION;
+    stat.http_msg_id = 0;
 
     if (s.settings & CONF_ALWAYS_CHARGE) {
         CHARGE_ENABLE;
@@ -202,15 +222,15 @@ int main(void)
 #ifdef CALIBRATION
     sys_messagebus_register(&adc_calibration, SYS_MSG_RTC_SECOND);
 #else
-    #ifndef DEBUG_GPRS
-        sys_messagebus_register(&schedule, SYS_MSG_RTC_SECOND);
-        sys_messagebus_register(&parse_gps, SYS_MSG_UART0_RX);
-    #else
-        sys_messagebus_register(&parse_UI, SYS_MSG_UART0_RX);
-    #endif
-    #ifndef DEBUG_GPS
-        sys_messagebus_register(&parse_gprs, SYS_MSG_UART1_RX);
-    #endif
+#ifndef DEBUG_GPRS
+    sys_messagebus_register(&schedule, SYS_MSG_RTC_SECOND);
+    sys_messagebus_register(&parse_gps, SYS_MSG_UART0_RX);
+#else
+    sys_messagebus_register(&parse_UI, SYS_MSG_UART0_RX);
+#endif
+#ifndef DEBUG_GPS
+    sys_messagebus_register(&parse_gprs, SYS_MSG_UART1_RX);
+#endif
 
 #endif
 
@@ -373,8 +393,96 @@ void adc_read()
 
     adc10_read(3, &q_bat, REFVSEL_1);
     adc10_read(2, &q_raw, REFVSEL_1);
-    v_bat = (uint32_t) q_bat * s.vref * DIV_BAT / 10000;
-    v_raw = (uint32_t) q_raw * s.vref * DIV_RAW / 10000;
+    v_bat = (uint32_t) q_bat *s.vref * DIV_BAT / 10000;
+    v_raw = (uint32_t) q_raw *s.vref * DIV_RAW / 10000;
     stat.v_bat = v_bat;
     stat.v_raw = v_raw;
+}
+
+void store_pkt()
+{
+    uint8_t i;
+    uint8_t payload_content_desc = 0;
+
+    snprintf(str_temp, STR_LEN, "i e %lu\tntx %lu\r\n", m.e, m.ntx);
+    uart0_tx_str(str_temp, strlen(str_temp));
+
+    if (s.settings & CONF_SHOW_CELL_LOC) {
+        for (i = 0; i < 4; i++) {
+            if ((sim900.cell[i].cellid != 65535) && (sim900.cell[i].cellid != 0)) {
+                payload_content_desc = i + 1;
+            }
+        }
+    }
+
+    if (mc_f.fix) {
+        payload_content_desc |= GPS_FIX_PRESENT;
+#ifdef CONFIG_GEOFENCE
+        payload_content_desc |= GEOFENCE_PRESENT;
+#endif
+    }
+
+    fm24_write((uint8_t *) & stat.http_post_version, m.e, 2);
+    fm24_write((uint8_t *) sim900.imei, m.e, 15);
+    fm24_write((uint8_t *) & s.settings, m.e, 2);
+    fm24_write((uint8_t *) & stat.v_bat, m.e, 2);
+    fm24_write((uint8_t *) & stat.v_raw, m.e, 2);
+    fm24_write((uint8_t *) & sim900.err, m.e, 2);
+    fm24_write((uint8_t *) & stat.http_msg_id, m.e, 2);
+    fm24_write((uint8_t *) & payload_content_desc, m.e, 1);
+
+    if (mc_f.fix) {
+        //fm24_write((uint8_t *) &mc_f, 25); // epic fail, struct not continguous
+        fm24_write((uint8_t *) & mc_f.year, m.e, 2);
+        fm24_write((uint8_t *) & mc_f.month, m.e, 1);
+        fm24_write((uint8_t *) & mc_f.day, m.e, 1);
+        fm24_write((uint8_t *) & mc_f.hour, m.e, 1);
+        fm24_write((uint8_t *) & mc_f.minute, m.e, 1);
+        fm24_write((uint8_t *) & mc_f.second, m.e, 1);
+
+        fm24_write((uint8_t *) & mc_f.lat, m.e, 4);
+        fm24_write((uint8_t *) & mc_f.lon, m.e, 4);
+        fm24_write((uint8_t *) & mc_f.pdop, m.e, 2);
+        fm24_write((uint8_t *) & mc_f.speed, m.e, 2);
+        fm24_write((uint8_t *) & mc_f.heading, m.e, 2);
+        fm24_write((uint8_t *) & mc_f.fixtime, m.e, 4);
+#ifdef CONFIG_GEOFENCE
+        fm24_write((uint8_t *) & geo.distance, m.e, 4);
+        fm24_write((uint8_t *) & geo.bearing, m.e, 2);
+#endif
+    } else {
+        // since gps is not available RTC time will be used
+        fm24_write((uint8_t *) & rtca_time.year, m.e, 2);
+        fm24_write((uint8_t *) & rtca_time.mon, m.e, 1);
+        fm24_write((uint8_t *) & rtca_time.day, m.e, 1);
+        fm24_write((uint8_t *) & rtca_time.hour, m.e, 1);
+        fm24_write((uint8_t *) & rtca_time.min, m.e, 1);
+        fm24_write((uint8_t *) & rtca_time.sec, m.e, 1);
+    }
+
+    if (payload_content_desc & 0x7) {
+        // tower cell data
+        fm24_write((uint8_t *) & sim900.cell[0], m.e,
+               (payload_content_desc & 0x7) * sizeof(sim900_cell_t));
+    }
+
+    // suffix
+    i = 0xff;
+    fm24_write((uint8_t *) & i, m.e, 1);
+
+    stat.http_msg_id++;
+
+    snprintf(str_temp, STR_LEN, "t e %lu\tntx %lu\t sz %lu\r\n", m.e, m.ntx, fm24_ntx_data_size());
+    uart0_tx_str(str_temp, strlen(str_temp));
+
+    uint8_t tt;
+
+    for (i=0;i<fm24_ntx_data_size();i++) {
+        fm24_read_from(&tt, m.ntx+i, 1);
+        snprintf(str_temp, 3, "%02x", tt);
+        uart0_tx_str(str_temp, 2);
+        uart0_tx_str(" ", 1);
+    }
+    uart0_tx_str("\r\n", 2);
+
 }

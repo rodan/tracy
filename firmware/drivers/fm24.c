@@ -7,14 +7,23 @@
 
 #include <inttypes.h>
 
+#include "proj.h"
 #include "fm24.h"
-
 #include "serial_bitbang.h"
 
 uint8_t fm24_seek(const uint32_t addr)
 {
     uint8_t rv = 0;
     uint8_t retry;
+    uint32_t c_addr;
+
+    // in case a seek beyond the end of device is requested
+    // we roll to the beginning since this memory is circular in nature
+    if (addr > FM_LA) {
+        c_addr = addr - FM_LA - 1;
+    } else {
+        c_addr = addr;
+    }
 
     for (retry = 0; retry < FM24V10_MAX_RETRY; retry++) {
         rv = i2cm_start();
@@ -23,12 +32,12 @@ uint8_t fm24_seek(const uint32_t addr)
             return EXIT_FAILURE;
         }
 
-        rv = i2cm_tx(FM24V10_BA | (addr >> 16), I2C_WRITE);
+        rv = i2cm_tx(FM24V10_BA | (c_addr >> 16), I2C_WRITE);
 
         if (rv == I2C_ACK) {
             // f-ram memory address
-            i2cm_tx((addr & 0xff00) >> 8, I2C_NO_ADDR_SHIFT);
-            i2cm_tx(addr & 0xff, I2C_NO_ADDR_SHIFT);
+            i2cm_tx((c_addr & 0xff00) >> 8, I2C_NO_ADDR_SHIFT);
+            i2cm_tx(c_addr & 0xff, I2C_NO_ADDR_SHIFT);
             i2cm_stop();
             break;
         } else if (rv == I2C_NAK) {
@@ -37,7 +46,6 @@ uint8_t fm24_seek(const uint32_t addr)
         }
     }
 
-
     if (rv != I2C_ACK) {
         return EXIT_FAILURE;
     }
@@ -45,7 +53,7 @@ uint8_t fm24_seek(const uint32_t addr)
     return EXIT_SUCCESS;
 }
 
-uint32_t fm24_read(uint8_t *buf, const uint32_t nbyte)
+uint32_t fm24_read(uint8_t * buf, const uint32_t nbyte)
 {
     uint8_t rv = 0;
 
@@ -70,7 +78,8 @@ uint32_t fm24_read(uint8_t *buf, const uint32_t nbyte)
     return nbyte;
 }
 
-uint32_t fm24_read_from(uint8_t *buf, const uint32_t addr, const uint32_t nbyte)
+uint32_t fm24_read_from(uint8_t * buf, const uint32_t addr,
+                        const uint32_t nbyte)
 {
     uint32_t rv;
 
@@ -83,12 +92,21 @@ uint32_t fm24_read_from(uint8_t *buf, const uint32_t addr, const uint32_t nbyte)
     return rv;
 }
 
-
-uint32_t fm24_write(const uint8_t *buf, const uint32_t addr, const uint32_t nbyte)
+uint32_t fm24_write(const uint8_t * buf, const uint32_t addr,
+                    const uint32_t nbyte)
 {
     uint8_t rv = 0;
     uint32_t i = 0;
     uint8_t retry;
+    uint32_t c_addr;
+
+    // in case a seek beyond the end of device is requested
+    // we roll to the beginning since this memory is circular in nature
+    if (addr > FM_LA) {
+        c_addr = addr - FM_LA - 1;
+    } else {
+        c_addr = addr;
+    }
 
     for (retry = 0; retry < FM24V10_MAX_RETRY; retry++) {
         rv = i2cm_start();
@@ -96,20 +114,24 @@ uint32_t fm24_write(const uint8_t *buf, const uint32_t addr, const uint32_t nbyt
         if (rv != I2C_OK) {
             return 0;
         }
-
         // device slave address + memory page bit
-        rv = i2cm_tx(FM24V10_BA | (addr >> 16), I2C_WRITE);
+        rv = i2cm_tx(FM24V10_BA | (c_addr >> 16), I2C_WRITE);
 
         if (rv == I2C_ACK) {
             // f-ram memory address
-            i2cm_tx((addr & 0xff00) >> 8, I2C_NO_ADDR_SHIFT);
-            i2cm_tx(addr & 0xff, I2C_NO_ADDR_SHIFT);
+            i2cm_tx((c_addr & 0xff00) >> 8, I2C_NO_ADDR_SHIFT);
+            i2cm_tx(c_addr & 0xff, I2C_NO_ADDR_SHIFT);
 
             // send data
-            for (i=0;i<nbyte;i++) {
+            for (i = 0; i < nbyte; i++) {
                 rv = i2cm_tx(buf[i], I2C_NO_ADDR_SHIFT);
                 if (rv != I2C_ACK) {
                     break;
+                } else {
+                    m.e++;
+                    if (m.e > FM_LA) {
+                        m.e -= FM_LA + 1;
+                    }
                 }
             }
 
@@ -154,3 +176,15 @@ uint8_t fm24_sleep(void)
     return rv;
 }
 
+uint32_t fm24_ntx_data_size()
+{
+    uint32_t rv = 0;
+
+    if (m.e > m.ntx) {
+        rv = m.e - m.ntx;
+    } else if (m.e < m.ntx) {
+        rv = FM_LA - m.ntx + m.e + 1;
+    }
+
+    return rv;
+}

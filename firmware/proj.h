@@ -55,6 +55,7 @@ void main_init(void);
 void check_events(void);
 void settings_init(uint8_t * addr);
 void adc_read(void);
+void store_pkt(void);
 
 #define MAX_PHONE_LEN   16
 #define MAX_APN_LEN     20
@@ -109,21 +110,17 @@ static const struct tracy_settings_t defaults = {
 struct tracy_stat_t {
     uint16_t v_bat; // LiPo battery voltage multiplied by 100
     uint16_t v_raw; // 5v rail voltage multiplied by 100
+    uint16_t http_post_version;
+    uint16_t http_msg_id;
 };
 
 struct tracy_stat_t stat;
-
-struct mem_mgmt_t {
-    uint32_t last_write;
-    uint32_t last_tx;
-};
-
-struct mem_mgmt_t m;
 
 typedef enum {
     MAIN_IDLE,
     MAIN_START_GPS,
     MAIN_INIT_GPS,
+    MAIN_SWITCHER,
     MAIN_START_GPRS
 } main_state_t;
 

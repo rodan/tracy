@@ -71,4 +71,6 @@ float nmea_to_float(const uint8_t deg, const uint8_t min, const uint16_t fr, con
 void distance_between(const float lat1, const float long1, const float lat2,
                 const float long2, float * distance, uint16_t * bearing);
 
+void geofence_calc(void);
+
 #endif

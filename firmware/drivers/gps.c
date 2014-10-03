@@ -261,6 +261,16 @@ float nmea_to_float(const uint8_t deg, const uint8_t min, const uint16_t fr, con
     return rv;
 }
 
+void geofence_calc(void)
+{
+    geo.lat_home = geo.lat_cur;
+    geo.lon_home = geo.lon_cur;
+    geo.lat_cur = mc_f.lat;
+    geo.lon_cur = mc_f.lon;
+    distance_between(geo.lat_home, geo.lon_home, geo.lat_cur, geo.lon_cur, &geo.distance, &geo.bearing);
+}
+
+
 void distance_between(const float lat1, const float long1, const float lat2,
                 const float long2, float * distance, uint16_t * bearing) {
         //courtesy of http://arduiniana.org/libraries/tinygps/
