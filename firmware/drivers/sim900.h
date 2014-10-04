@@ -222,7 +222,6 @@ uint8_t sim900_parse_sms(char *str, const uint16_t size);
 uint8_t sim900_parse_ceng(char *str, const uint16_t size);
 void extract_str(const char *haystack, const char *needle, char *str, uint8_t *len, const uint8_t maxlen);
 
-uint8_t send_fix_gprs(void);
 uint8_t extract_dec(char *str, uint16_t *rv);
 uint8_t extract_hex(char *str, uint16_t *rv);
 

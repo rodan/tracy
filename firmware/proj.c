@@ -27,9 +27,9 @@ const char gps_init[] = "$PMTK314,0,2,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0*28\r\n";
 
 uint32_t rtca_set_next = 0;
 
-uint32_t trigger_next = 0;
-uint16_t loop_period = 600;     // period (in seconds) between 2 fix reports sent via gprs
-uint16_t gps_warmup = 120;      // period (in seconds) when only the gps antenna is active
+uint32_t gps_trigger_next = 0;
+uint32_t gprs_trigger_next = 60;
+uint16_t gps_warmup = 120;        // period (in seconds) when only the gps antenna is active
 
 #ifndef DEBUG_GPRS
 static void parse_gps(enum sys_message msg)
@@ -100,50 +100,75 @@ static void parse_UI(enum sys_message msg)
 static void schedule(enum sys_message msg)
 {
 
-    if (rtca_time.sys >= trigger_next) {
+    // GPS related
+    if (rtca_time.sys >= gps_trigger_next) {
         // time to act
-        switch (main_next_state) {
-        case MAIN_IDLE:
-            trigger_next += 2;
-            main_next_state = MAIN_START_GPS;
+        switch (gps_next_state) {
+
+        case MAIN_GPS_IDLE:
+            gps_trigger_next = rtca_time.sys + 2;
+            gps_next_state = MAIN_GPS_START;
             adc_read();
         break;
 
-        case MAIN_START_GPS:
-            trigger_next += 1;
-            main_next_state = MAIN_INIT_GPS;
+        case MAIN_GPS_START:
+            // wait a second after power is applied
+            gps_trigger_next += 1;
+            gps_next_state = MAIN_GPS_INIT;
+            if (stat.v_bat < 340) {
+                // force charging
+                CHARGE_ENABLE;
+            }
             GPS_ENABLE;
         break;
 
-        case MAIN_INIT_GPS:
-            trigger_next += gps_warmup;
-            main_next_state = MAIN_SWITCHER;
+        case MAIN_GPS_INIT:
+            gps_trigger_next += gps_warmup;
+            gps_next_state = MAIN_GPS_STORE;
             uart0_tx_str((char *)gps_init, 51);
             // invalidate last fix
             memset(&mc_f, 0, sizeof(mc_f));
         break;
 
-        case MAIN_SWITCHER:
+        case MAIN_GPS_STORE:
+
+            // save all info to f-ram
+            store_pkt();
+
+
+            //if (send_fix_gprs()) {
+            //    gps_next_state = MAIN_START_GPRS;
+            //} else {
+                // send ICs to sleep
+                gps_trigger_next = rtca_time.sys + s.gps_loop_period - gps_warmup;
+                gps_next_state = MAIN_GPS_IDLE;
+
+                if ((gps_trigger_next - rtca_time.sys > 30) && (gps_trigger_next > rtca_time.sys)) {
+                    GPS_DISABLE;
+                }
+            //}
+        break;
+        }
+    }
+
+    // GPRS related
+    if (rtca_time.sys >= gprs_trigger_next) {
+        // time to act
+        switch (gprs_next_state) {
+        case MAIN_GPRS_IDLE:
+            gprs_trigger_next = rtca_time.sys + 2;
+            gprs_next_state = MAIN_GPRS_START;
+            adc_read();
+        break;
+
+        case MAIN_GPRS_START:
             if (stat.v_bat < 340) {
                 // force charging
                 CHARGE_ENABLE;
             }
 
-            // save all info to f-ram
-            store_pkt();
-
-            if (send_fix_gprs()) {
-                main_next_state = MAIN_START_GPRS;
-            } else {
-                // send ICs to sleep
-                trigger_next += loop_period - gps_warmup;
-                main_next_state = MAIN_IDLE;
-            }
-        break;
-
-        case MAIN_START_GPRS:
-            trigger_next += loop_period - gps_warmup;
-            main_next_state = MAIN_IDLE;
+            gprs_trigger_next += s.gprs_loop_period;
+            gprs_next_state = MAIN_GPRS_IDLE;
 
 #ifndef DEBUG_GPS
             if (stat.v_bat > 340) {
@@ -155,6 +180,7 @@ static void schedule(enum sys_message msg)
         break;
         }
     }
+
 }
 #endif
 
@@ -208,7 +234,8 @@ int main(void)
     }
 
     rtca_set_next = 0;
-    main_next_state = MAIN_IDLE;
+    gps_next_state = MAIN_GPS_IDLE;
+    gprs_next_state = MAIN_GPRS_IDLE;
 
 #ifdef DEBUG_GPS
     uart1_init(9600);
@@ -401,11 +428,14 @@ void adc_read()
 
 void store_pkt()
 {
-    uint8_t i;
+    uint32_t i;
+    uint8_t suffix = 0xff;
     uint8_t payload_content_desc = 0;
 
+    /*
     snprintf(str_temp, STR_LEN, "i e %lu\tntx %lu\r\n", m.e, m.ntx);
     uart0_tx_str(str_temp, strlen(str_temp));
+    */
 
     if (s.settings & CONF_SHOW_CELL_LOC) {
         for (i = 0; i < 4; i++) {
@@ -419,6 +449,7 @@ void store_pkt()
         payload_content_desc |= GPS_FIX_PRESENT;
 #ifdef CONFIG_GEOFENCE
         payload_content_desc |= GEOFENCE_PRESENT;
+        geofence_calc();
 #endif
     }
 
@@ -467,11 +498,18 @@ void store_pkt()
     }
 
     // suffix
-    i = 0xff;
-    fm24_write((uint8_t *) & i, m.e, 1);
+    fm24_write((uint8_t *) & suffix, m.e, 1);
 
     stat.http_msg_id++;
 
+    // reset values
+    for (i = 0; i < 4; i++) {
+        sim900.cell[i].cellid = 0;
+    }
+    mc_f.fix = 0;
+
+
+    /*
     snprintf(str_temp, STR_LEN, "t e %lu\tntx %lu\t sz %lu\r\n", m.e, m.ntx, fm24_ntx_data_size());
     uart0_tx_str(str_temp, strlen(str_temp));
 
@@ -484,5 +522,24 @@ void store_pkt()
         uart0_tx_str(" ", 1);
     }
     uart0_tx_str("\r\n", 2);
+    */
 
 }
+
+// function that decides if a gprs fix needs to be sent out 
+// returns:
+//    true
+//    false
+
+uint8_t send_fix_gprs(void)
+{
+    uint8_t rv = false;
+
+    if (fm24_ntx_data_size() > 800) {
+        rv = true;
+    }
+
+    return rv;
+}
+
+

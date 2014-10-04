@@ -273,6 +273,11 @@ void geofence_calc(void)
 
 void distance_between(const float lat1, const float long1, const float lat2,
                 const float long2, float * distance, uint16_t * bearing) {
+
+    if ((lat1 == lat2) && (long1 == long2)) {
+        *distance = 0;
+        *bearing = 0;
+    } else {
         //courtesy of http://arduiniana.org/libraries/tinygps/
         float delta = radians(long1 - long2);
         float sdlong = _sin(delta);
@@ -291,9 +296,10 @@ void distance_between(const float lat1, const float long1, const float lat2,
         delta = _sqrt(delta);
         float denom = (slat1 * slat2) + (clat1 * clat2 * cdlong);
         delta = _atan2f(delta, denom);
-        *distance =  delta * 6372795;
+        *distance = delta * 6372795;
         x = (180.0 * (_atan2f(y, x)/PI)) ;
         *bearing = ((int) -x + 360)%360 ;
+    }
 }
 
 

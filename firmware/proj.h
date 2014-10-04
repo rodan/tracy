@@ -48,7 +48,7 @@ char str_temp[STR_LEN];
 #define RTC_SET_PERIOD  86400 // maximum period (in seconds) after which the local RTC is set using gps values
 uint32_t rtca_set_next;
 
-#define VERSION         2   // must be incremented if struct settings_t changes
+#define VERSION         3   // must be incremented if struct settings_t changes
 #define FLASH_ADDR      SEGMENT_B
 
 void main_init(void);
@@ -56,6 +56,7 @@ void check_events(void);
 void settings_init(uint8_t * addr);
 void adc_read(void);
 void store_pkt(void);
+uint8_t send_fix_gprs(void);
 
 #define MAX_PHONE_LEN   16
 #define MAX_APN_LEN     20
@@ -86,6 +87,8 @@ struct tracy_settings_t {
     char server[MAX_SERVER_LEN];
     uint16_t port;
     uint8_t vref;
+    uint16_t gps_loop_period;
+    uint16_t gprs_loop_period;
 };
 
 struct tracy_settings_t s;
@@ -104,7 +107,9 @@ static const struct tracy_settings_t defaults = {
     14,                         // server_len
     "trk.simplex.ro",           // server
     80,                         // port
-    200                         // adc vref
+    200,                        // adc vref
+    300,                        // period (in seconds) between 2 gps measurements
+    600                         // period (in seconds) between 2 gprs connection attempts
 };
 
 struct tracy_stat_t {
@@ -117,13 +122,20 @@ struct tracy_stat_t {
 struct tracy_stat_t stat;
 
 typedef enum {
-    MAIN_IDLE,
-    MAIN_START_GPS,
-    MAIN_INIT_GPS,
-    MAIN_SWITCHER,
-    MAIN_START_GPRS
-} main_state_t;
+    MAIN_GPS_IDLE,
+    MAIN_GPS_START,
+    MAIN_GPS_INIT,
+    MAIN_GPS_STORE,
+} main_gps_state_t;
 
-main_state_t main_next_state;
+main_gps_state_t gps_next_state;
+
+typedef enum {
+    MAIN_GPRS_IDLE,
+    MAIN_GPRS_START,
+} main_gprs_state_t;
+
+main_gprs_state_t gprs_next_state;
+
 
 #endif
