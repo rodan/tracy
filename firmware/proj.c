@@ -224,6 +224,9 @@ int main(void)
 
     m.e = 0;
     m.ntx = 0;
+    m.seg[0] = 0;
+    m.seg_num = 0;
+
     stat.http_post_version = POST_VERSION;
     stat.http_msg_id = 0;
 
@@ -429,13 +432,17 @@ void adc_read()
 void store_pkt()
 {
     uint32_t i;
+    uint32_t me_temp;
     uint8_t suffix = 0xff;
     uint8_t payload_content_desc = 0;
+
+    me_temp = m.e;
 
     /*
     snprintf(str_temp, STR_LEN, "i e %lu\tntx %lu\r\n", m.e, m.ntx);
     uart0_tx_str(str_temp, strlen(str_temp));
     */
+
 
     if (s.settings & CONF_SHOW_CELL_LOC) {
         for (i = 0; i < 4; i++) {
@@ -508,6 +515,37 @@ void store_pkt()
     }
     mc_f.fix = 0;
 
+    // organize data into < 1000byte segments
+
+    if (fm24_data_len(m.seg[m.seg_num], m.e) > MAX_SEG_SIZE) {
+        if (m.seg_num == MAX_SEG - 2) {
+            // drop oldest segment
+            for (i = 1; i < MAX_SEG; i++) {
+                m.seg[i-1] = m.seg[i];
+            }
+            m.seg_num--;
+        }
+
+        // create new segment
+        m.seg[m.seg_num+1] = me_temp;
+        m.seg[m.seg_num+2] = m.e;
+        m.seg_num++;
+
+    } else {
+        // just concatenate to the current segment
+        // and mark the end of the segment
+        m.seg[m.seg_num+1] = m.e;
+    }
+
+    snprintf(str_temp, STR_LEN, "t e %lu\tntx %lu\tm.seg_num %d\r\n", m.e, m.ntx, m.seg_num);
+    uart0_tx_str(str_temp, strlen(str_temp));
+
+    for (i=0;i < m.seg_num+2;i++) {
+        snprintf(str_temp, STR_LEN, "seg%lu %lu\r\n", i, m.seg[i]);
+        uart0_tx_str(str_temp, strlen(str_temp));
+    }
+    uart0_tx_str("\r\n", 2);
+
 
     /*
     snprintf(str_temp, STR_LEN, "t e %lu\tntx %lu\t sz %lu\r\n", m.e, m.ntx, fm24_ntx_data_size());
@@ -535,7 +573,7 @@ uint8_t send_fix_gprs(void)
 {
     uint8_t rv = false;
 
-    if (fm24_ntx_data_size() > 800) {
+    if (fm24_data_len(m.ntx, m.e) > 500) {
         rv = true;
     }
 

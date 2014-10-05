@@ -595,7 +595,8 @@ static void sim900_state_machine(enum sys_message msg)
 
                         // payload contains everything after the HTTP header
                         //  - version (2 bytes), imei (15 bytes), settings (2 bytes), etc
-                        payload_size = fm24_ntx_data_size();
+                        //payload_size = fm24_data_len(m.ntx, m.e);
+                        payload_size = fm24_data_len(m.seg[m.seg_c], m.seg[m.seg_c + 1]);
 
                         sim900_tx_str("AT+CIPSEND=", 11);
                         // HTTP header is 19 + 6 + s.server_len + 2 + 34 + 25 = 86 bytes + s.server_len
@@ -620,7 +621,7 @@ static void sim900_state_machine(enum sys_message msg)
                         sim900_tx_str(str_temp, strlen(str_temp));
 
                         for (i=0; i<payload_size; i++) {
-                            fm24_read_from((uint8_t *)str_temp, m.ntx + i, 1);
+                            fm24_read_from((uint8_t *)str_temp, m.seg[m.seg_c] + i, 1);
                             if (i != payload_size - 1) {
                                 sim900_tx_str(str_temp, 1);
                             } else {
@@ -658,10 +659,13 @@ static void sim900_state_machine(enum sys_message msg)
                         timer_a0_delay_noblk_ccr2(SM_DELAY);
                         sim900.err = 0;
 #ifdef PCB_REV2
-                        m.ntx += fm24_ntx_data_size();
+                        m.seg_c++;
+                        /*
+                        m.ntx += fm24_data_len(m.ntx, m.e);
                         if (m.ntx > FM_LA) {
                             m.ntx -= FM_LA + 1;
                         }
+                        */
 #endif
                     } else {
                         sim900.next_state = SIM900_IP_CLOSE;

@@ -176,14 +176,14 @@ uint8_t fm24_sleep(void)
     return rv;
 }
 
-uint32_t fm24_ntx_data_size()
+uint32_t fm24_data_len(const uint32_t first, const uint32_t last)
 {
     uint32_t rv = 0;
 
-    if (m.e > m.ntx) {
-        rv = m.e - m.ntx;
-    } else if (m.e < m.ntx) {
-        rv = FM_LA - m.ntx + m.e + 1;
+    if (last > first) {
+        rv = last - first;
+    } else if (last < first) {
+        rv = FM_LA - first + last + 1;
     }
 
     return rv;
