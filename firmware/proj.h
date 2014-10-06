@@ -68,6 +68,8 @@ uint8_t send_fix_gprs(void);
 #define CONF_MIN_INTERFERENCE  0x2
 #define CONF_ALWAYS_CHARGE     0x4
 
+#define GEOFENCE_TRIGGER    300
+
 // this struct will end up written into an information flash segment
 // so it better not exceed 128bytes
 // tracy_settings_t ver1 is 108bytes long

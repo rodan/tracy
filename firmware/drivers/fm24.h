@@ -21,10 +21,9 @@
 
 // sim900 can only send about 1000 bytes at a time
 // so the unsent data has to be segmented up
-// MAX_SEG must be at least 3
-//#define MAX_SEG_SIZE  1000
-#define MAX_SEG_SIZE  300
-#define MAX_SEG       9
+// MAX_SEG must be at least 4
+#define MAX_SEG_SIZE  1000
+#define MAX_SEG       8
 
 uint8_t fm24_seek(const uint32_t addr);
 uint32_t fm24_read(uint8_t * buf, const uint32_t nbyte);
@@ -37,11 +36,9 @@ uint8_t fm24_sleep(void);
 // helpers
 
 struct mem_mgmt_t {
-    uint32_t e;             // first empty address
-    uint32_t ntx;           // first not yet transmitted address
-    uint32_t seg[MAX_SEG];  // addresses for the 1kb segments
-    uint8_t seg_num;        // current number of segments
-    uint8_t seg_c;          // 
+    uint32_t e;                 // first empty address
+    uint32_t seg[MAX_SEG+1];    // [start, end] addresses for the MAX_SEG_SIZE byte segments
+    uint8_t seg_num;            // number of allocated segments
 };
 
 struct mem_mgmt_t m;

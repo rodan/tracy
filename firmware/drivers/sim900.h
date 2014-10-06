@@ -2,6 +2,7 @@
 #define __SIM900_H__
 
 #include "proj.h"
+#include "fm24.h"
 
 #define SIM900_DTR_HIGH         P1OUT |= BIT3
 #define SIM900_DTR_LOW          P1OUT &= ~BIT3
@@ -20,7 +21,7 @@
 #define ERR_PIN_RDY             0x1
 #define ERR_CALL_RDY            0x2
 #define ERR_IMEI_UNKNOWN        0x4
-#define ERR_SEND_FIX_GPRS       0x8
+//#define ERR_SEND_FIX_GPRS       0x8
 #define ERR_SEND_FIX_SMS        0x10
 #define ERR_PARSE_SMS           0x20
 #define ERR_SEND_SMS            0x40
@@ -58,6 +59,8 @@ typedef enum {
     SIM900_IP_STATUS,
     SIM900_IP_CONNECT,
     SIM900_IP_CONNECT_OK,
+    SIM900_TCP_START,
+    SIM900_TCP_CLOSE,
     SIM900_IP_SEND,
     SIM900_IP_PUT,
     SIM900_IP_CLOSE,
@@ -76,7 +79,9 @@ typedef enum {
     CMD_GET_READY,
     CMD_GET_IMEI,
     CMD_SEND_SMS,
-    CMD_SEND_GPRS,
+    CMD_START_GPRS,
+    CMD_POST_GPRS,
+    CMD_CLOSE_GPRS,
     CMD_PARSE_SMS,
     CMD_PARSE_CENG
 } sim900_cmd_t;
@@ -93,7 +98,10 @@ typedef enum {
     SUBTASK_ON,
     SUBTASK_WAIT_FOR_RDY,
     SUBTASK_GET_IMEI,
-    SUBTASK_SEND_FIX_GPRS,
+    SUBTASK_TX_GPRS,
+    SUBTASK_START_GPRS,
+    SUBTASK_CLOSE_GPRS,
+    SUBTASK_HTTP_POST,
     SUBTASK_SEND_SMS,
     SUBTASK_PWROFF,
     SUBTASK_PARSE_SMS,
@@ -106,8 +114,9 @@ typedef enum {
 typedef enum {
     SUBTASK_NO_REPLY,
     SUBTASK_GET_IMEI_OK,
-    SUBTASK_SEND_FIX_GPRS_OK,
-    SUBTASK_SEND_FIX_GPRS_FAIL,
+    SUBTASK_START_GPRS_OK,
+    SUBTASK_CLOSE_GPRS_OK,
+    SUBTASK_HTTP_POST_OK,
     SUBTASK_SEND_SMS_OK,
     SUBTASK_PARSE_SMS_OK,
     SUBTASK_PARSE_CENG_OK
@@ -161,7 +170,7 @@ typedef enum {
 } sim900_sms_subj_t;
 
 #define TASK_MAX_RETRIES    3
-#define TASK_QUEUE_SIZE     5
+#define TASK_QUEUE_SIZE     MAX_SEG + 7
 #define SMS_QUEUE_SIZE      4
 
 // modem status
@@ -185,7 +194,7 @@ typedef struct {      // cell tower data
 struct sim900_t {
     uint8_t checks;         // status register  - maybe remove?
     uint8_t rdy;            // ready status register {RDY, PIN_RDY ... }
-    uint8_t task_counter;   // task retry counter [0 - TASK_MAX_RETRIES-1]
+    uint8_t trc;            // task retry counter [0 - TASK_MAX_RETRIES-1]
     uint8_t current_t;      // current task in the task queue [0 - TASK_QUEUE_SIZE-1]
     uint8_t last_t;         // number of entries in the task queue [0 - TASK_QUEUE_SIZE-1]
     sim900_task_state_t queue[TASK_QUEUE_SIZE]; // the task queue
