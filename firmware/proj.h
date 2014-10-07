@@ -93,6 +93,7 @@ struct tracy_settings_t {
     uint8_t vref;
     uint16_t gps_loop_period;
     uint16_t gprs_loop_period;
+    uint16_t gprs_tx_period;
 };
 
 struct tracy_settings_t s;
@@ -112,8 +113,9 @@ static const struct tracy_settings_t defaults = {
     "trk.simplex.ro",           // server
     80,                         // port
     200,                        // adc vref
-    10,                         // period (in seconds) between 2 gps measurements
-    600                         // period (in seconds) between 2 gsm connection attempts (used to get tower id data and sms commands)
+    240,                        // period (in seconds) between 2 gps measurements
+    900,                        // period (in seconds) between 2 gsm connection attempts (used to get tower id data and sms commands)
+    3600                        // maximum period (in seconds) between 2 HTTP POSTs
 };
 
 struct tracy_stat_t {
