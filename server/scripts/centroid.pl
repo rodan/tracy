@@ -76,6 +76,10 @@ sub cell_tower_pos {
 sub avg_coord {
     my $elem = ($tr->{'payload'} & 0x7);
 
+    if ($elem == 0) {
+        return (undef, undef);
+    }
+
     my $X = 0;
     my $Y = 0;
     my $Z = 0;
