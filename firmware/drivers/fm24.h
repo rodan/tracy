@@ -21,9 +21,13 @@
 
 // sim900 can only send about 1000 bytes at a time
 // so the unsent data has to be segmented up
+// transmitted packets also include a header which can become 106bytes long
 // MAX_SEG must be at least 4
-#define MAX_SEG_SIZE  1000
-#define MAX_SEG       8
+#define MAX_SEG_SIZE  1000 - 106
+#define MAX_SEG       10
+
+//#define MAX_SEG_SIZE  500
+//#define MAX_SEG       5
 
 uint8_t fm24_seek(const uint32_t addr);
 uint32_t fm24_read(uint8_t * buf, const uint32_t nbyte);

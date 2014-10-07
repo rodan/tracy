@@ -23,6 +23,9 @@
 #define GPS_ENABLE      P6OUT |= BIT0
 #define GPS_DISABLE     P6OUT &= ~BIT0
 
+#define GPS_IRQ_ENABLE  UCA0IE |= UCRXIE
+#define GPS_IRQ_DISABLE UCA0IE &= ~UCRXIE
+
 #ifdef PCB_REV1
 #define GPS_BKP_ENABLE  P4OUT |= BIT6
 #define GPS_BKP_DISABLE P4OUT &= ~BIT6
@@ -56,19 +59,18 @@ void check_events(void);
 void settings_init(uint8_t * addr);
 void adc_read(void);
 void store_pkt(void);
-uint8_t send_fix_gprs(void);
 
-#define MAX_PHONE_LEN   16
-#define MAX_APN_LEN     20
-#define MAX_USER_LEN    20
-#define MAX_PASS_LEN    20
-#define MAX_SERVER_LEN  20
+#define MAX_PHONE_LEN           16
+#define MAX_APN_LEN             20
+#define MAX_USER_LEN            20
+#define MAX_PASS_LEN            20
+#define MAX_SERVER_LEN          20
 
-#define CONF_SHOW_CELL_LOC     0x1
-#define CONF_MIN_INTERFERENCE  0x2
-#define CONF_ALWAYS_CHARGE     0x4
+#define CONF_SHOW_CELL_LOC      0x1
+#define CONF_MIN_INTERFERENCE   0x2
+#define CONF_ALWAYS_CHARGE      0x4
 
-#define GEOFENCE_TRIGGER    300
+#define GEOFENCE_TRIGGER        100
 
 // this struct will end up written into an information flash segment
 // so it better not exceed 128bytes
@@ -110,8 +112,8 @@ static const struct tracy_settings_t defaults = {
     "trk.simplex.ro",           // server
     80,                         // port
     200,                        // adc vref
-    300,                        // period (in seconds) between 2 gps measurements
-    600                         // period (in seconds) between 2 gprs connection attempts
+    10,                         // period (in seconds) between 2 gps measurements
+    600                         // period (in seconds) between 2 gsm connection attempts (used to get tower id data and sms commands)
 };
 
 struct tracy_stat_t {
@@ -127,6 +129,7 @@ typedef enum {
     MAIN_GPS_IDLE,
     MAIN_GPS_START,
     MAIN_GPS_INIT,
+    MAIN_GPS_PDOP_RST,
     MAIN_GPS_STORE,
 } main_gps_state_t;
 

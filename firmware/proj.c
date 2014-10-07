@@ -101,19 +101,20 @@ static void schedule(enum sys_message msg)
 {
 
     // GPS related
-    if (rtca_time.sys >= gps_trigger_next) {
+    if (rtca_time.sys > gps_trigger_next) {
         // time to act
         switch (gps_next_state) {
 
         case MAIN_GPS_IDLE:
-            gps_trigger_next = rtca_time.sys + 2;
+            if (s.gps_loop_period > gps_warmup + 30) {
+                GPS_DISABLE;
+                gps_trigger_next = rtca_time.sys + s.gps_loop_period - gps_warmup;
+            }
             gps_next_state = MAIN_GPS_START;
             adc_read();
         break;
 
         case MAIN_GPS_START:
-            // wait a second after power is applied
-            gps_trigger_next += 1;
             gps_next_state = MAIN_GPS_INIT;
             if (stat.v_bat < 340) {
                 // force charging
@@ -123,7 +124,13 @@ static void schedule(enum sys_message msg)
         break;
 
         case MAIN_GPS_INIT:
-            gps_trigger_next += gps_warmup;
+            if (s.gps_loop_period > gps_warmup + 30) {
+                // gps had a power off period
+                gps_trigger_next = rtca_time.sys + gps_warmup;
+            } else {
+                // gps was on all the time
+                gps_trigger_next = rtca_time.sys + s.gps_loop_period - 2;
+            }
             gps_next_state = MAIN_GPS_STORE;
             uart0_tx_str((char *)gps_init, 51);
             // invalidate last fix
@@ -131,53 +138,40 @@ static void schedule(enum sys_message msg)
         break;
 
         case MAIN_GPS_STORE:
-
-            // save all info to f-ram
-            store_pkt();
-
-
-            //if (send_fix_gprs()) {
-            //    gps_next_state = MAIN_START_GPRS;
-            //} else {
-                // send ICs to sleep
-                gps_trigger_next = rtca_time.sys + s.gps_loop_period - gps_warmup;
-                gps_next_state = MAIN_GPS_IDLE;
-
-                if ((gps_trigger_next - rtca_time.sys > 30) && (gps_trigger_next > rtca_time.sys)) {
-                    GPS_DISABLE;
-                }
-            //}
+            if (mc_f.fix) {
+                // save all info to f-ram
+                store_pkt();
+            }
+            gps_next_state = MAIN_GPS_IDLE;
+            // XXX send ICs to sleep 
         break;
         }
     }
 
-    // GPRS related
-    if (rtca_time.sys >= gprs_trigger_next) {
+    if (((rtca_time.sys > gprs_trigger_next) || (sim900.rdy & TX_FIX_RDY)) && !(sim900.rdy & TASK_IN_PROGRESS)) {
         // time to act
         switch (gprs_next_state) {
-        case MAIN_GPRS_IDLE:
-            gprs_trigger_next = rtca_time.sys + 2;
-            gprs_next_state = MAIN_GPRS_START;
-            adc_read();
-        break;
+            case MAIN_GPRS_IDLE:
+                gprs_trigger_next = rtca_time.sys + 2;
+                gprs_next_state = MAIN_GPRS_START;
 
-        case MAIN_GPRS_START:
-            if (stat.v_bat < 340) {
-                // force charging
-                CHARGE_ENABLE;
-            }
+                adc_read();
+            break;
+            case MAIN_GPRS_START:
+               gprs_trigger_next = rtca_time.sys + s.gprs_loop_period;
+               gprs_next_state = MAIN_GPRS_IDLE;
 
-            gprs_trigger_next += s.gprs_loop_period;
-            gprs_next_state = MAIN_GPRS_IDLE;
-
+               if (stat.v_bat > 340) {
 #ifndef DEBUG_GPS
-            if (stat.v_bat > 340) {
-                // if battery voltage is below ~3.4v
-                // the sim will most likely lock up while trying to TX
-                sim900_exec_default_task();
-            }
+                    // if battery voltage is below ~3.4v
+                    // the sim will most likely lock up while trying to TX
+                    sim900_exec_default_task();
 #endif
-        break;
+                } else {
+                    // force charging
+                    CHARGE_ENABLE;
+                }
+            break;
         }
     }
 
@@ -342,6 +336,11 @@ void main_init(void)
     P4MAP3 = PM_UCA0RXD;
     P4SEL |= 0xc;
 #endif
+
+    // try to also send uart0 tx to 4.1 XXX
+    P4MAP1 = PM_UCA0TXD;
+    P4SEL |= 0x2;
+
 #ifdef DEBUG_GPS
     // debug interface
     P4MAP1 = PM_UCA1TXD;
@@ -439,12 +438,6 @@ void store_pkt()
 
     me_temp = m.e;
 
-    /*
-    snprintf(str_temp, STR_LEN, "i e %lu\r\n", m.e);
-    uart0_tx_str(str_temp, strlen(str_temp));
-    */
-
-
     if (s.settings & CONF_SHOW_CELL_LOC) {
         for (i = 0; i < 4; i++) {
             if ((sim900.cell[i].cellid != 65535) && (sim900.cell[i].cellid != 0)) {
@@ -459,6 +452,10 @@ void store_pkt()
         payload_content_desc |= GEOFENCE_PRESENT;
         geofence_calc();
 #endif
+    }
+
+    if (payload_content_desc == 0) {
+        return;
     }
 
     fm24_write((uint8_t *) & stat.http_post_version, m.e, 2);
@@ -503,6 +500,7 @@ void store_pkt()
         // tower cell data
         fm24_write((uint8_t *) & sim900.cell[0], m.e,
                (payload_content_desc & 0x7) * sizeof(sim900_cell_t));
+        memset(&sim900.cell, 0, sizeof(sim900_cell_t));
     }
 
     // suffix
@@ -516,7 +514,7 @@ void store_pkt()
     }
     mc_f.fix = 0;
 
-    // organize data into < 1000byte segments
+    // organize data into < MAX_SEG_SIZE byte segments
     if (fm24_data_len(m.seg[m.seg_num - 1], m.e) > MAX_SEG_SIZE) {
         if (m.seg_num == MAX_SEG) {
             // drop oldest segment
@@ -537,39 +535,35 @@ void store_pkt()
         m.seg[m.seg_num] = m.e;
     }
 
-    snprintf(str_temp, STR_LEN, "t e %lu\tm.seg_num %d\r\n", m.e, m.seg_num);
-    uart0_tx_str(str_temp, strlen(str_temp));
 
-    for (i=0;i < m.seg_num+1;i++) {
-        snprintf(str_temp, STR_LEN, "seg%lu %lu\r\n", i, m.seg[i]);
-        uart0_tx_str(str_temp, strlen(str_temp));
-    }
-    uart0_tx_str("\r\n", 2);
-
-}
-
-// function that decides if a gprs fix needs to be sent out 
-// returns:
-//    true
-//    false
-
-uint8_t send_fix_gprs(void)
-{
-    uint8_t rv = false;
+    // see if a data upload is needed
 
 #ifdef CONFIG_GEOFENCE
     if (geo.distance > GEOFENCE_TRIGGER) {
         geo.distance = 0;
-        rv = true;
+        sim900.rdy |= TX_FIX_RDY;
     }
 #endif
 
     // if only one more segment can be created
     if (m.seg_num > MAX_SEG - 2) {
-        rv = true;
+        sim900.rdy |= TX_FIX_RDY;
     }
 
-    return rv;
-}
+//#ifdef DEBUG_GPRS
+    snprintf(str_temp, STR_LEN, "e: %lu\tseg_num: %d\r\n", m.e, m.seg_num);
+    uart0_tx_str(str_temp, strlen(str_temp));
 
+    for (i=0;i < m.seg_num+1;i++) {
+        snprintf(str_temp, STR_LEN, "seg[%lu]: %lu\r\n", i, m.seg[i]);
+        uart0_tx_str(str_temp, strlen(str_temp));
+    }
+    uart0_tx_str("\r\n", 2);
+
+    if (sim900.rdy & TX_FIX_RDY) {
+        uart0_tx_str("rdy\r\n", 5);
+    }
+//#endif
+
+}
 

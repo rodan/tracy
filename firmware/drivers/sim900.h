@@ -21,7 +21,7 @@
 #define ERR_PIN_RDY             0x1
 #define ERR_CALL_RDY            0x2
 #define ERR_IMEI_UNKNOWN        0x4
-//#define ERR_SEND_FIX_GPRS       0x8
+#define ERR_SEND_FIX_GPRS       0x8
 #define ERR_SEND_FIX_SMS        0x10
 #define ERR_PARSE_SMS           0x20
 #define ERR_SEND_SMS            0x40
@@ -30,7 +30,6 @@
 
 // state machine timeouts
 #define SM_STEP_DELAY   _10ms * 2  // ~20ms
-#define SM_DELAY        _10ms * 20 // ~200ms
 #define SM_R_DELAY      _10ms * 130 // ~1.3s
 
 #define POST_VERSION            0x1
@@ -178,6 +177,9 @@ typedef enum {
 #define PIN_RDY             0x2
 #define CALL_RDY            0x4
 #define NEED_SYSTEM_REBOOT  0x8
+#define GPRS_RDY            0x10
+#define TX_FIX_RDY          0x20
+#define TASK_IN_PROGRESS    0x40
 
 // HTTP payload content
 #define GEOFENCE_PRESENT    0x8

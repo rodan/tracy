@@ -3,7 +3,7 @@
 
 #include <inttypes.h>
 
-#define FIX_INVALIDATE_PERIOD 240 // time in seconds after which the fix is no longer considered valid
+#define FIX_INVALIDATE_PERIOD 30 // time in seconds after which the fix is no longer considered valid
 
 struct nmea_gprmc_t {
     uint16_t year;     // date and time received from the sattelites
