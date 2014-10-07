@@ -398,6 +398,7 @@ if (($missing_imei == 1) && ($found_imei = 0)) {
 } elsif (($missing_imei == 1) && ($found_imei = 1)) {
     # found the IMEI in a later subpacket. use that value for earlier subpackets
     seek($io, 0, SEEK_SET);
+    $missing_imei = 0;
     $ret = 'OK';
     while ($ret eq 'OK') {
         $ret = unpack_pkt();
