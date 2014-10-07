@@ -72,7 +72,9 @@ my $fh;
 # sometimes the imei is not part of the first subpacket
 # so we parse the entire packet in search of a valid IMEI and then use it to fill
 # subpackets that miss it
-my $imei_search_loop;
+my $missing_imei = 0;
+my $found_imei = 0;
+my $imei_proper;
 
 sub save_pkt{
 
@@ -127,9 +129,8 @@ sub unpack_pkt{
         }
 
     if ($head->{'imei'} != 0) {
-        $head->{'imei_proper'} = $head->{'imei'};
-        if ($imei_search_loop == 1) {
-            $imei_search_loop = 0;
+        $imei_proper = $head->{'imei'};
+        if ($missing_imei == 1) {
             return 'FOUND_IMEI';
         }
     }
@@ -160,7 +161,6 @@ sub unpack_pkt{
         ) = unpack( "f2 S3 L", $buf );
         $mc_f->{'pdop'} /= 100.0;
     
-    
         if ($geofence) {
             read( $io, $buf, 6 );
             ( $geo->{'distance'}, $geo->{'bearing'} ) = unpack( "f S", $buf );
@@ -186,12 +186,12 @@ sub unpack_pkt{
         $crc_ok = 0;
     }
 
-    if ($head->{'imei_proper'} == 0) {
+    if ($imei_proper == 0) {
         return 'ZERO_IMEI';
     }
     
     if (!$dryrun) {
-        my $database = $db_dir . '/' . $head->{'imei_proper'} . '.db';
+        my $database = $db_dir . '/' . $imei_proper . '.db';
         my $dsn = "DBI:SQLite:database=$database";
         my $username = undef;
         my $password = undef;
@@ -293,7 +293,7 @@ sub unpack_pkt{
         say ' * header {';
         say ' version:   ' . $head->{'version'};
         say ' imei:      ' . $head->{'imei'};
-        say ' imei_p:    ' . $head->{'imei_proper'};
+        say ' imei_p:    ' . $imei_proper;
         say ' settings:  ' . $head->{'settings'};
         say ' v_bat:     ' . $head->{'v_bat'};
         say ' v_raw:     ' . $head->{'v_raw'};
@@ -384,20 +384,25 @@ print 'RCVD OK' . "\r\n";
 
 my $ret = 'OK';
 
-while (($ret eq 'OK') || ($ret eq 'ZERO_IMEI' ) || ($ret eq 'FOUND_IMEI' )) {
+while (($ret eq 'OK') || ($ret eq 'ZERO_IMEI' )) {
     $ret = unpack_pkt();
     if ($ret eq 'ZERO_IMEI') {
-        $imei_search_loop = 1;
+        $missing_imei = 1;
     } elsif ($ret eq 'FOUND_IMEI') {
-        # found the IMEI in a later subpacket. use that value for earlier subpackets
-        seek($io, 0, SEEK_SET);
+        $found_imei = 1;
     }
-  
 }
 
-if ($imei_search_loop == 1) {
-        $ret = 'ERR_IMEI';
+if (($missing_imei == 1) && ($found_imei = 0)) {
+    $ret = 'ERR_IMEI';
+} elsif (($missing_imei == 1) && ($found_imei = 1)) {
+    # found the IMEI in a later subpacket. use that value for earlier subpackets
+    seek($io, 0, SEEK_SET);
+    $ret = 'OK';
+    while ($ret eq 'OK') {
+        $ret = unpack_pkt();
     }
+}
 
 if ($ret eq 'EOF') {
     if ($verbose) {
