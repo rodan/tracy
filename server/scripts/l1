@@ -305,7 +305,7 @@ EOF_googlemap5
     print '<tr><td class="title">id</td><td class="title">timestamp (GMT)</td><td class="title">latitude</td><td class="title">longitude</td><td class="title">map</td><td class="title">PDOP</td><td class="title">gd</td><td class="title">V</td><td class="title">avg cell coord</td></tr>' . "\n";
 
 
-    $sth = $dbh->prepare('SELECT row_id, v_bat, v_raw, payload, timestamp, latitude, longitude, pdop, geo_distance, avg_latitude, avg_longitude FROM live order by row_id DESC LIMIT 25');
+    $sth = $dbh->prepare('SELECT row_id, v_bat, v_raw, payload, timestamp, latitude, longitude, pdop, geo_distance, avg_latitude, avg_longitude FROM live order by row_id DESC LIMIT 200');
     $sth->execute();
 
     my $row;
