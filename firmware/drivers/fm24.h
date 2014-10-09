@@ -24,7 +24,7 @@
 // transmitted packets also include a header which can become 106bytes long
 // MAX_SEG must be at least 4
 #define MAX_SEG_SIZE  1000 - 106
-#define MAX_SEG       20
+#define MAX_SEG       12
 
 #if MAX_SEG * MAX_SEG_SIZE > FM_LA
 #error "invalid segmentation in fm24.h"

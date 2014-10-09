@@ -76,11 +76,9 @@ void store_pkt(void);
 #define CONF_MIN_INTERFERENCE   0x2
 #define CONF_ALWAYS_CHARGE      0x4
 
-#define GEOFENCE_TRIGGER        100
-
 // this struct will end up written into an information flash segment
 // so it better not exceed 128bytes
-// tracy_settings_t VERSION 4 is 117bytes long
+// tracy_settings_t VERSION 3 is 119bytes long
 
 struct tracy_settings_t {
     uint8_t ver;                    // settings struct version
@@ -102,6 +100,7 @@ struct tracy_settings_t {
     uint16_t gps_invalidate_period;
     uint16_t gprs_loop_period;
     uint16_t gprs_tx_period;
+    uint16_t geofence_trigger;
 };
 
 struct tracy_settings_t s;
@@ -120,12 +119,13 @@ static const struct tracy_settings_t defaults = {
     14,                         // server_len
     "trk.simplex.ro",           // server
     80,                         // port
-    200,                        // adc vref
+    198,                        // adc vref
     120,                        // period (in seconds) between 2 gps measurements
-    40,                         // period (in seconds) between gps powerup and NMEA data gathering
+    45,                         // period (in seconds) between gps powerup and NMEA data gathering
     20,                         // period (in seconds) in which the best PDOP is searched for
-    900,                        // period (in seconds) between 2 gsm connection attempts (used to get tower id data and sms commands)
-    3600                        // maximum period (in seconds) between 2 HTTP POSTs
+    1801,                       // period (in seconds) between 2 gsm connection attempts (used to get tower id data and sms commands)
+    3600,                       // maximum period (in seconds) between 2 HTTP POSTs
+    200                         // minimal distance (in meters) between 2 consecutive fixes at which a geofence action is triggered
 };
 
 struct tracy_stat_t {

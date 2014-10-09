@@ -587,9 +587,8 @@ void store_pkt()
 
 
     // see if a data upload is needed
-
 #ifdef CONFIG_GEOFENCE
-    if (geo.distance > GEOFENCE_TRIGGER) {
+    if (geo.distance > s.geofence_trigger) {
         geo.distance = 0;
         sim900.rdy |= TX_FIX_RDY;
     }

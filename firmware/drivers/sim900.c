@@ -1293,13 +1293,13 @@ uint8_t sim900_parse_sms(char *str, const uint16_t size)
     if (strstr(sender, s.ctrl_phone)) {
         // the authorized phone sent us a command
         // XXX should make sure add_subtask does not end in failure!
-        if (strstr(str, "err")) {
+        if (strstr(str, "err?")) {
             // send sim900.err in a sms reply
             sim900_add_subtask(SUBTASK_SEND_SMS, SMS_ERRORS);
-        } else if (strstr(str, "gprs")) {
+        } else if (strstr(str, "gprs?")) {
             // send the gprs credentials in a sms reply
             sim900_add_subtask(SUBTASK_SEND_SMS, SMS_GPRS_SETUP);
-        } else if (strstr(str, "setup")) {
+        } else if (strstr(str, "setup?")) {
             // send the generic setup in a sms reply
             sim900_add_subtask(SUBTASK_SEND_SMS, SMS_GENERIC_SETUP);
         } else if (strstr(str, "spt?")) {
@@ -1349,6 +1349,12 @@ uint8_t sim900_parse_sms(char *str, const uint16_t size)
             if (s.gps_invalidate_period > s.gps_loop_period) {
                 s.gps_invalidate_period = s.gps_loop_period;
             }
+            sim900_add_subtask(SUBTASK_SEND_SMS, SMS_GPS_TIMINGS);
+        } else if (strstr(str, "spg")) {
+            p = strstr(str, "spg");
+            p += 3;
+            extract_dec(p, &s.geofence_trigger);
+            save = true;
             sim900_add_subtask(SUBTASK_SEND_SMS, SMS_GPS_TIMINGS);
         } else if (strstr(str, "sml")) {
             p = strstr(str, "sml");
