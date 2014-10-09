@@ -50,6 +50,7 @@ char str_temp[STR_LEN];
 
 #define RTC_SET_PERIOD  86400 // maximum period (in seconds) after which the local RTC is set using gps values
 uint32_t rtca_set_next;
+uint8_t rtc_not_set;
 
 #define VERSION         3   // must be incremented if struct settings_t changes
 #define FLASH_ADDR      SEGMENT_B
@@ -113,7 +114,7 @@ static const struct tracy_settings_t defaults = {
     "trk.simplex.ro",           // server
     80,                         // port
     200,                        // adc vref
-    240,                        // period (in seconds) between 2 gps measurements
+    60,                         // period (in seconds) between 2 gps measurements
     900,                        // period (in seconds) between 2 gsm connection attempts (used to get tower id data and sms commands)
     3600                        // maximum period (in seconds) between 2 HTTP POSTs
 };

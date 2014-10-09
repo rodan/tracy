@@ -50,6 +50,7 @@ uint8_t fm24_seek(const uint32_t addr)
         return EXIT_FAILURE;
     }
 
+    fm24_status |= FM24_AWAKE;
     return EXIT_SUCCESS;
 }
 
@@ -75,6 +76,7 @@ uint32_t fm24_read(uint8_t * buf, const uint32_t nbyte)
         return EXIT_FAILURE;
     }
 
+    fm24_status |= FM24_AWAKE;
     return nbyte;
 }
 
@@ -143,6 +145,7 @@ uint32_t fm24_write(const uint8_t * buf, const uint32_t addr,
         }
     }
 
+    fm24_status |= FM24_AWAKE;
     return 0;
 }
 
@@ -173,6 +176,7 @@ uint8_t fm24_sleep(void)
     }
 
     i2cm_stop();
+    fm24_status &= ~FM24_AWAKE;
     return rv;
 }
 

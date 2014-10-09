@@ -1395,7 +1395,11 @@ void sim900_exec_default_task(void)
     sim900_add_subtask(SUBTASK_PARSE_SMS, SMS_NULL);
     sim900_add_subtask(SUBTASK_PARSE_CENG, SMS_NULL);
     if (sim900.rdy & TX_FIX_RDY) {
-        sim900_add_subtask(SUBTASK_TX_GPRS, SMS_NULL);
+        if (fm24_data_len(m.seg[0], m.seg[1]) > 0) {
+            sim900_add_subtask(SUBTASK_TX_GPRS, SMS_NULL);
+        } else {
+            sim900.rdy &= ~TX_FIX_RDY;
+        }
     }
     timer_a0_delay_noblk_ccr1(SM_STEP_DELAY);
 }

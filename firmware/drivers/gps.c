@@ -192,7 +192,7 @@ uint8_t nmea_parse(char *s, const uint8_t len)
             mc_f.pdop = 9999;
         }
 
-        if (mc_t.fix && (mc_t.pdop < 300) && ((rtca_time.sys > rtca_set_next) || (rtca_time.min != mc_f.minute))) {
+        if (mc_t.fix && ((mc_t.pdop < 300) || rtc_not_set) && ((rtca_time.sys > rtca_set_next) || (rtca_time.min != mc_f.minute))) {
             rtca_time.year = mc_t.year;
             rtca_time.mon = mc_t.month;
             rtca_time.day = mc_t.day;
@@ -201,6 +201,7 @@ uint8_t nmea_parse(char *s, const uint8_t len)
             rtca_time.sec = mc_t.second;
 
             rtca_set_time();
+            rtc_not_set = 0;
             rtca_set_next += RTC_SET_PERIOD;
         }
 

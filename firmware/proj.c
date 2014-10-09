@@ -35,6 +35,7 @@ uint16_t gps_warmup = 120;        // period (in seconds) when only the gps anten
 uint32_t gps_reinit_next = 0;
 uint16_t gps_reinit_period = 120;
 
+uint32_t status_show_next = 0;
 uint16_t fix_invalidate_period = 10;
 
 #ifndef DEBUG_GPRS
@@ -62,7 +63,7 @@ static void parse_gprs(enum sys_message msg)
 static void parse_UI(enum sys_message msg)
 {
     uint8_t i;
-    //char in[3];
+    char in[3];
     uint8_t data[10];
     char f = uart0_rx_buf[0];
 
@@ -76,20 +77,17 @@ static void parse_UI(enum sys_message msg)
         adc_read();
         store_pkt();
     } else if (f == 'w') {
-        for (i = 0; i < 10; i++) {
-            data[i] = 0xff - i;
+        for (i = 0; i < 100; i++) {
+            data[i] = i;
         }
-        fm24_write(data, 0x1fffb, 10);
+        fm24_write(data, 0x1fffb, 100);
     } else if (f == 'r') {
-        fm24_read_from((uint8_t *) & str_temp, 0x1fffb, 10);
-
-        /*
-           for (i=0;i<10;i++) {
-           snprintf(in, 3, "%02x", str_temp[i]);
-           uart0_tx_str(in, strlen(in));
-           uart0_tx_str(" ", 1);
-           }
-         */
+        fm24_read_from((uint8_t *) & str_temp, 0x1fffb, 100);
+        for (i=0;i<100;i++) {
+            snprintf(in, 3, "%02x", str_temp[i]);
+            uart0_tx_str(in, strlen(in));
+            uart0_tx_str(" ", 1);
+        }
     } else if (f == 's') {
         fm24_sleep();
     } else {
@@ -164,20 +162,28 @@ static void schedule(enum sys_message msg)
         }
     }
 
+
+    // show current status
+    if (rtca_time.sys > status_show_next) {
+        status_show_next = rtca_time.sys + 300;
+        snprintf(str_temp, STR_LEN, "err 0x%04x\tm.e 0x%05lx\tntx %lu\r\n", 
+                sim900.err, m.e, fm24_data_len(m.seg[0], m.e));
+        uart0_tx_str(str_temp, strlen(str_temp));
+    }
+
+    // GPRS related
+
     // force the HTTP POST from time to time
     if (rtca_time.sys > gprs_tx_next) {
         gprs_tx_next = rtca_time.sys + s.gprs_tx_period;
         sim900.rdy |= TX_FIX_RDY;
     }
 
-    // GPRS related
     if (((rtca_time.sys > gprs_trigger_next) || (sim900.rdy & TX_FIX_RDY)) && !(sim900.rdy & TASK_IN_PROGRESS)) {
         // time to act
         switch (gprs_next_state) {
             case MAIN_GPRS_IDLE:
-                gprs_trigger_next = rtca_time.sys + 2;
                 gprs_next_state = MAIN_GPRS_START;
-
                 adc_read();
             break;
             case MAIN_GPRS_START:
@@ -255,6 +261,7 @@ int main(void)
     }
 
     rtca_set_next = 0;
+    rtc_not_set = 1;
     gps_next_state = MAIN_GPS_IDLE;
     gprs_next_state = MAIN_GPRS_IDLE;
 
@@ -288,6 +295,7 @@ int main(void)
 
 #endif
 
+    // main loop
     while (1) {
         _BIS_SR(LPM3_bits + GIE);
         //wake_up();
@@ -300,6 +308,9 @@ int main(void)
         check_events();
         check_events();
         check_events();
+        if (fm24_status & FM24_AWAKE) {
+            fm24_sleep();
+        }
     }
 }
 
@@ -464,6 +475,7 @@ void store_pkt()
     uint32_t me_temp;
     uint8_t suffix = 0xff;
     uint8_t payload_content_desc = 0;
+    uint16_t rv = 0;
 
     me_temp = m.e;
 
@@ -483,57 +495,63 @@ void store_pkt()
 #endif
     }
 
+#ifndef DEBUG_GPRS
     if (payload_content_desc == 0) {
         return;
     }
+#endif
 
-    fm24_write((uint8_t *) & stat.http_post_version, m.e, 2);
-    fm24_write((uint8_t *) sim900.imei, m.e, 15);
-    fm24_write((uint8_t *) & s.settings, m.e, 2);
-    fm24_write((uint8_t *) & stat.v_bat, m.e, 2);
-    fm24_write((uint8_t *) & stat.v_raw, m.e, 2);
-    fm24_write((uint8_t *) & sim900.err, m.e, 2);
-    fm24_write((uint8_t *) & stat.http_msg_id, m.e, 2);
-    fm24_write((uint8_t *) & payload_content_desc, m.e, 1);
+    rv += fm24_write((uint8_t *) & stat.http_post_version, m.e, 2);
+    rv += fm24_write((uint8_t *) sim900.imei, m.e, 15);
+    rv += fm24_write((uint8_t *) & s.settings, m.e, 2);
+    rv += fm24_write((uint8_t *) & stat.v_bat, m.e, 2);
+    rv += fm24_write((uint8_t *) & stat.v_raw, m.e, 2);
+    rv += fm24_write((uint8_t *) & sim900.err, m.e, 2);
+    rv += fm24_write((uint8_t *) & stat.http_msg_id, m.e, 2);
+    rv += fm24_write((uint8_t *) & payload_content_desc, m.e, 1);
 
     if (mc_f.fix) {
         //fm24_write((uint8_t *) &mc_f, 25); // epic fail, struct not continguous
-        fm24_write((uint8_t *) & mc_f.year, m.e, 2);
-        fm24_write((uint8_t *) & mc_f.month, m.e, 1);
-        fm24_write((uint8_t *) & mc_f.day, m.e, 1);
-        fm24_write((uint8_t *) & mc_f.hour, m.e, 1);
-        fm24_write((uint8_t *) & mc_f.minute, m.e, 1);
-        fm24_write((uint8_t *) & mc_f.second, m.e, 1);
+        rv += fm24_write((uint8_t *) & mc_f.year, m.e, 2);
+        rv += fm24_write((uint8_t *) & mc_f.month, m.e, 1);
+        rv += fm24_write((uint8_t *) & mc_f.day, m.e, 1);
+        rv += fm24_write((uint8_t *) & mc_f.hour, m.e, 1);
+        rv += fm24_write((uint8_t *) & mc_f.minute, m.e, 1);
+        rv += fm24_write((uint8_t *) & mc_f.second, m.e, 1);
 
-        fm24_write((uint8_t *) & mc_f.lat, m.e, 4);
-        fm24_write((uint8_t *) & mc_f.lon, m.e, 4);
-        fm24_write((uint8_t *) & mc_f.pdop, m.e, 2);
-        fm24_write((uint8_t *) & mc_f.speed, m.e, 2);
-        fm24_write((uint8_t *) & mc_f.heading, m.e, 2);
-        fm24_write((uint8_t *) & mc_f.fixtime, m.e, 4);
+        rv += fm24_write((uint8_t *) & mc_f.lat, m.e, 4);
+        rv += fm24_write((uint8_t *) & mc_f.lon, m.e, 4);
+        rv += fm24_write((uint8_t *) & mc_f.pdop, m.e, 2);
+        rv += fm24_write((uint8_t *) & mc_f.speed, m.e, 2);
+        rv += fm24_write((uint8_t *) & mc_f.heading, m.e, 2);
+        rv += fm24_write((uint8_t *) & mc_f.fixtime, m.e, 4);
 #ifdef CONFIG_GEOFENCE
-        fm24_write((uint8_t *) & geo.distance, m.e, 4);
-        fm24_write((uint8_t *) & geo.bearing, m.e, 2);
+        rv += fm24_write((uint8_t *) & geo.distance, m.e, 4);
+        rv += fm24_write((uint8_t *) & geo.bearing, m.e, 2);
 #endif
     } else {
         // since gps is not available RTC time will be used
-        fm24_write((uint8_t *) & rtca_time.year, m.e, 2);
-        fm24_write((uint8_t *) & rtca_time.mon, m.e, 1);
-        fm24_write((uint8_t *) & rtca_time.day, m.e, 1);
-        fm24_write((uint8_t *) & rtca_time.hour, m.e, 1);
-        fm24_write((uint8_t *) & rtca_time.min, m.e, 1);
-        fm24_write((uint8_t *) & rtca_time.sec, m.e, 1);
+        rv += fm24_write((uint8_t *) & rtca_time.year, m.e, 2);
+        rv += fm24_write((uint8_t *) & rtca_time.mon, m.e, 1);
+        rv += fm24_write((uint8_t *) & rtca_time.day, m.e, 1);
+        rv += fm24_write((uint8_t *) & rtca_time.hour, m.e, 1);
+        rv += fm24_write((uint8_t *) & rtca_time.min, m.e, 1);
+        rv += fm24_write((uint8_t *) & rtca_time.sec, m.e, 1);
     }
 
     if (payload_content_desc & 0x7) {
         // tower cell data
-        fm24_write((uint8_t *) & sim900.cell[0], m.e,
+        rv += fm24_write((uint8_t *) & sim900.cell[0], m.e,
                (payload_content_desc & 0x7) * sizeof(sim900_cell_t));
         memset(&sim900.cell, 0, sizeof(sim900_cell_t));
     }
 
     // suffix
-    fm24_write((uint8_t *) & suffix, m.e, 1);
+    rv += fm24_write((uint8_t *) & suffix, m.e, 1);
+
+    if (rv < 31) {
+        sim900.err |= ERR_RAM_WRITE;
+    }
 
     stat.http_msg_id++;
 
@@ -579,8 +597,8 @@ void store_pkt()
         sim900.rdy |= TX_FIX_RDY;
     }
 
-//#ifdef DEBUG_GPRS
-    snprintf(str_temp, STR_LEN, "e: %lu\tseg_num: %d\r\n", m.e, m.seg_num);
+#ifdef DEBUG_GPRS
+    snprintf(str_temp, STR_LEN, "e: %lu\tseg_num: %d\twb: %u\r\n", m.e, m.seg_num, rv);
     uart0_tx_str(str_temp, strlen(str_temp));
 
     for (i=0;i < m.seg_num+1;i++) {
@@ -592,7 +610,7 @@ void store_pkt()
     if (sim900.rdy & TX_FIX_RDY) {
         uart0_tx_str("rdy\r\n", 5);
     }
-//#endif
+#endif
 
 }
 

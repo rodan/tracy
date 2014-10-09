@@ -27,6 +27,7 @@
 #define ERR_SEND_SMS            0x40
 #define ERR_GPRS_NO_IP_START    0x80
 #define ERR_PARSE_CENG          0x100
+#define ERR_RAM_WRITE           0x200
 
 // state machine timeouts
 #define SM_STEP_DELAY   _10ms * 2  // ~20ms

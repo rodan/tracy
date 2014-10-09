@@ -29,6 +29,9 @@
 //#define MAX_SEG_SIZE  500
 //#define MAX_SEG       5
 
+uint8_t fm24_status;
+#define FM24_AWAKE  0x1
+
 uint8_t fm24_seek(const uint32_t addr);
 uint32_t fm24_read(uint8_t * buf, const uint32_t nbyte);
 uint32_t fm24_read_from(uint8_t * buf, const uint32_t addr,
