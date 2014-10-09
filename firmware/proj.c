@@ -27,16 +27,11 @@ const char gps_init[] = "$PMTK314,0,2,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0*28\r\n";
 
 uint32_t rtca_set_next = 0;
 
-uint32_t gps_trigger_next = 0;
-uint32_t gprs_trigger_next = 60;
-uint32_t gprs_tx_next;
-uint16_t gps_warmup = 120;        // period (in seconds) when only the gps antenna is active
+uint32_t status_show_next = 0;
 
 uint32_t gps_reinit_next = 0;
 uint16_t gps_reinit_period = 120;
 
-uint32_t status_show_next = 0;
-uint16_t fix_invalidate_period = 10;
 
 #ifndef DEBUG_GPRS
 static void parse_gps(enum sys_message msg)
@@ -109,10 +104,10 @@ static void schedule(enum sys_message msg)
         switch (gps_next_state) {
 
             case MAIN_GPS_IDLE:
-                if (s.gps_loop_period > gps_warmup + 30) {
+                if (s.gps_loop_period > s.gps_warmup_period + 30) {
                     // when gps has OFF periods
                     GPS_DISABLE;
-                    gps_trigger_next = rtca_time.sys + s.gps_loop_period - gps_warmup - 2;
+                    gps_trigger_next = rtca_time.sys + s.gps_loop_period - s.gps_warmup_period - 2;
                 }
                 gps_next_state = MAIN_GPS_START;
                 adc_read();
@@ -120,7 +115,7 @@ static void schedule(enum sys_message msg)
     
             case MAIN_GPS_START:
                 gps_next_state = MAIN_GPS_INIT;
-                if (stat.v_bat < 340) {
+                if (stat.v_bat < 350) {
                     // force charging
                     CHARGE_ENABLE;
                 }
@@ -128,25 +123,25 @@ static void schedule(enum sys_message msg)
             break;
 
             case MAIN_GPS_INIT:
-                if (s.gps_loop_period > gps_warmup + 30) {
+                if (s.gps_loop_period > s.gps_warmup_period + 30) {
                     // gps had a power off period
-                    gps_trigger_next = rtca_time.sys + gps_warmup - fix_invalidate_period - 3;
+                    gps_trigger_next = rtca_time.sys + s.gps_warmup_period - s.gps_invalidate_period - 3;
                     uart0_tx_str((char *)gps_init, 51);
                 } else {
                     // gps was on all the time
-                    gps_trigger_next = rtca_time.sys + s.gps_loop_period - fix_invalidate_period - 3;
+                    gps_trigger_next = rtca_time.sys + s.gps_loop_period - s.gps_invalidate_period - 3;
                     if (rtca_time.sys > gps_reinit_next) {
                         gps_reinit_next = rtca_time.sys + gps_reinit_period;
                         uart0_tx_str((char *)gps_init, 51);
                     }
                 }
                 gps_next_state = MAIN_GPS_PDOP_RST;
-                // invalidate last fix
+                // zero out all the old data
                 memset(&mc_f, 0, sizeof(mc_f));
             break;
     
             case MAIN_GPS_PDOP_RST:
-                gps_trigger_next = rtca_time.sys + fix_invalidate_period - 1;
+                gps_trigger_next = rtca_time.sys + s.gps_invalidate_period - 1;
                 gps_next_state = MAIN_GPS_STORE;
                 mc_f.pdop = 9999;
             break;
@@ -166,9 +161,14 @@ static void schedule(enum sys_message msg)
     // show current status
     if (rtca_time.sys > status_show_next) {
         status_show_next = rtca_time.sys + 300;
-        snprintf(str_temp, STR_LEN, "err 0x%04x\tm.e 0x%05lx\tntx %lu\r\n", 
+        snprintf(str_temp, STR_LEN, "err 0x%04x\tm.e 0x%05lx\tntx %lu \r\n", 
                 sim900.err, m.e, fm24_data_len(m.seg[0], m.e));
         uart0_tx_str(str_temp, strlen(str_temp));
+
+        /*
+        snprintf(str_temp, STR_LEN, "spl %u spw %u spi %u\r", s.gps_loop_period, s.gps_warmup_period, s.gps_invalidate_period);
+        uart0_tx_str(str_temp, strlen(str_temp));
+        */
     }
 
     // GPRS related
@@ -190,7 +190,7 @@ static void schedule(enum sys_message msg)
                gprs_trigger_next = rtca_time.sys + s.gprs_loop_period;
                gprs_next_state = MAIN_GPRS_IDLE;
 
-               if (stat.v_bat > 340) {
+               if (stat.v_bat > 350) {
 #ifndef DEBUG_GPS
                     // if battery voltage is below ~3.4v
                     // the sim will most likely lock up while trying to TX
@@ -260,13 +260,16 @@ int main(void)
         CHARGE_DISABLE;
     }
 
+    gps_trigger_next = 0;
+    gprs_trigger_next = 60;
+
     rtca_set_next = 0;
     rtc_not_set = 1;
     gps_next_state = MAIN_GPS_IDLE;
     gprs_next_state = MAIN_GPRS_IDLE;
 
-    if (fix_invalidate_period > s.gps_loop_period) {
-        fix_invalidate_period = s.gps_loop_period;
+    if (s.gps_invalidate_period > s.gps_loop_period) {
+        s.gps_invalidate_period = s.gps_loop_period;
     }
     
     gprs_tx_next = s.gprs_tx_period;

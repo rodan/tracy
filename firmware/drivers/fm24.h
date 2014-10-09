@@ -12,11 +12,11 @@
 // FM24V10 has 131072 addressable bytes, so uint16_t is not enough
 
 #ifdef CONFIG_HAVE_FM24V10
-#define FM_LA   0x1FFFF         // last addressable address
+#define FM_LA   0x1FFFF         // last addressable byte
 #endif
 
 #ifdef CONFIG_HAVE_FM24CL64B
-#define FM_LA   0x
+#define FM_LA   0x1FFF          // last addressable byte
 #endif
 
 // sim900 can only send about 1000 bytes at a time
@@ -24,7 +24,11 @@
 // transmitted packets also include a header which can become 106bytes long
 // MAX_SEG must be at least 4
 #define MAX_SEG_SIZE  1000 - 106
-#define MAX_SEG       10
+#define MAX_SEG       20
+
+#if MAX_SEG * MAX_SEG_SIZE > FM_LA
+#error "invalid segmentation in fm24.h"
+#endif
 
 //#define MAX_SEG_SIZE  500
 //#define MAX_SEG       5

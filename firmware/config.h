@@ -9,6 +9,7 @@
 
 #ifdef PCB_REV2
     #define CONFIG_HAVE_FM24V10
+//    #define CONFIG_HAVE_FM24CL64B
 #endif
 
 //#define CONFIG_RTC_DST

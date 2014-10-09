@@ -162,8 +162,10 @@ typedef enum {
 typedef enum {
     SMS_NULL,
     SMS_FIX,
-    SMS_SETUP,
+    SMS_GENERIC_SETUP,
     SMS_GPRS_SETUP,
+    SMS_GPS_TIMINGS,
+    SMS_GPRS_TIMINGS,
     SMS_ERRORS,
     SMS_VREF,
     SMS_CODE_OK

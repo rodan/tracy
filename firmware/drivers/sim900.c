@@ -812,7 +812,7 @@ static void sim900_state_machine(enum sys_message msg)
                                     sim900_tx_str("no_fix\r", 7);
                                 }
                             break;
-                            case SMS_SETUP:
+                            case SMS_GENERIC_SETUP:
                                 snprintf(str_temp, STR_LEN, "setup 0x%04x\r", s.settings);
                                 sim900_tx_str(str_temp, strlen(str_temp));
                             break;
@@ -826,6 +826,14 @@ static void sim900_state_machine(enum sys_message msg)
                                 sim900_tx_str("\" srv=\"", 7);
                                 sim900_tx_str(s.server, s.server_len);
                                 snprintf(str_temp, STR_LEN, ":%u\"\r", s.port);
+                                sim900_tx_str(str_temp, strlen(str_temp));
+                            break;
+                            case SMS_GPRS_TIMINGS:
+                                snprintf(str_temp, STR_LEN, "sml %u smt %u\r", s.gprs_loop_period, s.gprs_tx_period);
+                                sim900_tx_str(str_temp, strlen(str_temp));
+                            break;
+                            case SMS_GPS_TIMINGS:
+                                snprintf(str_temp, STR_LEN, "spl %u spw %u spi %u\r", s.gps_loop_period, s.gps_warmup_period, s.gps_invalidate_period);
                                 sim900_tx_str(str_temp, strlen(str_temp));
                             break;
                             case SMS_ERRORS:
@@ -1289,11 +1297,17 @@ uint8_t sim900_parse_sms(char *str, const uint16_t size)
             // send sim900.err in a sms reply
             sim900_add_subtask(SUBTASK_SEND_SMS, SMS_ERRORS);
         } else if (strstr(str, "gprs")) {
-            // send the gprs setup in a sms reply
+            // send the gprs credentials in a sms reply
             sim900_add_subtask(SUBTASK_SEND_SMS, SMS_GPRS_SETUP);
         } else if (strstr(str, "setup")) {
             // send the generic setup in a sms reply
-            sim900_add_subtask(SUBTASK_SEND_SMS, SMS_SETUP);
+            sim900_add_subtask(SUBTASK_SEND_SMS, SMS_GENERIC_SETUP);
+        } else if (strstr(str, "spt?")) {
+            // send the gps related timings in a sms reply
+            sim900_add_subtask(SUBTASK_SEND_SMS, SMS_GPS_TIMINGS);
+        } else if (strstr(str, "smt?")) {
+            // send the gprs related timings in a sms reply
+            sim900_add_subtask(SUBTASK_SEND_SMS, SMS_GPRS_TIMINGS);
         } else if (strstr(str, "fix")) {
             // send the gps fix in a sms reply
             sim900_add_subtask(SUBTASK_SEND_SMS, SMS_FIX);
@@ -1314,6 +1328,42 @@ uint8_t sim900_parse_sms(char *str, const uint16_t size)
             p += 4;
             extract_dec(p, &s.port);
             save = true;
+        } else if (strstr(str, "spl")) {
+            p = strstr(str, "spl");
+            p += 3;
+            extract_dec(p, &s.gps_loop_period);
+            save = true;
+            gps_trigger_next = 0;
+            sim900_add_subtask(SUBTASK_SEND_SMS, SMS_GPS_TIMINGS);
+        } else if (strstr(str, "spw")) {
+            p = strstr(str, "spw");
+            p += 3;
+            extract_dec(p, &s.gps_warmup_period);
+            save = true;
+            sim900_add_subtask(SUBTASK_SEND_SMS, SMS_GPS_TIMINGS);
+        } else if (strstr(str, "spi")) {
+            p = strstr(str, "spi");
+            p += 3;
+            extract_dec(p, &s.gps_invalidate_period);
+            save = true;
+            if (s.gps_invalidate_period > s.gps_loop_period) {
+                s.gps_invalidate_period = s.gps_loop_period;
+            }
+            sim900_add_subtask(SUBTASK_SEND_SMS, SMS_GPS_TIMINGS);
+        } else if (strstr(str, "sml")) {
+            p = strstr(str, "sml");
+            p += 3;
+            extract_dec(p, &s.gprs_loop_period);
+            save = true;
+            gprs_trigger_next = rtca_time.sys + s.gprs_loop_period;
+            sim900_add_subtask(SUBTASK_SEND_SMS, SMS_GPRS_TIMINGS);
+        } else if (strstr(str, "smt")) {
+            p = strstr(str, "smt");
+            p += 3;
+            extract_dec(p, &s.gprs_tx_period);
+            save = true;
+            gprs_tx_next = rtca_time.sys + s.gprs_tx_period;
+            sim900_add_subtask(SUBTASK_SEND_SMS, SMS_GPRS_TIMINGS);
         } else if (strstr(str, "set")) {
             p = strstr(str, "set");
             p += 3;
@@ -1336,6 +1386,8 @@ uint8_t sim900_parse_sms(char *str, const uint16_t size)
                 sim900_add_subtask(SUBTASK_SEND_SMS, SMS_VREF);
             }
         }
+
+
     }
 
     if (save) {
