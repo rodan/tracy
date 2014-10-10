@@ -48,16 +48,22 @@
 #define STR_LEN 64
 char str_temp[STR_LEN];
 
-#define RTC_SET_PERIOD  86400 // maximum period (in seconds) after which the local RTC is set using gps values
+#define RTC_SET_INTERVAL  86400 // maximum interval (in seconds) after which the local RTC is set using gps values
 
 uint32_t gps_trigger_next;
 uint32_t gprs_trigger_next;
 uint32_t gprs_tx_next;
+uint32_t gprs_tx_prev;
+uint8_t gprs_tx_trig;
+
+#define TG_NOW_MOVING   0x1
+#define TG_GEOFENCE     0x2
+#define TG_INTERVAL     0x4
 
 uint32_t rtca_set_next;
 uint8_t rtc_not_set;
 
-#define VERSION         5   // must be incremented if struct settings_t changes
+#define VERSION         4   // must be incremented if struct settings_t changes
 #define FLASH_ADDR      SEGMENT_B
 
 void main_init(void);
@@ -78,7 +84,7 @@ void store_pkt(void);
 
 // this struct will end up written into an information flash segment
 // so it better not exceed 128bytes
-// tracy_settings_t VERSION 3 is 119bytes long
+// tracy_settings_t VERSION 4 is 121bytes long
 
 struct tracy_settings_t {
     uint8_t ver;                    // settings struct version
@@ -95,11 +101,12 @@ struct tracy_settings_t {
     char server[MAX_SERVER_LEN];
     uint16_t port;
     uint8_t vref;
-    uint16_t gps_loop_period;
-    uint16_t gps_warmup_period;
-    uint16_t gps_invalidate_period;
-    uint16_t gprs_loop_period;
-    uint16_t gprs_tx_period;
+    uint16_t gps_loop_interval;
+    uint16_t gps_warmup_interval;
+    uint16_t gps_invalidate_interval;
+    uint16_t gprs_loop_interval;
+    uint16_t gprs_static_tx_interval;
+    uint16_t gprs_moving_tx_interval;
     uint16_t geofence_trigger;
 };
 
@@ -120,12 +127,13 @@ static const struct tracy_settings_t defaults = {
     "trk.simplex.ro",           // server
     80,                         // port
     198,                        // adc vref
-    120,                        // period (in seconds) between 2 gps measurements
-    45,                         // period (in seconds) between gps powerup and NMEA data gathering
-    20,                         // period (in seconds) in which the best PDOP is searched for
-    1801,                       // period (in seconds) between 2 gsm connection attempts (used to get tower id data and sms commands)
-    3600,                       // maximum period (in seconds) between 2 HTTP POSTs
-    200                         // minimal distance (in meters) between 2 consecutive fixes at which a geofence action is triggered
+    180,                        // time interval (in seconds) between 2 gps measurements
+    45,                         // time interval (in seconds) between gps powerup and NMEA data gathering
+    20,                         // time interval (in seconds) in which the best PDOP is searched for
+    910,                        // time interval (in seconds) between 2 gsm connection attempts (used to get tower id data and sms commands)
+    3600,                       // time interval (in seconds) between 2 HTTP POSTs when device is stationary
+    600,                        // time interval (in seconds) between 2 HTTP POSTs when device is on the move
+    200                         // minimal distance (in meters) between 2 consecutive fixes at which the device is considered non-stationary
 };
 
 struct tracy_stat_t {
@@ -146,13 +154,6 @@ typedef enum {
 } main_gps_state_t;
 
 main_gps_state_t gps_next_state;
-
-typedef enum {
-    MAIN_GPRS_IDLE,
-    MAIN_GPRS_START,
-} main_gprs_state_t;
-
-main_gprs_state_t gprs_next_state;
 
 
 #endif

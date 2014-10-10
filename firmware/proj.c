@@ -30,8 +30,7 @@ uint32_t rtca_set_next = 0;
 uint32_t status_show_next = 0;
 
 uint32_t gps_reinit_next = 0;
-uint16_t gps_reinit_period = 120;
-
+uint16_t gps_reinit_interval = 120;
 
 #ifndef DEBUG_GPRS
 static void parse_gps(enum sys_message msg)
@@ -104,10 +103,10 @@ static void schedule(enum sys_message msg)
         switch (gps_next_state) {
 
             case MAIN_GPS_IDLE:
-                if (s.gps_loop_period > s.gps_warmup_period + 30) {
-                    // when gps has OFF periods
+                if (s.gps_loop_interval > s.gps_warmup_interval + 30) {
+                    // when gps has OFF intervals
                     GPS_DISABLE;
-                    gps_trigger_next = rtca_time.sys + s.gps_loop_period - s.gps_warmup_period - 2;
+                    gps_trigger_next = rtca_time.sys + s.gps_loop_interval - s.gps_warmup_interval - 2;
                 }
                 gps_next_state = MAIN_GPS_START;
                 adc_read();
@@ -123,15 +122,15 @@ static void schedule(enum sys_message msg)
             break;
 
             case MAIN_GPS_INIT:
-                if (s.gps_loop_period > s.gps_warmup_period + 30) {
-                    // gps had a power off period
-                    gps_trigger_next = rtca_time.sys + s.gps_warmup_period - s.gps_invalidate_period - 3;
+                if (s.gps_loop_interval > s.gps_warmup_interval + 30) {
+                    // gps had a power off interval
+                    gps_trigger_next = rtca_time.sys + s.gps_warmup_interval - s.gps_invalidate_interval - 3;
                     uart0_tx_str((char *)gps_init, 51);
                 } else {
                     // gps was on all the time
-                    gps_trigger_next = rtca_time.sys + s.gps_loop_period - s.gps_invalidate_period - 3;
+                    gps_trigger_next = rtca_time.sys + s.gps_loop_interval - s.gps_invalidate_interval - 3;
                     if (rtca_time.sys > gps_reinit_next) {
-                        gps_reinit_next = rtca_time.sys + gps_reinit_period;
+                        gps_reinit_next = rtca_time.sys + gps_reinit_interval;
                         uart0_tx_str((char *)gps_init, 51);
                     }
                 }
@@ -141,7 +140,7 @@ static void schedule(enum sys_message msg)
             break;
     
             case MAIN_GPS_PDOP_RST:
-                gps_trigger_next = rtca_time.sys + s.gps_invalidate_period - 1;
+                gps_trigger_next = rtca_time.sys + s.gps_invalidate_interval - 1;
                 gps_next_state = MAIN_GPS_STORE;
                 mc_f.pdop = 9999;
             break;
@@ -166,7 +165,7 @@ static void schedule(enum sys_message msg)
         uart0_tx_str(str_temp, strlen(str_temp));
 
         /*
-        snprintf(str_temp, STR_LEN, "spl %u spw %u spi %u\r", s.gps_loop_period, s.gps_warmup_period, s.gps_invalidate_period);
+        snprintf(str_temp, STR_LEN, "spl %u spw %u spi %u\r", s.gps_loop_interval, s.gps_warmup_interval, s.gps_invalidate_interval);
         uart0_tx_str(str_temp, strlen(str_temp));
         */
     }
@@ -175,32 +174,30 @@ static void schedule(enum sys_message msg)
 
     // force the HTTP POST from time to time
     if (rtca_time.sys > gprs_tx_next) {
-        gprs_tx_next = rtca_time.sys + s.gprs_tx_period;
+        if (gprs_tx_trig & TG_NOW_MOVING) {
+            gprs_tx_next = rtca_time.sys + s.gprs_moving_tx_interval;
+        } else {
+            gprs_tx_next = rtca_time.sys + s.gprs_static_tx_interval;
+        }
+        gprs_tx_trig = TG_INTERVAL;
         sim900.rdy |= TX_FIX_RDY;
     }
 
-    if (((rtca_time.sys > gprs_trigger_next) || (sim900.rdy & TX_FIX_RDY)) && !(sim900.rdy & TASK_IN_PROGRESS)) {
+    if (((rtca_time.sys > gprs_trigger_next) || (sim900.rdy & TX_FIX_RDY)) && 
+            !(sim900.rdy & TASK_IN_PROGRESS)) {
         // time to act
-        switch (gprs_next_state) {
-            case MAIN_GPRS_IDLE:
-                gprs_next_state = MAIN_GPRS_START;
-                adc_read();
-            break;
-            case MAIN_GPRS_START:
-               gprs_trigger_next = rtca_time.sys + s.gprs_loop_period;
-               gprs_next_state = MAIN_GPRS_IDLE;
+        adc_read();
+        gprs_trigger_next = rtca_time.sys + s.gprs_loop_interval;
 
-               if (stat.v_bat > 350) {
+        if (stat.v_bat > 350) {
 #ifndef DEBUG_GPS
-                    // if battery voltage is below ~3.4v
-                    // the sim will most likely lock up while trying to TX
-                    sim900_exec_default_task();
+            // if battery voltage is below ~3.4v
+            // the sim will most likely lock up while trying to TX
+            sim900_exec_default_task();
 #endif
-                } else {
-                    // force charging
-                    CHARGE_ENABLE;
-                }
-            break;
+        } else {
+            // force charging
+            CHARGE_ENABLE;
         }
     }
 
@@ -266,13 +263,12 @@ int main(void)
     rtca_set_next = 0;
     rtc_not_set = 1;
     gps_next_state = MAIN_GPS_IDLE;
-    gprs_next_state = MAIN_GPRS_IDLE;
 
-    if (s.gps_invalidate_period > s.gps_loop_period) {
-        s.gps_invalidate_period = s.gps_loop_period;
+    if (s.gps_invalidate_interval > s.gps_loop_interval) {
+        s.gps_invalidate_interval = s.gps_loop_interval;
     }
     
-    gprs_tx_next = s.gprs_tx_period;
+    gprs_tx_next = s.gprs_static_tx_interval;
 
 #ifdef DEBUG_GPS
     uart1_init(9600);
@@ -589,13 +585,22 @@ void store_pkt()
     // see if a data upload is needed
 #ifdef CONFIG_GEOFENCE
     if (geo.distance > s.geofence_trigger) {
+        gprs_tx_trig |= TG_NOW_MOVING;
         geo.distance = 0;
-        sim900.rdy |= TX_FIX_RDY;
+        if (!(gprs_tx_trig & TG_GEOFENCE)) {
+            // previous tx was not triggered by movement
+            sim900.rdy |= TX_FIX_RDY;
+            gprs_tx_trig |= TG_GEOFENCE;
+        } else {
+            if (gprs_tx_next > gprs_tx_prev + s.gprs_moving_tx_interval) {
+                gprs_tx_next = gprs_tx_prev + s.gprs_moving_tx_interval;
+            }
+        }
     }
 #endif
 
-    // if only one more segment can be created
-    if (m.seg_num > MAX_SEG - 2) {
+    // if only 2 more segments can be created
+    if (m.seg_num > MAX_SEG - 3) {
         sim900.rdy |= TX_FIX_RDY;
     }
 

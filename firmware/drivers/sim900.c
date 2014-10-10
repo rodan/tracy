@@ -173,6 +173,7 @@ static void sim900_tasks(enum sys_message msg)
                     } else if (sim900.task_rv == SUBTASK_CLOSE_GPRS_OK) {
                         sim900.trc = 0;
                         if (m.seg_num < 2) {
+                            gprs_tx_prev = rtca_time.sys;
                             sim900.rdy &= ~TX_FIX_RDY;
                         }
                         sim900.task_next_state = SUBTASK_SWITCHER;
@@ -829,11 +830,11 @@ static void sim900_state_machine(enum sys_message msg)
                                 sim900_tx_str(str_temp, strlen(str_temp));
                             break;
                             case SMS_GPRS_TIMINGS:
-                                snprintf(str_temp, STR_LEN, "sml %u smt %u\r", s.gprs_loop_period, s.gprs_tx_period);
+                                snprintf(str_temp, STR_LEN, "sml %u smst %u smmt %u\r", s.gprs_loop_interval, s.gprs_static_tx_interval, s.gprs_moving_tx_interval);
                                 sim900_tx_str(str_temp, strlen(str_temp));
                             break;
                             case SMS_GPS_TIMINGS:
-                                snprintf(str_temp, STR_LEN, "spl %u spw %u spi %u\r", s.gps_loop_period, s.gps_warmup_period, s.gps_invalidate_period);
+                                snprintf(str_temp, STR_LEN, "spl %u spw %u spi %u\r", s.gps_loop_interval, s.gps_warmup_interval, s.gps_invalidate_interval);
                                 sim900_tx_str(str_temp, strlen(str_temp));
                             break;
                             case SMS_ERRORS:
@@ -970,7 +971,7 @@ static void sim900_console_timing(enum sys_message msg)
 {
     if (sim900.console == TTY_RX_WAIT) {
         // this point is reached REPLY_TMOUT ticks after a command was sent
-        // it also means SIM900 failed to reply in that time period
+        // it also means SIM900 failed to reply in that time interval
         sim900.rc = RC_TMOUT;
         sim900.console = TTY_NULL;
         SIM900_RTS_LOW;
@@ -1331,23 +1332,23 @@ uint8_t sim900_parse_sms(char *str, const uint16_t size)
         } else if (strstr(str, "spl")) {
             p = strstr(str, "spl");
             p += 3;
-            extract_dec(p, &s.gps_loop_period);
+            extract_dec(p, &s.gps_loop_interval);
             save = true;
             gps_trigger_next = 0;
             sim900_add_subtask(SUBTASK_SEND_SMS, SMS_GPS_TIMINGS);
         } else if (strstr(str, "spw")) {
             p = strstr(str, "spw");
             p += 3;
-            extract_dec(p, &s.gps_warmup_period);
+            extract_dec(p, &s.gps_warmup_interval);
             save = true;
             sim900_add_subtask(SUBTASK_SEND_SMS, SMS_GPS_TIMINGS);
         } else if (strstr(str, "spi")) {
             p = strstr(str, "spi");
             p += 3;
-            extract_dec(p, &s.gps_invalidate_period);
+            extract_dec(p, &s.gps_invalidate_interval);
             save = true;
-            if (s.gps_invalidate_period > s.gps_loop_period) {
-                s.gps_invalidate_period = s.gps_loop_period;
+            if (s.gps_invalidate_interval > s.gps_loop_interval) {
+                s.gps_invalidate_interval = s.gps_loop_interval;
             }
             sim900_add_subtask(SUBTASK_SEND_SMS, SMS_GPS_TIMINGS);
         } else if (strstr(str, "spg")) {
@@ -1359,16 +1360,23 @@ uint8_t sim900_parse_sms(char *str, const uint16_t size)
         } else if (strstr(str, "sml")) {
             p = strstr(str, "sml");
             p += 3;
-            extract_dec(p, &s.gprs_loop_period);
+            extract_dec(p, &s.gprs_loop_interval);
             save = true;
-            gprs_trigger_next = rtca_time.sys + s.gprs_loop_period;
+            gprs_trigger_next = rtca_time.sys + s.gprs_loop_interval;
             sim900_add_subtask(SUBTASK_SEND_SMS, SMS_GPRS_TIMINGS);
-        } else if (strstr(str, "smt")) {
-            p = strstr(str, "smt");
+        } else if (strstr(str, "smst")) {
+            p = strstr(str, "smst");
             p += 3;
-            extract_dec(p, &s.gprs_tx_period);
+            extract_dec(p, &s.gprs_static_tx_interval);
             save = true;
-            gprs_tx_next = rtca_time.sys + s.gprs_tx_period;
+            gprs_tx_next = rtca_time.sys + s.gprs_static_tx_interval;
+            sim900_add_subtask(SUBTASK_SEND_SMS, SMS_GPRS_TIMINGS);
+        } else if (strstr(str, "smmt")) {
+            p = strstr(str, "smmt");
+            p += 3;
+            extract_dec(p, &s.gprs_static_tx_interval);
+            save = true;
+            gprs_tx_next = rtca_time.sys + s.gprs_moving_tx_interval;
             sim900_add_subtask(SUBTASK_SEND_SMS, SMS_GPRS_TIMINGS);
         } else if (strstr(str, "set")) {
             p = strstr(str, "set");
@@ -1380,6 +1388,8 @@ uint8_t sim900_parse_sms(char *str, const uint16_t size)
             } else {
                 CHARGE_DISABLE;
             }
+        } else if (strstr(str, "ping")) {
+            sim900.rdy |= TX_FIX_RDY;
         } else if (strstr(str, "vref")) {
             p = strstr(str, "vref");
             p += 4;

@@ -202,7 +202,7 @@ uint8_t nmea_parse(char *s, const uint8_t len)
 
             rtca_set_time();
             rtc_not_set = 0;
-            rtca_set_next += RTC_SET_PERIOD;
+            rtca_set_next += RTC_SET_INTERVAL;
         }
 
         if (mc_t.fix && (mc_t.pdop <= mc_f.pdop)) {
