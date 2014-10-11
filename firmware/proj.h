@@ -63,12 +63,12 @@ uint8_t gprs_tx_trig;
 uint32_t rtca_set_next;
 uint8_t rtc_not_set;
 
-#define VERSION         4   // must be incremented if struct settings_t changes
+#define FLASH_VER       4   // must be incremented if struct settings_t changes
 #define FLASH_ADDR      SEGMENT_B
 
 void main_init(void);
 void check_events(void);
-void settings_init(uint8_t * addr);
+void settings_init(uint8_t * addr, uint8_t defaults);
 void adc_read(void);
 void store_pkt(void);
 
@@ -84,7 +84,7 @@ void store_pkt(void);
 
 // this struct will end up written into an information flash segment
 // so it better not exceed 128bytes
-// tracy_settings_t VERSION 4 is 121bytes long
+// tracy_settings_t FLASH_VER 4 is 121bytes long
 
 struct tracy_settings_t {
     uint8_t ver;                    // settings struct version
@@ -113,7 +113,7 @@ struct tracy_settings_t {
 struct tracy_settings_t s;
 
 static const struct tracy_settings_t defaults = {
-    VERSION,                    // ver
+    FLASH_VER,                  // ver
     CONF_SHOW_CELL_LOC | CONF_ALWAYS_CHARGE,  // settings
     0,                          // ctrl_phone_len
     "",                         // ctrl_phone
@@ -129,11 +129,11 @@ static const struct tracy_settings_t defaults = {
     198,                        // adc vref
     180,                        // time interval (in seconds) between 2 gps measurements
     45,                         // time interval (in seconds) between gps powerup and NMEA data gathering
-    20,                         // time interval (in seconds) in which the best PDOP is searched for
-    910,                        // time interval (in seconds) between 2 gsm connection attempts (used to get tower id data and sms commands)
+    20,                         // time interval (in seconds) during which the best PDOP is searched for
+    900,                        // time interval (in seconds) between 2 gsm connection attempts (used to get tower id data and sms commands)
     3600,                       // time interval (in seconds) between 2 HTTP POSTs when device is stationary
     600,                        // time interval (in seconds) between 2 HTTP POSTs when device is on the move
-    200                         // minimal distance (in meters) between 2 consecutive fixes at which the device is considered non-stationary
+    300                         // minimal distance (in meters) between 2 consecutive fixes at which the device is considered non-stationary
 };
 
 struct tracy_stat_t {

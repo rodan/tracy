@@ -834,7 +834,11 @@ static void sim900_state_machine(enum sys_message msg)
                                 sim900_tx_str(str_temp, strlen(str_temp));
                             break;
                             case SMS_GPS_TIMINGS:
-                                snprintf(str_temp, STR_LEN, "spl %u spw %u spi %u\r", s.gps_loop_interval, s.gps_warmup_interval, s.gps_invalidate_interval);
+                                snprintf(str_temp, STR_LEN, "spl %u spw %u spi %u spg %u\r", s.gps_loop_interval, s.gps_warmup_interval, s.gps_invalidate_interval, s.geofence_trigger);
+                                sim900_tx_str(str_temp, strlen(str_temp));
+                            break;
+                            case SMS_DEFAULTS:
+                                snprintf(str_temp, STR_LEN, "defaults loaded\r");
                                 sim900_tx_str(str_temp, strlen(str_temp));
                             break;
                             case SMS_ERRORS:
@@ -1390,6 +1394,11 @@ uint8_t sim900_parse_sms(char *str, const uint16_t size)
             }
         } else if (strstr(str, "ping")) {
             sim900.rdy |= TX_FIX_RDY;
+        } else if (strstr(str, "default")) {
+            settings_init(SEGMENT_B, 1);
+            save = true;
+            sim900.rdy |= NEED_SYSTEM_REBOOT;
+            sim900_add_subtask(SUBTASK_SEND_SMS, SMS_DEFAULTS);
         } else if (strstr(str, "vref")) {
             p = strstr(str, "vref");
             p += 4;

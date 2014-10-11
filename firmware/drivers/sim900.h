@@ -166,6 +166,7 @@ typedef enum {
     SMS_GPRS_SETUP,
     SMS_GPS_TIMINGS,
     SMS_GPRS_TIMINGS,
+    SMS_DEFAULTS,
     SMS_ERRORS,
     SMS_VREF,
     SMS_CODE_OK

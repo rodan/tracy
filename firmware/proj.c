@@ -179,12 +179,17 @@ static void schedule(enum sys_message msg)
         } else {
             gprs_tx_next = rtca_time.sys + s.gprs_static_tx_interval;
         }
-        gprs_tx_trig = TG_INTERVAL;
         sim900.rdy |= TX_FIX_RDY;
+        gprs_tx_trig = TG_INTERVAL;
     }
 
     if (((rtca_time.sys > gprs_trigger_next) || (sim900.rdy & TX_FIX_RDY)) && 
             !(sim900.rdy & TASK_IN_PROGRESS)) {
+
+        if (gprs_tx_trig & (TG_NOW_MOVING | TG_GEOFENCE)) {
+            gprs_tx_trig &= ~TG_NOW_MOVING;
+        }
+
         // time to act
         adc_read();
         gprs_trigger_next = rtca_time.sys + s.gprs_loop_interval;
@@ -240,7 +245,7 @@ int main(void)
 #ifdef PCB_REV1
     GPS_BKP_ENABLE;
 #endif
-    settings_init(SEGMENT_B);
+    settings_init(SEGMENT_B, 0);
 
     m.e = 0x0;
     m.seg[0] = 0x0;
@@ -258,7 +263,7 @@ int main(void)
     }
 
     gps_trigger_next = 0;
-    gprs_trigger_next = 60;
+    gprs_trigger_next = s.gprs_loop_interval;
 
     rtca_set_next = 0;
     rtc_not_set = 1;
@@ -267,7 +272,8 @@ int main(void)
     if (s.gps_invalidate_interval > s.gps_loop_interval) {
         s.gps_invalidate_interval = s.gps_loop_interval;
     }
-    
+   
+    gprs_tx_trig = 0;
     gprs_tx_next = s.gprs_static_tx_interval;
 
 #ifdef DEBUG_GPS
@@ -440,14 +446,14 @@ void check_events(void)
     }
 }
 
-void settings_init(uint8_t * addr)
+void settings_init(uint8_t * addr, uint8_t defaults)
 {
     uint8_t *src_p, *dst_p;
     uint8_t i;
 
     src_p = addr;
     dst_p = (uint8_t *) & s;
-    if ((*src_p) != VERSION) {
+    if (((*src_p) != FLASH_VER) || (defaults)) {
         src_p = (uint8_t *) & defaults;
     }
     for (i = 0; i < sizeof(s); i++) {
