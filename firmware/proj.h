@@ -68,9 +68,13 @@ uint8_t rtc_not_set;
 
 void main_init(void);
 void check_events(void);
-void settings_init(uint8_t * addr, uint8_t defaults);
+void settings_init(uint8_t * addr, const uint8_t location);
 void adc_read(void);
 void store_pkt(void);
+
+
+#define VERSION_BASED           0
+#define FACTORY_DEFAULTS        1
 
 #define MAX_PHONE_LEN           16
 #define MAX_APN_LEN             20

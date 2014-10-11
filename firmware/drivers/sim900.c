@@ -1395,7 +1395,7 @@ uint8_t sim900_parse_sms(char *str, const uint16_t size)
         } else if (strstr(str, "ping")) {
             sim900.rdy |= TX_FIX_RDY;
         } else if (strstr(str, "default")) {
-            settings_init(SEGMENT_B, 1);
+            settings_init(SEGMENT_B, FACTORY_DEFAULTS);
             save = true;
             sim900.rdy |= NEED_SYSTEM_REBOOT;
             sim900_add_subtask(SUBTASK_SEND_SMS, SMS_DEFAULTS);

@@ -245,14 +245,14 @@ int main(void)
 #ifdef PCB_REV1
     GPS_BKP_ENABLE;
 #endif
-    settings_init(SEGMENT_B, 0);
+    settings_init(SEGMENT_B, VERSION_BASED);
 
     m.e = 0x0;
     m.seg[0] = 0x0;
     m.seg_num = 1;
 
     stat.http_post_version = POST_VERSION;
-    stat.http_msg_id = 0;
+    stat.http_msg_id = 1;
 
     sim900.imei[0] = 0;
 
@@ -446,14 +446,14 @@ void check_events(void)
     }
 }
 
-void settings_init(uint8_t * addr, uint8_t defaults)
+void settings_init(uint8_t * addr, const uint8_t location)
 {
     uint8_t *src_p, *dst_p;
     uint8_t i;
 
     src_p = addr;
     dst_p = (uint8_t *) & s;
-    if (((*src_p) != FLASH_VER) || (defaults)) {
+    if (((*src_p) != FLASH_VER) || (location)) {
         src_p = (uint8_t *) & defaults;
     }
     for (i = 0; i < sizeof(s); i++) {
