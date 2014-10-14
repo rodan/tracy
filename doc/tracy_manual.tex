@@ -1,19 +1,16 @@
 
 \documentclass[a4paper,twoside]{refart}
 
-%\usepackage{fancyhdr}
-%\usepackage{makeidx}
-%\usepackage{amssymb}
-%\usepackage{url}
 \usepackage{longtable}
-%\usepackage{multicol}
-%\usepackage{graphics}
 \usepackage{graphicx} 
-%\usepackage{subfigure}
 \usepackage[bitheight=6ex]{bytefield}
 \usepackage{gensymb}
 \usepackage[stable]{footmisc}
 \usepackage{multirow}
+\usepackage{hyperref}
+\usepackage[toc]{glossaries}
+
+\makeglossaries
 
 \usepackage{hyperref}
 \hypersetup{
@@ -39,7 +36,7 @@ morestring=[b]",
 language=sms, % Detects keywords, comments, strings, functions, etc for the language specified
 backgroundcolor=\color{highlight}, % Set the background color for the snippet - useful for highlighting
 basicstyle=\footnotesize\ttfamily, % The default font size and style of the code
-basicstyle=\ttfamily, % The default font size and style of the code
+%basicstyle=\ttfamily, % The default font size and style of the code
 breakatwhitespace=false, % If true, only allows line breaks at white space
 breaklines=true, % Automatic line breaking (prevents code from protruding outside the box)
 captionpos=b, % Sets the caption position: b for bottom; t for top
@@ -66,14 +63,60 @@ tabsize=2, % Number of spaces per tab in the code
 %\renewcommand*{\familydefault}{\ttdefault}
 %\renewcommand*{\familydefault}{\rmdefault{ppl}}
 
+\newglossaryentry{adc}{%
+  name={ADC},
+  description={analog to digital converter}
+}
+
+\newglossaryentry{cell-id}{%
+  name={cell ID},
+  description={cell identification code - part of the cell tower id broadcast}
+}
+
+\newglossaryentry{cell-lac}{%
+  name={cell LAC},
+  description={location area code - part of the cell tower id broadcast}
+}
+
+\newglossaryentry{cell-mcc}{%
+  name={cell MCC},
+  description={mobile country code - part of the cell tower id broadcast}
+}
+
+\newglossaryentry{cell-mnc}{%
+  name={cell MNC},
+  description={mobile network code - part of the cell tower id broadcast}
+}
+
+\newglossaryentry{cell-rxl}{%
+  name={cell RXL},
+  description={receive signal strength level - part of the cell tower id broadcast}
+}
+
+\newglossaryentry{m2m}{%
+  name={M2M},
+  description={machine to machine data plan - mobile subscription that covers SMS and data but no voice}
+}
+
+\newglossaryentry{pdop}{%
+  name={PDOP},
+  description={(3D) position dilution of precision - a value that describes the measurement's precision based on satellite geometry scattering as viewed from the ground. the lower the number the better. if it's more than 5 the calculated geographical position is not to be taken into account}
+}
+
+%\newglossaryentry{}{%
+%  name={},
+%  description={}
+%}
+
+
 \begin{document}
-\title{gps tracking module with gprs connectivity}
+\title{Gps tracking module with gprs connectivity}
 \author{Petre Rodan \url{http://www.simplex.ro}}
 \date{created September 2014, revised \today}
 \maketitle
 
 \begin{abstract}
-this module can be used to track goods wherever gsm signal is present. it is optimized for very low power consumption and has configurable timings which would make it fit to any use scenario.
+This module can be used to track goods wherever gsm signal is present. It is optimized for very low power consumption and has configurable timings which would make it fit to any use scenario.
 \end{abstract}
 
 
@@ -81,21 +124,313 @@ this module can be used to track goods wherever gsm signal is present. it is opt
 \newpage
 
 \section{principles of operation}
-geographic coordinates are obtained by decoding NMEA sentences received from the GPS chipset and then transmitted via the mobile phone network to a web server. the server stores the received information into a database and provides it on demand to the end-user.
+Geographic coordinates are obtained by decoding NMEA sentences received from the GPS chipset and then transmitted via the mobile phone network to a web server. The server stores the received information into a database and provides it on demand to the end-user.
 
-cell tower identifiers are also transmitted in the same packet and this allows approximate localization when the gps signal is obstructed. when the gsm signal is missing data is being stored on the device and it's transmission will resume once connection is re-established.
+Cell tower identifiers are also transmitted in the same packet and this allows approximate localization when the gps signal is obstructed. When the gsm signal is missing data is being stored on the device and it's transmission will resume once connection is re-established.
+
+\section{Quick reference guide}
+
+\subsection{Getting started}
+
+\subsubsection{Requirements}
+
+\marginlabel{Warning} Special care must be taken with the gprs antenna. It has to be connected to the connector marked 'gprs' at all times or otherwise the module could be damaged.
+
+This module works best with two power sources. One 3.7V Li-Polymer/Li-Ion cell (at least 2000mAh recommended) and a 5V input DC that is only used for recharging the cell. Only the second one is optional due to the fact that for very short intervals the gprs modem needs more current than the DC input can handle. This circuitry is USB power friendly. If the module gets installed onto a vehicle, a high efficiency DC-DC converter can be provided to lower the voltage from up to 24V to the 5V needed. Double check the polarity on the connectors before attempting to apply any power to the device. Pin 1 is marked on the silkscreen with a small triangle and that represents the ground (negative) terminal for both the battery and the DC inputs.
+
+The user will also need a mobile phone in order to send commands to the module via SMS and a web browser to visualize the generated data.
+
+\subsubsection{SIM cards and initial setup}
+
+Below is a step-by-step guide for installing a local SIM card into the tracking module. The setup of a 'Vodafone prepay card' is shown as an example.
+
+\begin{itemize}
+    \item buy a SIM card. any SIM card will do: prepay-ed, subscription (but do keep in mind that no voice transmission will ever be used on this SIM tho), machine to machine (also known as \gls{m2m}). mini SIM form factor cards are needed.
+    \item obtain the associated phone number and enter it into your phone's address-book - don't forget to also add the country prefix so you can contact the tracker while abroad. it's "+4" prefixed to the number in Romania.
+    \item place the newly purchased SIM card into an actual phone
+    \item if it has no initial credit, fill it with at least 5EUR
+    \item make sure no PIN is set on the SIM itself
+    \item disable any 'best value plan' the provider might have selected - this SIM will mostly be used to connect to the internet, and it will send a minimal number of SMS messages during the setup process. the only extra options that are needed are the cheapest internet plan available ('100MB internet for 1 Month - 2EUR' for vodafone). also activate data roaming.
+    \item disable 'VOX voicemail' by calling \#\#002\#
+    \item place the SIMs back into their proper locations: the newly purchased one in the tracker and your old one into the phone.
+    \item while inserting the SIM into the tracker write down the last 4 IMEI digits that you see written on the SIM900 IC that is adjacent to the SIM holder.
+    \item send a SMS from the phone to the tracker that contains:
+
+\begin{lstlisting}
+code 5551
+\end{lstlisting}
+
+'5551' will need to be replaced by those digits you wrote down during the previous step
+
+    \item power on the tracker and wait. it only connects to the gsm network every 15 minutes by default and it has a 1 minute interval in which it's actively listening to incoming SMS messages. once the code is received and acknowledged you will get a 'code ok' reply on the phone. from this moment on you can send commands to the tracker.
+\end{itemize}
+
+\subsection{gprs setup}
+
+In order for the module to connect to the internet to send out the tracking data it needs a working gprs connection to the mobile service provider. This connection is established only if a set of credentials (\verb"apn", \verb"username" and \verb"password") are used to authenticate the device. You can ask your mobile phone company to provide these. Sometimes one company has customized \verb"apn" and/or \verb"usernmames" for each sim card type, so don't rely on web searches.
+
+Once you get your correct credentials, send them as 3 different SMS commands to the device:
+
+\begin{lstlisting}
+apn STRING
+\end{lstlisting}
+\begin{lstlisting}
+user STRING
+\end{lstlisting}
+\begin{lstlisting}
+pass STRING
+\end{lstlisting}
+
+\marginlabel{Warning} All strings can be max 20 characters long. If you need more on any of them please contact me.
+
+You can check if all data has been received ok with the following command:
+
+\begin{lstlisting}
+gprs?
+\end{lstlisting}
 
 
-\section{components used}
+\subsection{Web visualization of data}
+
+You can check all the info the tracker sends out by visiting \\ \verb"http://www.simplex.ro/scripts/l1?i=IMEI_NUMBER" .\\
+the \verb"IMEI_NUMBER" is a 15 digit number and it's written on the sim900 module.
+
+This project offers the possibility to advanced users to redirect the tracking data to another web server.
+Two commands control the location where HTTP POST packets are sent:
+
+\begin{lstlisting}
+srv your.server.com
+\end{lstlisting}
+
+\begin{lstlisting}
+port port_number
+\end{lstlisting}
+
+\marginlabel{Warning} All strings can be max 20 characters long. If you need more on any of them please contact me.
+
+The post request will be sent to \verb"http://your.server.com:port_number/u1". u1 has to be a CGI script (or an alias to one) that decodes the binary packets sent. See Section~\ref{sec:post-packets} for details.
+
+\subsection{SMS commands}
+
+\begin{tabular}{ |l|p{8cm}| }
+    \hline
+        command & 
+\begin{lstlisting}
+code STRING
+\end{lstlisting} \\
+        action & pair a phone to the tracker.
+STRING has to be the last 4 digits of the SIM900's IMEI \\ \hline
+\end{tabular}
+
+
+\begin{tabular}{ |l|p{8cm}| }
+    \hline
+        command & 
+\begin{lstlisting}
+gprs?
+\end{lstlisting} \\
+        action & show APN, USER, PASSWORD that are currently used in order to authenticate for a gprs session \\ \hline
+\end{tabular}
+
+
+\begin{tabular}{ |l|p{8cm}| }
+    \hline
+    \multicolumn{2}{|l|}{} \\
+    \hline
+        command & 
+\begin{lstlisting}
+setup?
+\end{lstlisting} \\
+        action & show a hex value containing current switches \\ \hline
+\end{tabular}
+
+
+\begin{tabular}{ |l|p{8cm}| }
+    \hline
+        command & 
+\begin{lstlisting}
+fix?
+\end{lstlisting} \\
+        action & 
+try to send back a GPS fix as a SMS reply \\ \hline
+\end{tabular}
+
+\begin{tabular}{ |l|p{8cm}| }
+    \hline
+        command & 
+\begin{lstlisting}
+ping
+\end{lstlisting} \\
+        action & 
+a HTTP POST is sent with all available data once this command is received \\ \hline
+\end{tabular}
+
+\begin{tabular}{ |l|p{8cm}| }
+    \hline
+        command & 
+\begin{lstlisting}
+default
+\end{lstlisting} \\
+        action & 
+restores ALL variables to the factory defaults and reboots the device. the user will have to use the \verb"code" command again to pair it's phone\\ \hline
+\end{tabular}
+
+
+\begin{tabular}{ |l|p{8cm}| }
+    \hline
+        command & 
+\begin{lstlisting}
+apn STRING
+\end{lstlisting} \\
+        default & live.vodafone.com \\
+        action & 
+set the gprs apn value - max 20 char long
+
+in case STRING is missing, an empty apn is used \\ \hline
+\end{tabular}
+
+
+\begin{tabular}{ |l|p{8cm}| }
+    \hline
+        command & 
+\begin{lstlisting}
+user STRING
+\end{lstlisting} \\
+        default & live \\
+        action & 
+set the gprs user  - max 20 char long
+
+in case STRING is missing, an empty username is used  \\ \hline
+\end{tabular}
+
+
+\begin{tabular}{ |l|p{8cm}| }
+    \hline
+        command & 
+\begin{lstlisting}
+pass STRING
+\end{lstlisting} \\
+        default & vodafone \\
+        action & 
+set the gprs pass - max 20 char long
+in case STRING is missing, an empty password is used  \\ \hline
+\end{tabular}
+
+
+\begin{tabular}{ |l|p{8cm}| }
+    \hline
+        command & 
+\begin{lstlisting}
+srv STRING
+\end{lstlisting} \\
+        default & trk.simplex.ro \\
+        action & 
+what server to contact in order to send the tracking data \\ \hline
+\end{tabular}
+
+
+\begin{tabular}{ |l|p{8cm}| }
+    \hline
+        command & 
+\begin{lstlisting}
+port STRING
+\end{lstlisting} \\
+        default & 80 \\
+        action & 
+TCP port used during connection to the server  \\ \hline
+\end{tabular}
+
+
+\begin{tabular}{ |l|p{8cm}| }
+    \hline
+        command & 
+\begin{lstlisting}
+vref STRING
+\end{lstlisting} \\
+        default & 198 \\
+        action & 
+STRING is a number between 190 and 210 that acts as calibration coefficient to the on board \gls{adc}. only used if the voltage values reported by the module differ from the measured ones \\ \hline
+\end{tabular}
+
+
+\begin{tabular}{ |l|p{8cm}| }
+    \hline
+        command & 
+\begin{lstlisting}
+err?
+\end{lstlisting} \\
+        action & 
+shows a hex value in case there were any errors logged in the device. this value gets reset when all power is lost, when an 'err?' command is replied to or after a HTTP POST packet is sent out/stored to FRAM. only used for debug  \\ \hline
+\end{tabular}
+
+\begin{tabular}{ |l|p{8cm}| }
+    \hline
+        command & 
+\begin{lstlisting}
+spt?
+\end{lstlisting} \\
+        action & 
+shows a list of gps related timing values\\ \hline
+\end{tabular}
+
+\begin{tabular}{ |l|p{8cm}| }
+    \hline
+        command & 
+\begin{lstlisting}
+smt?
+\end{lstlisting} \\
+        action & 
+shows a list of gprs related timing values\\ \hline
+\end{tabular}
+
+\begin{tabular}{ |l|p{8cm}| }
+    \hline
+        commands & 
+\begin{lstlisting}
+spl STRING
+\end{lstlisting}
+\begin{lstlisting}
+spw STRING
+\end{lstlisting}
+\begin{lstlisting}
+spi STRING
+\end{lstlisting}
+\begin{lstlisting}
+spg STRING
+\end{lstlisting}
+\begin{lstlisting}
+sml STRING
+\end{lstlisting}
+\begin{lstlisting}
+smst STRING
+\end{lstlisting}
+\begin{lstlisting}
+smmt STRING
+\end{lstlisting} \\
+        action &
+timing variables. see section \ref{sub:timing} for details.
+\\ \hline
+\end{tabular}
+
+
+\section{developer guide}
 \subsection{software}
 
-all the documentation, sources and hardware schematics are provided as Open Source in order to encourage further improvements by the community. the TI spy-bi-wire protocol can be used to reflash the enclosed microcontroller.
+All the documentation, sources and hardware schematics are provided as Open Source in order to encourage further improvements by the community. The TI spy-bi-wire protocol can be used to re-flash the enclosed microcontroller.
 
-firmware is written in C and it's created to be fully non-blocking and interrupt driven. the server-side scripts are in perl and bash.
+Firmware is written in C and it's created to be fully non-blocking and interrupt driven. The server-side scripts are in perl and bash.
 
-any web server can be used to receive the binary data sent from the tracker. the unpack() function present in perl, python, php will reconstruct the information and make it ready to be inserted into a database.
+Any web server can be used to receive the binary data sent from the tracker. The unpack() function present in perl, python, php will reconstruct the information and make it ready to be inserted into a database. Special care has to be taken so that the web server's reply header is as short as possible. If it's too long the module will not parse it properly and the data flow will be disrupted. In case nginx is used using the following settings are highly recommended:
 
-provided scripts have the following runtime dependencies (some are optional):
+\begin{lstlisting}
+more_clear_headers 'Server';
+more_clear_headers 'Date';
+more_clear_headers 'Content-Type';
+more_clear_headers 'Transfer-Encoding';
+more_clear_headers 'Connection';
+\end{lstlisting}
+
+Provided scripts have the following run time dependencies (some are optional):
 
 \begin{itemize}
     \item perl at least ver 5.8.2
@@ -120,6 +455,13 @@ or by downloading a snapshot archive
 wget https://github.com/rodan/tracy/archive/master.zip
 \end{lstlisting} 
 
+compiling is as easy as
+\begin{lstlisting}
+cd firmware
+make clean
+make
+\end{lstlisting} 
+
 the following packages are used to compile and manage the firmware:
 
 \begin{itemize}
@@ -130,9 +472,20 @@ the following packages are used to compile and manage the firmware:
     \item mspdebug (0.22)
 \end{itemize}
 
-\subsubsection{HTTP POST packets}
+burning the firmware can be achieved with any MSP430 programmer that supports SPY-Bi-Wire. 
 
-Tracking information is sent to the server by TCP packets via the HTTP POST method. A webserver is thus needed to receive the data and feed it to the parsing script (see \verb"server/scripts/u1" in the repository).
+\marginlabel{Warning} specialized programmers can detect the 2.8V rail the microcontroller uses and will not send signals with a higher voltage. anything higher than 3V is just asking for trouble. 
+
+mspdebug can be used to program the firmware:
+
+\begin{lstlisting}
+mspdebug rf2500 "prog proj.elf"
+\end{lstlisting}
+
+\subsubsection{HTTP POST packets}
+\label{sec:post-packets}
+
+Tracking information is sent to the server by TCP packets via the HTTP POST method. A web server is thus needed to receive the data and feed it to the parsing script (see \verb"server/scripts/u1" in the repository).
 
 In order to have a good bandwidth usage the data is sent in a binary format and the F-RAM chip that is being used allows the data to be buffered and sent out at set intervals. Most scripting languages have an unpack() function that can correctly decode these packets. A sample perl script is provided in the repository (see \verb"server/scripts/l1").
 
@@ -197,7 +550,7 @@ Each positional measurement will be placed in a subsegment. At least one of thes
     \begin{rightwordgroup}{gps \\ data}
         \bitbox{32}{latitude (float)} \\
         \bitbox{32}{longitude (float)} \\
-        \bitbox{16}{PDOP} &&
+        \bitbox{16}{\gls{pdop}} &&
         \bitbox{16}{speed} \\
         \bitbox{16}{heading} &&
         \bitbox{16}{system time} \\
@@ -216,20 +569,20 @@ Each positional measurement will be placed in a subsegment. At least one of thes
   \begin{bytefield}{32}
     \bitheader{0,7-8,15-16,23-24,31} \\
     \begin{rightwordgroup}{gprs \\ data}
-        \bitbox{16}{cell rxl} &&
-        \bitbox{16}{cell mcc} \\
-        \bitbox{16}{cell mnc} &&
-        \bitbox{16}{cell identifier} \\
-        \bitbox{16}{cell lac}
+        \bitbox{16}{\gls{cell-rxl}} &&
+        \bitbox{16}{\gls{cell-mcc}} \\
+        \bitbox{16}{\gls{cell-mnc}} &&
+        \bitbox{16}{\gls{cell-id}} \\
+        \bitbox{16}{\gls{cell-lac}}
     \end{rightwordgroup}
   \end{bytefield}
   \caption{gprs payload}
   \label{fig:gprs_payload}
 \end{figure}
 
-Each subsegment (shown in Figure~\ref{fig:subsegment-format}) has a header containing the timestamp at the time of the fix, modem IMEI, system voltages, previous errors detected, basic device configuration, an autoincrement id and a byte that describes the type of the positional data. This can either be a GPS fix (Figure~\ref{fig:gps_payload}) and/or one up to four tower identification strings (Figure~\ref{fig:gprs_payload}).
+Each subsegment (shown in Figure~\ref{fig:subsegment-format}) has a header containing the timestamp at the time of the fix, modem IMEI, system voltages, previous errors detected, basic device configuration, an auto increment id and a byte that describes the type of the positional data. This can either be a GPS fix (Figure~\ref{fig:gps_payload}) and/or one up to four tower identification strings (Figure~\ref{fig:gprs_payload}).
 
-The tower identification strings are post-processed on the webserver and a \emph{very} approximate geographic position is obtained.
+The tower identification strings are post-processed on the web server and a \emph{very} approximate geographic position is obtained.
 
 These subsegments are simply concatenated together to constitute the final segment being sent. The size of one such segment varies but SIM900's internal buffering limits it up to 1000bytes. During one GPRS session one up to \verb"MAX_SEG" are sent out at a time. If GPRS connections cannot be established for a long interval and \verb"MAX_SEG" is reached then the oldest segment is freed in order to make place for new data.
 
@@ -237,7 +590,7 @@ These subsegments are simply concatenated together to constitute the final segme
 \subsubsection{Timings and intervals}
 \label{sub:timing}
 
-This tracking device allows fine-grained timing customizations. It can either preserve battery life for more than a month when sparse measurements are being made or it can record positional data every 10 seconds if needed. Either behaviour can be set by the user via SMS commands, without the need to recompile the firmware.
+This tracking device allows fine-grained timing customization. It can either preserve battery life for more than a month when sparse measurements are being made or it can record positional data every 10 seconds if needed. Either behaviour can be set by the user via SMS commands, without the need to recompile the firmware.
 
 A 'reset to factory settings' function is also provided in case the user needs to return to known-good timing values.
 
@@ -273,7 +626,7 @@ list of customizable variables:
     value & 0 & 20 & 65535 & seconds \\ \hline
     sms command to set & \multicolumn{4}{|l|}{\textbf{spi} $value$} \\ \hline
     sms command to view & \multicolumn{4}{|l|}{\textbf{spt?}} \\ \hline
-    description & \multicolumn{4}{|p{6.8cm}|}{time interval at the end of the measurement session during which the gps fix with the best PDOP is searched for} \\ \hline
+    description & \multicolumn{4}{|p{6.8cm}|}{time interval at the end of the measurement session during which the gps fix with the best \gls{pdop} is searched for} \\ \hline
 \end{tabular}
 
 \verb"spi" must be a smaller value then \verb"spl".
@@ -289,7 +642,7 @@ list of customizable variables:
     description & \multicolumn{4}{|p{7cm}|}{minimal distance between two consecutive fixes at which the device is considered non-stationary} \\ \hline
 \end{tabular}
 
-Heavy cloud coverage or large adiacent buildings can obscure or create multipath errors in the gps signal detection. It is thus advisable to not set the \textbf{spg} variable too low in order to minimize false-positives.
+Heavy cloud coverage or large adjacent buildings can obscure or create multipath errors in the gps signal detection. It is thus advisable to not set the \textbf{spg} variable too low in order to minimize false-positives.
 
 \label{sms:sml}
 \begin{tabular}{ |l|c|c|c|c| }
@@ -326,7 +679,7 @@ the gprs module is by far the most power-hungry IC in this device. each applicat
     description & \multicolumn{4}{|p{7cm}|}{time interval between two HTTP POSTs when the device is moving (see \textbf{spg} \ref{sms:spg})} \\ \hline
 \end{tabular}
 
-all the timings in this section are used for scheduling the respective actions. the final timestamps received in the web reports will not follow exactly the values entered. this happens because the device tries to get the best fix possible in the \textbf{spi} interval based on PDOP measurements and also because most actions performed are dependant on both outside factors (how quickly a good fix is received from the gps, mobile service availability, how many sms actions need to be executed) as well as local interractions (the gprs modem can only perform one task at any given time).
+all the timings in this section are used for scheduling the respective actions. the final timestamps received in the web reports will not follow exactly the values entered. this happens because the device tries to get the best fix possible in the \textbf{spi} interval based on \gls{pdop} measurements and also because most actions performed are dependant on both outside factors (how quickly a good fix is received from the gps, mobile service availability, how many sms actions need to be executed) as well as local interactions (the gprs modem can only perform one task at any given time).
 
 \subsection{hardware}
 
@@ -335,8 +688,8 @@ all the timings in this section are used for scheduling the respective actions. 
         \item 16bit RISC architecture with 32KB flash and 4KB of SRAM
         \item low supply voltage - 2.8V used in this implementation
         \item ultra-low power consumption // XXX
-        \item 10bit ADC - both the battery voltage and input voltage levels are kept in check
-        \item 4 16bit timers with interrupt generation - used to syncronize all processes
+        \item 10bit \gls{adc} - both the battery voltage and input voltage levels are kept in check
+        \item 4 16bit timers with interrupt generation - used to synchronize all processes
         \item real-time clock - keeps calendar data and the clock when gps signal is missing
         \item port mapping controller - allows digital functions to be switched between different ports
         \item watchdog, brown out reset - ensures the system runs in stable parameters
@@ -345,7 +698,7 @@ all the timings in this section are used for scheduling the respective actions. 
 \marginlabel{SIM900 quad-band GSM/GPRS engine}
     \begin{itemize}
         \item GSM 850MHz, EGSM 900MHz, DCS 1800MHz, PCS 1900MHz frequencies are supported
-        \item a dedicated user-provided micro SIM is needed to connect to the mobile phone network of choice. M2M SIMs also work since voice is never used in this application.
+        \item a dedicated user-provided micro SIM is needed to connect to the mobile phone network of choice. \gls{m2m} SIMs also work since voice is never used in this application.
     \end{itemize}
 
 \marginlabel{MT3339 MediaTek GPS chipset}
@@ -443,7 +796,7 @@ for all pin connectors, pin 1 is marked by a small triangle in the silkscreen
         connector & Molex 053048-0210 \\
         footprint & \begin{center} \includegraphics[height=50pt]{img/con2} \end{center} \\ \hline
         silkscreen & \verb"5V" \\ \hline
-        use & 5V DC either from a USB connection or a DCDC converter. used only to charge the included batterywith a current up to 300mA \\
+        use & 5V DC either from a USB connection or a DCDC converter. used only to charge the included battery with a current up to 300mA \\
     \hline
     \multicolumn{2}{|l|}{pin assignments} \\
     \hline
@@ -505,241 +858,18 @@ for all pin connectors, pin 1 is marked by a small triangle in the silkscreen
 \end{tabular}
 
 \newpage
-\section{usage}
-
-\subsection{SIM cards}
-
-below is a step-by-step guide for installing a local SIM card into the tracking module. the setup of a 'Vodafone prepay card' is shown as an example and one can adapt each step to their particular use case.
-
-\begin{itemize}
-    \item buy a SIM card. any SIM card will do: prepayed, subscription (but do keep in mind that no voice transmission will ever be used on this SIM tho), machine to machine (also known as M2M). rev1 boards use full size SIM cards, rev2 use a mini SIM form factor.
-    \item obtain the associated phone number and enter it into your phone's addressbook - don't forget to also add the country prefix so you can contact the tracker while abroad. it's "+4" prefixed to the number in Romania.
-    \item place the newly purchased SIM card into an actual phone
-    \item if it has no initial credit, fill it with at least 5EUR
-    \item make sure no PIN is set on the SIM itself
-    \item disable any 'best value plan' the provider might have selected - this is easiest to do from the 'MYVodafone' entry from within the vodafone.ro website. This SIM will mostly be used to connect to the internet, and it will send a minimal number of SMS messages during the setup process. the only extra options that are needed are '100MB internet for 1 Month - 2EUR'. you can optionaly activate roaming.
-    \item disable 'VOX voicemail' by calling \#\#002\#
-    \item place the SIMs back into their proper locations: the newly purchased one in the tracker and your old one into the phone.
-    \item while inserting the SIM into the tracker write down the last 4 IMEI digits that you see written on the SIM900 IC that is adiacent to the SIM holder.
-    \item send a SMS from the phone to the tracker that contains:
-
-\begin{lstlisting}
-code 5551
-\end{lstlisting}
-
-'5551' will need to be replaced by those digits you wrote down during the previous step
-
-    \item power on the tracker and wait. it only connects to the gsm network every 10 minutes by default and it has a 1 minute interval in which it's actively listening to incoming SMS messages. once the code is received and acknowledged you will get a 'code ok' reply on the phone. from this moment on you can send commands to the tracker.
-\end{itemize}
-
-\newpage
-\subsection{SMS commands}
-
-\begin{tabular}{ |l|p{8cm}| }
-    \hline
-        command & 
-\begin{lstlisting}
-code STRING
-\end{lstlisting} \\
-        action & pair a phone to the tracker.
-STRING has to be the last 4 digits of the SIM900's IMEI \\ \hline
-\end{tabular}
 
 
-\begin{tabular}{ |l|p{8cm}| }
-    \hline
-        command & 
-\begin{lstlisting}
-gprs?
-\end{lstlisting} \\
-        action & show APN, USER, PASSWORD that are currently used in order to authenticate for a gprs session \\ \hline
-\end{tabular}
+%\glsaddall
+\printglossaries
+%\printglossary[type=acronymdesc,style=altlist]
 
+%\printnoidxglossary[type=main,sort=word]
+%\printnoidxglossary[type=symbols,sort=use]
 
-\begin{tabular}{ |l|p{8cm}| }
-    \hline
-    \multicolumn{2}{|l|}{} \\
-    \hline
-        command & 
-\begin{lstlisting}
-setup?
-\end{lstlisting} \\
-        action & show a hex value containing current switches \\ \hline
-\end{tabular}
+%\renewcommand*{\glsnamefont}[1]{\textmd{#1}}
 
+%\printnoidxglossary[type=index,style=mcolindexgroup,sort=word]
 
-\begin{tabular}{ |l|p{8cm}| }
-    \hline
-        command & 
-\begin{lstlisting}
-fix?
-\end{lstlisting} \\
-        action & 
-try to send back a GPS fix as a SMS reply \\ \hline
-\end{tabular}
-
-\begin{tabular}{ |l|p{8cm}| }
-    \hline
-        command & 
-\begin{lstlisting}
-ping
-\end{lstlisting} \\
-        action & 
-a HTTP POST is sent with all avaiable data once this command is received \\ \hline
-\end{tabular}
-
-\begin{tabular}{ |l|p{8cm}| }
-    \hline
-        command & 
-\begin{lstlisting}
-default
-\end{lstlisting} \\
-        action & 
-restores ALL variables to the factory defaults and reboots the device. the user will have to use the \verb"code" command again to pair it's phone\\ \hline
-\end{tabular}
-
-
-\begin{tabular}{ |l|p{8cm}| }
-    \hline
-        command & 
-\begin{lstlisting}
-apn STRING
-\end{lstlisting} \\
-        default & live.vodafone.com \\
-        action & 
-set the gprs apn value - max 20 char long
-
-in case STRING is missing, an empty apn is used \\ \hline
-\end{tabular}
-
-
-\begin{tabular}{ |l|p{8cm}| }
-    \hline
-        command & 
-\begin{lstlisting}
-user STRING
-\end{lstlisting} \\
-        default & live \\
-        action & 
-set the gprs user  - max 20 char long
-
-in case STRING is missing, an empty username is used  \\ \hline
-\end{tabular}
-
-
-\begin{tabular}{ |l|p{8cm}| }
-    \hline
-        command & 
-\begin{lstlisting}
-pass STRING
-\end{lstlisting} \\
-        default & vodafone \\
-        action & 
-set the gprs pass - max 20 char long
-in case STRING is missing, an empty password is used  \\ \hline
-\end{tabular}
-
-
-\begin{tabular}{ |l|p{8cm}| }
-    \hline
-        command & 
-\begin{lstlisting}
-srv STRING
-\end{lstlisting} \\
-        default & trk.simplex.ro \\
-        action & 
-what server to contact in order to send the tracking data \\ \hline
-\end{tabular}
-
-
-\begin{tabular}{ |l|p{8cm}| }
-    \hline
-        command & 
-\begin{lstlisting}
-port STRING
-\end{lstlisting} \\
-        default & 80 \\
-        action & 
-TCP port used during connection to the server  \\ \hline
-\end{tabular}
-
-
-\begin{tabular}{ |l|p{8cm}| }
-    \hline
-        command & 
-\begin{lstlisting}
-vref STRING
-\end{lstlisting} \\
-        default & 198 \\
-        action & 
-STRING is a number between 190 and 210 that acts as calibration coefficient to the onboard ADC. only used if the voltage values reported by the module differ from the measured ones \\ \hline
-\end{tabular}
-
-
-\begin{tabular}{ |l|p{8cm}| }
-    \hline
-        command & 
-\begin{lstlisting}
-err?
-\end{lstlisting} \\
-        action & 
-shows a hex value in case there were any errors logged in the device. this value gets reset when all power is lost, when an 'err?' command is replied to or after a HTTP POST packet is sent out/stored to FRAM. only used for debug  \\ \hline
-\end{tabular}
-
-\begin{tabular}{ |l|p{8cm}| }
-    \hline
-        command & 
-\begin{lstlisting}
-spt?
-\end{lstlisting} \\
-        action & 
-shows a list of gps related timing values\\ \hline
-\end{tabular}
-
-\begin{tabular}{ |l|p{8cm}| }
-    \hline
-        command & 
-\begin{lstlisting}
-smt?
-\end{lstlisting} \\
-        action & 
-shows a list of gprs related timing values\\ \hline
-\end{tabular}
-
-\begin{tabular}{ |l|p{8cm}| }
-    \hline
-        commands & 
-\begin{lstlisting}
-spl STRING
-\end{lstlisting}
-\begin{lstlisting}
-spw STRING
-\end{lstlisting}
-\begin{lstlisting}
-spi STRING
-\end{lstlisting}
-\begin{lstlisting}
-spg STRING
-\end{lstlisting}
-\begin{lstlisting}
-sml STRING
-\end{lstlisting}
-\begin{lstlisting}
-smst STRING
-\end{lstlisting}
-\begin{lstlisting}
-smmt STRING
-\end{lstlisting} \\
-        action &
-timing variables. see section \ref{sub:timing} for details.
-\\ \hline
-\end{tabular}
-
-
-
-
-ADC - analog to digital converter
-M2M - machine to machine dataplan - mobile subscription that covers SMS and data but no voice
-PDOP - (3D) position dilution of precision - a value that describes the measurement's precision based on sattelite geometry. the lower the number the better. more than 5 is pretty poor. 
 
 \end{document}
