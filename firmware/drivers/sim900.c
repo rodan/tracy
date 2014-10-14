@@ -1313,7 +1313,7 @@ uint8_t sim900_parse_sms(char *str, const uint16_t size)
         } else if (strstr(str, "smt?")) {
             // send the gprs related timings in a sms reply
             sim900_add_subtask(SUBTASK_SEND_SMS, SMS_GPRS_TIMINGS);
-        } else if (strstr(str, "fix")) {
+        } else if (strstr(str, "fix?")) {
             // send the gps fix in a sms reply
             sim900_add_subtask(SUBTASK_SEND_SMS, SMS_FIX);
         } else if (strstr(str, "apn")) {

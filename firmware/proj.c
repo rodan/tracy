@@ -252,7 +252,7 @@ int main(void)
     m.seg_num = 1;
 
     stat.http_post_version = POST_VERSION;
-    stat.http_msg_id = 1;
+    stat.fix_id = 1;
 
     sim900.imei[0] = 0;
 
@@ -512,7 +512,7 @@ void store_pkt()
     rv += fm24_write((uint8_t *) & stat.v_bat, m.e, 2);
     rv += fm24_write((uint8_t *) & stat.v_raw, m.e, 2);
     rv += fm24_write((uint8_t *) & sim900.err, m.e, 2);
-    rv += fm24_write((uint8_t *) & stat.http_msg_id, m.e, 2);
+    rv += fm24_write((uint8_t *) & stat.fix_id, m.e, 2);
     rv += fm24_write((uint8_t *) & payload_content_desc, m.e, 1);
 
     if (mc_f.fix) {
@@ -558,7 +558,7 @@ void store_pkt()
         sim900.err |= ERR_RAM_WRITE;
     }
 
-    stat.http_msg_id++;
+    stat.fix_id++;
 
     // reset values
     for (i = 0; i < 4; i++) {

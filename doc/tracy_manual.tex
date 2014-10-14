@@ -10,7 +10,7 @@
 %\usepackage{graphics}
 \usepackage{graphicx} 
 %\usepackage{subfigure}
-
+\usepackage[bitheight=6ex]{bytefield}
 \usepackage{gensymb}
 \usepackage[stable]{footmisc}
 \usepackage{multirow}
@@ -30,7 +30,7 @@
 \definecolor{highlight}{RGB}{255,251,204} % Code highlight color
 
 \lstdefinelanguage{sms}
-{morekeywords={code,gprs,setup,fix,apn,user,pass,srv,port,vref,err,set},
+{morekeywords={code,gprs?,setup?,fix?,apn,user,pass,srv,port,vref,err.*,spl,spw,spi,spg,sml,smst,smmt,ping,set,default},
 sensitive=false,
 morestring=[b]",
 }
@@ -38,7 +38,7 @@ morestring=[b]",
 \lstset{
 language=sms, % Detects keywords, comments, strings, functions, etc for the language specified
 backgroundcolor=\color{highlight}, % Set the background color for the snippet - useful for highlighting
-%basicstyle=\footnotesize\ttfamily, % The default font size and style of the code
+basicstyle=\footnotesize\ttfamily, % The default font size and style of the code
 basicstyle=\ttfamily, % The default font size and style of the code
 breakatwhitespace=false, % If true, only allows line breaks at white space
 breaklines=true, % Automatic line breaking (prevents code from protruding outside the box)
@@ -68,12 +68,12 @@ tabsize=2, % Number of spaces per tab in the code
 
 \begin{document}
 \title{gps tracking module with gprs connectivity}
-\author{\url{http://www.simplex.ro}}
+\author{Petre Rodan \url{http://www.simplex.ro}}
 \date{created September 2014, revised \today}
 \maketitle
 
 \begin{abstract}
-this module can be used to track goods wherever gsm signal is present. it is optimized for very low power consumption and small form factor
+this module can be used to track goods wherever gsm signal is present. it is optimized for very low power consumption and has configurable timings which would make it fit to any use scenario.
 \end{abstract}
 
 
@@ -107,7 +107,7 @@ provided scripts have the following runtime dependencies (some are optional):
 
 \subsubsection{tweaking the firmware}
 
-the original source code is kept in a git repository on github.com.
+the original source code is kept in a git repository at github.com.
 one can grab a copy by running
 
 \begin{lstlisting}
@@ -117,7 +117,7 @@ git clone http://github.com/rodan/tracy
 or by downloading a snapshot archive
 
 \begin{lstlisting}
-wget foo
+wget https://github.com/rodan/tracy/archive/master.zip
 \end{lstlisting} 
 
 the following packages are used to compile and manage the firmware:
@@ -130,6 +130,203 @@ the following packages are used to compile and manage the firmware:
     \item mspdebug (0.22)
 \end{itemize}
 
+\subsubsection{HTTP POST packets}
+
+Tracking information is sent to the server by TCP packets via the HTTP POST method. A webserver is thus needed to receive the data and feed it to the parsing script (see \verb"server/scripts/u1" in the repository).
+
+In order to have a good bandwidth usage the data is sent in a binary format and the F-RAM chip that is being used allows the data to be buffered and sent out at set intervals. Most scripting languages have an unpack() function that can correctly decode these packets. A sample perl script is provided in the repository (see \verb"server/scripts/l1").
+
+Each positional measurement will be placed in a subsegment. At least one of these subsegments will constitute one segment that is sent out together with a HTTP header to create an HTTP POST request (see Figure~\ref{fig:packet-format}).
+
+\begin{figure}[htbp]
+  \centering
+  \begin{bytefield}{32}
+    \bitheader{0,0} \\
+    \begin{rightwordgroup}{HTTP \\ POST \\ method \\ header}
+        \bitbox{32}{POST /u1 HTTP/1.0} \\
+        \bitbox{32}{Host: trk.simplex.ro} \\
+        \bitbox{32}{Content-Type: application/binary} \\
+        \bitbox{32}{Content-Length: 00000}
+    \end{rightwordgroup} \\
+
+    \begin{rightwordgroup}{one\\ segment}
+    \wordbox[lrt]{1}{
+      \parbox{0.6\width}{\centering at least one subsegment}} \\
+    \skippedwords \\
+    \wordbox[lrb]{1}{} 
+  \end{rightwordgroup}
+  \end{bytefield}
+  \caption{packet format}
+  \label{fig:packet-format}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{bytefield}{32}
+    \bitheader{0,7-8,15-16,23-24,31} \\
+    \begin{rightwordgroup}{subsegment \\ header}
+        \bitbox{16}{version} &&
+        \bitbox[tlr]{16}{} \\
+        \wordbox[lr]{1}{\parbox{0.6\width}{\centering 15 byte IMEI}} \\
+        \skippedwords \\
+        \wordbox[lrb]{1}{} \\ 
+        \bitbox{16}{settings} &&
+        \bitbox{16}{$V_{BAT}$} \\
+        \bitbox{16}{$V_{RAW}$} &&
+        \bitbox{16}{errors} \\
+        \bitbox{16}{message id} &&
+        \bitbox{8}{payload descriptor} &&
+        \bitbox[tlr]{8}{} \\
+        \bitbox[rl]{32}{timestamp} \\
+        \bitbox[rlb]{8}{} &&
+        \bitbox[tl]{24}{}
+    \end{rightwordgroup} \\
+    \begin{rightwordgroup}{payload}
+    \\
+    \bitbox[lrb]{32}{\dots gps and/or gprs payload}
+    \end{rightwordgroup}
+  \end{bytefield}
+  \caption{subsegment format}
+  \label{fig:subsegment-format}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{bytefield}{32}
+    \bitheader{0,7-8,15-16,23-24,31} \\
+    \begin{rightwordgroup}{gps \\ data}
+        \bitbox{32}{latitude (float)} \\
+        \bitbox{32}{longitude (float)} \\
+        \bitbox{16}{PDOP} &&
+        \bitbox{16}{speed} \\
+        \bitbox{16}{heading} &&
+        \bitbox{16}{system time} \\
+        \bitbox{16}{system time} &&
+        \bitbox[btl]{16}{geofence distance} \\
+        \bitbox[btr]{16}{geofence distance} &&
+        \bitbox{16}{geofence bearing}
+    \end{rightwordgroup}
+  \end{bytefield}
+  \caption{gps payload}
+  \label{fig:gps_payload}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{bytefield}{32}
+    \bitheader{0,7-8,15-16,23-24,31} \\
+    \begin{rightwordgroup}{gprs \\ data}
+        \bitbox{16}{cell rxl} &&
+        \bitbox{16}{cell mcc} \\
+        \bitbox{16}{cell mnc} &&
+        \bitbox{16}{cell identifier} \\
+        \bitbox{16}{cell lac}
+    \end{rightwordgroup}
+  \end{bytefield}
+  \caption{gprs payload}
+  \label{fig:gprs_payload}
+\end{figure}
+
+Each subsegment (shown in Figure~\ref{fig:subsegment-format}) has a header containing the timestamp at the time of the fix, modem IMEI, system voltages, previous errors detected, basic device configuration, an autoincrement id and a byte that describes the type of the positional data. This can either be a GPS fix (Figure~\ref{fig:gps_payload}) and/or one up to four tower identification strings (Figure~\ref{fig:gprs_payload}).
+
+The tower identification strings are post-processed on the webserver and a \emph{very} approximate geographic position is obtained.
+
+These subsegments are simply concatenated together to constitute the final segment being sent. The size of one such segment varies but SIM900's internal buffering limits it up to 1000bytes. During one GPRS session one up to \verb"MAX_SEG" are sent out at a time. If GPRS connections cannot be established for a long interval and \verb"MAX_SEG" is reached then the oldest segment is freed in order to make place for new data.
+
+\newpage
+\subsubsection{Timings and intervals}
+\label{sub:timing}
+
+This tracking device allows fine-grained timing customizations. It can either preserve battery life for more than a month when sparse measurements are being made or it can record positional data every 10 seconds if needed. Either behaviour can be set by the user via SMS commands, without the need to recompile the firmware.
+
+A 'reset to factory settings' function is also provided in case the user needs to return to known-good timing values.
+
+list of customizable variables: 
+
+\label{sms:spl}
+\begin{tabular}{ |l|c|c|c|c| }
+    \hline
+    \multicolumn{1}{|c|}{\multirow{2}{*}{\textbf{gps loop interval}}} & \multicolumn{3}{|c|}{value} & \multicolumn{1}{|c|}{\multirow{2}{*}{unit}} \\ \cline{2-4}
+    \multicolumn{1}{|c|}{} & min & default & max & \\ \hline
+    value & 10 & 180 & 65535 & seconds \\ \hline
+    sms command to set & \multicolumn{4}{|l|}{\textbf{spl} $value$} \\ \hline
+    sms command to view & \multicolumn{4}{|l|}{\textbf{spt?}} \\ \hline
+    description & \multicolumn{4}{|p{7cm}|}{sets the interval between two gps measurement sessions} \\ \hline
+\end{tabular}
+
+\label{sms:spw}
+\begin{tabular}{ |l|c|c|c|c| }
+    \hline
+    \multicolumn{1}{|c|}{\multirow{2}{*}{\textbf{gps warmup interval}}} & \multicolumn{3}{|c|}{value} & \multicolumn{1}{|c|}{\multirow{2}{*}{unit}} \\ \cline{2-4}
+    \multicolumn{1}{|c|}{} & min & default & max & \\ \hline
+    value & 0 & 45 & 65535 & seconds \\ \hline
+    sms command to set & \multicolumn{4}{|l|}{\textbf{spw} $value$} \\ \hline
+    sms command to view & \multicolumn{4}{|l|}{\textbf{spt?}} \\ \hline
+    description & \multicolumn{4}{|p{7cm}|}{time interval between gps powerup and the actual measurement} \\ \hline
+\end{tabular}
+
+\label{sms:spi}
+\begin{tabular}{ |l|c|c|c|c| }
+    \hline
+    \multicolumn{1}{|c|}{\multirow{2}{*}{\textbf{gps invalidate interval}}} & \multicolumn{3}{|c|}{value} & \multicolumn{1}{|c|}{\multirow{2}{*}{unit}} \\ \cline{2-4}
+    \multicolumn{1}{|c|}{} & min & default & max & \\ \hline
+    value & 0 & 20 & 65535 & seconds \\ \hline
+    sms command to set & \multicolumn{4}{|l|}{\textbf{spi} $value$} \\ \hline
+    sms command to view & \multicolumn{4}{|l|}{\textbf{spt?}} \\ \hline
+    description & \multicolumn{4}{|p{6.8cm}|}{time interval at the end of the measurement session during which the gps fix with the best PDOP is searched for} \\ \hline
+\end{tabular}
+
+\verb"spi" must be a smaller value then \verb"spl".
+
+\label{sms:spg}
+\begin{tabular}{ |l|c|c|c|c| }
+    \hline
+    \multicolumn{1}{|c|}{\multirow{2}{*}{\textbf{gps geofence trigger}}} & \multicolumn{3}{|c|}{value} & \multicolumn{1}{|c|}{\multirow{2}{*}{unit}} \\ \cline{2-4}
+    \multicolumn{1}{|c|}{} & min & default & max & \\ \hline
+    value & 0 & 300 & 65535 & meters \\ \hline
+    sms command to set & \multicolumn{4}{|l|}{\textbf{spg} $value$} \\ \hline
+    sms command to view & \multicolumn{4}{|l|}{\textbf{spt?}} \\ \hline
+    description & \multicolumn{4}{|p{7cm}|}{minimal distance between two consecutive fixes at which the device is considered non-stationary} \\ \hline
+\end{tabular}
+
+Heavy cloud coverage or large adiacent buildings can obscure or create multipath errors in the gps signal detection. It is thus advisable to not set the \textbf{spg} variable too low in order to minimize false-positives.
+
+\label{sms:sml}
+\begin{tabular}{ |l|c|c|c|c| }
+    \hline
+    \multicolumn{1}{|c|}{\multirow{2}{*}{\textbf{gprs loop interval}}} & \multicolumn{3}{|c|}{value} & \multicolumn{1}{|c|}{\multirow{2}{*}{unit}} \\ \cline{2-4}
+    \multicolumn{1}{|c|}{} & min & default & max & \\ \hline
+    value & 180 & 900 & 65535 & seconds \\ \hline
+    sms command to set & \multicolumn{4}{|l|}{\textbf{sml} $value$} \\ \hline
+    sms command to view & \multicolumn{4}{|l|}{\textbf{smt?}} \\ \hline
+    description & \multicolumn{4}{|p{7cm}|}{time interval between two gsm connection attempts (these are used to get tower id data and to receive and parse sms commands)} \\ \hline
+\end{tabular}
+
+the gprs module is by far the most power-hungry IC in this device. each application needs a different balance between sms responsiveness and low power consumption.
+
+\label{sms:smst}
+\begin{tabular}{ |l|c|c|c|c| }
+    \hline
+    \multicolumn{1}{|c|}{\multirow{2}{*}{\textbf{gprs static tx interval}}} & \multicolumn{3}{|c|}{value} & \multicolumn{1}{|c|}{\multirow{2}{*}{unit}} \\ \cline{2-4}
+    \multicolumn{1}{|c|}{} & min & default & max & \\ \hline
+    value & 180 & 3600 & 65535 & seconds \\ \hline
+    sms command to set & \multicolumn{4}{|l|}{\textbf{smst} $value$} \\ \hline
+    sms command to view & \multicolumn{4}{|l|}{\textbf{smt?}} \\ \hline
+    description & \multicolumn{4}{|p{7cm}|}{time interval between two HTTP POSTs when the device is stationary (see \textbf{spg} \ref{sms:spg})} \\ \hline
+\end{tabular}
+
+\label{sms:smmt}
+\begin{tabular}{ |l|c|c|c|c| }
+    \hline
+    \multicolumn{1}{|c|}{\multirow{2}{*}{\textbf{gprs moving tx interval}}} & \multicolumn{3}{|c|}{value} & \multicolumn{1}{|c|}{\multirow{2}{*}{unit}} \\ \cline{2-4}
+    \multicolumn{1}{|c|}{} & min & default & max & \\ \hline
+    value & 180 & 600 & 65535 & seconds \\ \hline
+    sms command to set & \multicolumn{4}{|l|}{\textbf{smmt} $value$} \\ \hline
+    sms command to view & \multicolumn{4}{|l|}{\textbf{smt?}} \\ \hline
+    description & \multicolumn{4}{|p{7cm}|}{time interval between two HTTP POSTs when the device is moving (see \textbf{spg} \ref{sms:spg})} \\ \hline
+\end{tabular}
+
+all the timings in this section are used for scheduling the respective actions. the final timestamps received in the web reports will not follow exactly the values entered. this happens because the device tries to get the best fix possible in the \textbf{spi} interval based on PDOP measurements and also because most actions performed are dependant on both outside factors (how quickly a good fix is received from the gps, mobile service availability, how many sms actions need to be executed) as well as local interractions (the gprs modem can only perform one task at any given time).
 
 \subsection{hardware}
 
@@ -195,7 +392,7 @@ Stresses above those listed in absolute maximum ratings may cause permanent dama
     \multicolumn{2}{|c|}{} & min & typ & max & \\ \hline
     $V_{I}$ & input voltage range                      & 4.35  & 5     & 6.4  & V \\ \hline
     $I_{I}$ & input current                            & X     & X     & 1.5  & A \\ \hline
-    $V_{BAT}$ & battery voltage range                  & 3.4   &       & 4.1  & V \\ \hline
+    $V_{BAT}$ & battery voltage range                  & 3.5   &       & 4.1  & V \\ \hline
     $I_{BAT}$ & battery current while discharging      & X     & X     & 2000 & mA \\ \hline
     $I_{CHG}$ & battery charging current \footnotemark &       & 0.3   &   & A \\ \hline
     $V_{IO}$ & IO voltage thru the debug connector     & 0     &       & 2.8  & V \\ \hline
@@ -298,7 +495,7 @@ for all pin connectors, pin 1 is marked by a small triangle in the silkscreen
         connector & UFL \\
          & \begin{center} \includegraphics[height=40pt]{img/ufl} \end{center} \\ \hline
         silkscreen & \verb"gps" \\ \hline
-        use & the gps module used provides a small patch antenna but one can improve signal reception by using an external one \\
+        use & the gps module provides a small patch antenna but one could improve signal reception by using an external one connected here\\
     \hline
     \multicolumn{2}{|l|}{pin assignments} \\
     \hline
@@ -353,7 +550,7 @@ STRING has to be the last 4 digits of the SIM900's IMEI \\ \hline
     \hline
         command & 
 \begin{lstlisting}
-gprs
+gprs?
 \end{lstlisting} \\
         action & show APN, USER, PASSWORD that are currently used in order to authenticate for a gprs session \\ \hline
 \end{tabular}
@@ -365,7 +562,7 @@ gprs
     \hline
         command & 
 \begin{lstlisting}
-setup
+setup?
 \end{lstlisting} \\
         action & show a hex value containing current switches \\ \hline
 \end{tabular}
@@ -375,10 +572,30 @@ setup
     \hline
         command & 
 \begin{lstlisting}
-fix
+fix?
 \end{lstlisting} \\
         action & 
 try to send back a GPS fix as a SMS reply \\ \hline
+\end{tabular}
+
+\begin{tabular}{ |l|p{8cm}| }
+    \hline
+        command & 
+\begin{lstlisting}
+ping
+\end{lstlisting} \\
+        action & 
+a HTTP POST is sent with all avaiable data once this command is received \\ \hline
+\end{tabular}
+
+\begin{tabular}{ |l|p{8cm}| }
+    \hline
+        command & 
+\begin{lstlisting}
+default
+\end{lstlisting} \\
+        action & 
+restores ALL variables to the factory defaults and reboots the device. the user will have to use the \verb"code" command again to pair it's phone\\ \hline
 \end{tabular}
 
 
@@ -453,7 +670,7 @@ TCP port used during connection to the server  \\ \hline
 \begin{lstlisting}
 vref STRING
 \end{lstlisting} \\
-        default & 200 \\
+        default & 198 \\
         action & 
 STRING is a number between 190 and 210 that acts as calibration coefficient to the onboard ADC. only used if the voltage values reported by the module differ from the measured ones \\ \hline
 \end{tabular}
@@ -463,16 +680,66 @@ STRING is a number between 190 and 210 that acts as calibration coefficient to t
     \hline
         command & 
 \begin{lstlisting}
-err
+err?
 \end{lstlisting} \\
         action & 
-shows a hex value in case there were any errors logged in the device. this value gets reset when all power is lost, when an 'err' command is replied to or after a HTTP POST packet is sent out/stored to FRAM. only used for debug  \\ \hline
+shows a hex value in case there were any errors logged in the device. this value gets reset when all power is lost, when an 'err?' command is replied to or after a HTTP POST packet is sent out/stored to FRAM. only used for debug  \\ \hline
+\end{tabular}
+
+\begin{tabular}{ |l|p{8cm}| }
+    \hline
+        command & 
+\begin{lstlisting}
+spt?
+\end{lstlisting} \\
+        action & 
+shows a list of gps related timing values\\ \hline
+\end{tabular}
+
+\begin{tabular}{ |l|p{8cm}| }
+    \hline
+        command & 
+\begin{lstlisting}
+smt?
+\end{lstlisting} \\
+        action & 
+shows a list of gprs related timing values\\ \hline
+\end{tabular}
+
+\begin{tabular}{ |l|p{8cm}| }
+    \hline
+        commands & 
+\begin{lstlisting}
+spl STRING
+\end{lstlisting}
+\begin{lstlisting}
+spw STRING
+\end{lstlisting}
+\begin{lstlisting}
+spi STRING
+\end{lstlisting}
+\begin{lstlisting}
+spg STRING
+\end{lstlisting}
+\begin{lstlisting}
+sml STRING
+\end{lstlisting}
+\begin{lstlisting}
+smst STRING
+\end{lstlisting}
+\begin{lstlisting}
+smmt STRING
+\end{lstlisting} \\
+        action &
+timing variables. see section \ref{sub:timing} for details.
+\\ \hline
 \end{tabular}
 
 
 
 
 ADC - analog to digital converter
-M2M - machine to machine dataplan - subscription that covers SMS and data but no voice
+M2M - machine to machine dataplan - mobile subscription that covers SMS and data but no voice
+PDOP - (3D) position dilution of precision - a value that describes the measurement's precision based on sattelite geometry. the lower the number the better. more than 5 is pretty poor. 
 
 \end{document}

@@ -144,7 +144,7 @@ struct tracy_stat_t {
     uint16_t v_bat; // LiPo battery voltage multiplied by 100
     uint16_t v_raw; // 5v rail voltage multiplied by 100
     uint16_t http_post_version;
-    uint16_t http_msg_id;
+    uint16_t fix_id;
 };
 
 struct tracy_stat_t stat;
