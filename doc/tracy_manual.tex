@@ -672,9 +672,9 @@ The modem gets woken up by one of these two triggers:
     \item upload of data stored in \gls{f-ram} via gprs. SMS commands are also accepted at this point. this trigger can happen either because enough data has piled up in the memory, one of the \verb"gprs tx interval"s has been reached, the \verb"ping" command was received or the module just started to move after being stationary. \\ trigger controlled by \verb"gprs static tx interval" when the module is not moving or \verb"gprs moving tx interval" otherwise.
 \end{itemize}
 
-Whatever is the reason for the modem startup, the neighboring tower cell IDs are stored as a secondary (but less precise) positioning method. \\ \\ 
+Whatever is the reason for the modem startup, the neighboring tower cell IDs are stored as a secondary (but less precise) positioning method. 
 
-The module behavior when using the default gprs interval settings is shown in Table~\ref{gsm_diag}. Every 900 seconds the \verb"gprs loop interval" wakes up the modem for a 2 minute period in which possible SMSs are parsed and tower cell IDs are captured.
+The module behavior when using the default gprs interval settings is shown in a simplified form in Table~\ref{gsm_diag}. Every 900 seconds the \verb"gprs loop interval" wakes up the modem for a 2 minute period in which possible SMSs are parsed and tower cell IDs are captured.
 
 A movement that was detected triggers an upload of data and makes the next upload happen after 600sec (\verb"gprs moving tx interval"). The next transfer will happen after 3600sec (\verb"gprs static tx interval") since the module is not moving.
 
@@ -686,10 +686,6 @@ A movement that was detected triggers an upload of data and makes the next uploa
  tx trigger & 2L 1H 6L 1H 36L 1H 36L 1H 1L \\
 \extracode
     \tablerules
-%    \begin{pgfonlayer}{background}
-%    \foreach \n in {1,...,8}
-%        \draw[help lines] (A\n) -- (B\n);
-%    \end{pgfonlayer}
 \end{tikztimingtable}
 }
 \caption{\em default module behavior}
