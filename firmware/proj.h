@@ -20,9 +20,6 @@
 #define LED_ON          P1OUT |= BIT2
 #define LED_OFF         P1OUT &= ~BIT2
 
-#define GPS_ENABLE      P6OUT |= BIT0
-#define GPS_DISABLE     P6OUT &= ~BIT0
-
 #define GPS_IRQ_ENABLE  UCA0IE |= UCRXIE
 #define GPS_IRQ_DISABLE UCA0IE &= ~UCRXIE
 
@@ -53,7 +50,6 @@ char str_temp[STR_LEN];
 uint32_t gps_trigger_next;
 uint32_t gprs_trigger_next;
 uint32_t gprs_tx_next;
-uint32_t gprs_tx_prev;
 uint8_t gprs_tx_trig;
 
 #define TG_NOW_MOVING   0x1
@@ -72,6 +68,8 @@ void settings_init(uint8_t * addr, const uint8_t location);
 void adc_read(void);
 void store_pkt(void);
 
+void gps_enable(void);
+void gps_disable(void);
 
 #define VERSION_BASED           0
 #define FACTORY_DEFAULTS        1
