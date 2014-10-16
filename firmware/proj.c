@@ -32,6 +32,8 @@ uint32_t status_show_next = 0;
 uint32_t gps_reinit_next = 0;
 uint16_t gps_reinit_interval = 120;
 
+uint32_t movement_next = 0;
+
 #ifndef DEBUG_GPRS
 static void parse_gps(enum sys_message msg)
 {
@@ -82,7 +84,7 @@ static void parse_UI(enum sys_message msg)
             uart0_tx_str(in, strlen(in));
             uart0_tx_str(" ", 1);
         }
-    } else if (f == 's') {
+    } else if (f == 'S') {
         fm24_sleep();
     } else {
         sim900_tx_str((char *)uart0_rx_buf, uart0_p);
@@ -101,11 +103,10 @@ static void schedule(enum sys_message msg)
     if (rtca_time.sys > gps_trigger_next) {
 
         switch (gps_next_state) {
-
             case MAIN_GPS_IDLE:
                 if (s.gps_loop_interval > s.gps_warmup_interval + 30) {
                     // when gps has OFF intervals
-                    GPS_DISABLE;
+                    gps_disable();
                     gps_trigger_next = rtca_time.sys + s.gps_loop_interval - s.gps_warmup_interval - 2;
                 }
                 gps_next_state = MAIN_GPS_START;
@@ -118,7 +119,7 @@ static void schedule(enum sys_message msg)
                     // force charging
                     CHARGE_ENABLE;
                 }
-                GPS_ENABLE;
+                gps_enable();
             break;
 
             case MAIN_GPS_INIT:
@@ -151,11 +152,9 @@ static void schedule(enum sys_message msg)
                     store_pkt();
                 }
                 gps_next_state = MAIN_GPS_IDLE;
-                // XXX send ICs to sleep 
             break;
         }
     }
-
 
     // show current status
     if (rtca_time.sys > status_show_next) {
@@ -164,10 +163,8 @@ static void schedule(enum sys_message msg)
                 sim900.err, m.e, fm24_data_len(m.seg[0], m.e));
         uart0_tx_str(str_temp, strlen(str_temp));
 
-        /*
-        snprintf(str_temp, STR_LEN, "spl %u spw %u spi %u\r", s.gps_loop_interval, s.gps_warmup_interval, s.gps_invalidate_interval);
-        uart0_tx_str(str_temp, strlen(str_temp));
-        */
+        //snprintf(str_temp, STR_LEN, "spl %u spw %u spi %u\r", s.gps_loop_interval, s.gps_warmup_interval, s.gps_invalidate_interval);
+        //uart0_tx_str(str_temp, strlen(str_temp));
     }
 
     // GPRS related
@@ -180,15 +177,10 @@ static void schedule(enum sys_message msg)
             gprs_tx_next = rtca_time.sys + s.gprs_static_tx_interval;
         }
         sim900.rdy |= TX_FIX_RDY;
-        gprs_tx_trig = TG_INTERVAL;
     }
 
     if (((rtca_time.sys > gprs_trigger_next) || (sim900.rdy & TX_FIX_RDY)) && 
             !(sim900.rdy & TASK_IN_PROGRESS)) {
-
-        if (gprs_tx_trig & (TG_NOW_MOVING | TG_GEOFENCE)) {
-            gprs_tx_trig &= ~TG_NOW_MOVING;
-        }
 
         // time to act
         adc_read();
@@ -205,7 +197,6 @@ static void schedule(enum sys_message msg)
             CHARGE_ENABLE;
         }
     }
-
 }
 #endif
 
@@ -300,6 +291,8 @@ int main(void)
 
 #endif
 
+    fm24_sleep();
+
     // main loop
     while (1) {
         _BIS_SR(LPM3_bits + GIE);
@@ -313,9 +306,20 @@ int main(void)
         check_events();
         check_events();
         check_events();
+
+        // sleep
         if (fm24_status & FM24_AWAKE) {
             fm24_sleep();
         }
+        // P4.0 and P4.1
+        P4SEL &= ~0x3;
+        
+        /*
+        PMMCTL0_H = 0xA5;
+        SVSMHCTL &= ~SVMHE;
+        SVSMLCTL &= ~(SVSLE+SVMLE);
+        PMMCTL0_H = 0x00;
+        */
     }
 }
 
@@ -355,7 +359,8 @@ void main_init(void)
 #endif
 
 #ifdef PCB_REV2
-    P4DIR = 0x00;
+    //P4DIR = 0x00;
+    P4DIR = 0x3;
 
 #ifdef CONFIG_HAVE_FM24V10
 
@@ -379,12 +384,11 @@ void main_init(void)
     // enable GPS module
     P4MAP2 = PM_UCA0TXD;
     P4MAP3 = PM_UCA0RXD;
-    P4SEL |= 0xc;
 #endif
 
     // try to also send uart0 tx to 4.1 XXX
-    P4MAP1 = PM_UCA0TXD;
-    P4SEL |= 0x2;
+    //P4MAP1 = PM_UCA0TXD;
+    //P4SEL |= 0x2;
 
 #ifdef DEBUG_GPS
     // debug interface
@@ -472,6 +476,7 @@ void adc_read()
     v_raw = (uint32_t) q_raw *s.vref * DIV_RAW / 10000;
     stat.v_bat = v_bat;
     stat.v_raw = v_raw;
+    adc10_halt();
 }
 
 void store_pkt()
@@ -587,20 +592,19 @@ void store_pkt()
         m.seg[m.seg_num] = m.e;
     }
 
-
     // see if a data upload is needed
 #ifdef CONFIG_GEOFENCE
     if (geo.distance > s.geofence_trigger) {
-        gprs_tx_trig |= TG_NOW_MOVING;
         geo.distance = 0;
-        if (!(gprs_tx_trig & TG_GEOFENCE)) {
-            // previous tx was not triggered by movement
+        movement_next = rtca_time.sys + 600;
+        if (!(gprs_tx_trig & TG_NOW_MOVING)) {
+            gprs_tx_trig |= TG_NOW_MOVING;
             sim900.rdy |= TX_FIX_RDY;
-            gprs_tx_trig |= TG_GEOFENCE;
-        } else {
-            if (gprs_tx_next > gprs_tx_prev + s.gprs_moving_tx_interval) {
-                gprs_tx_next = gprs_tx_prev + s.gprs_moving_tx_interval;
-            }
+            gprs_tx_next = rtca_time.sys + s.gprs_moving_tx_interval;
+        }
+    } else {
+        if (rtca_time.sys > movement_next) {
+            gprs_tx_trig &= ~TG_NOW_MOVING;
         }
     }
 #endif
@@ -625,5 +629,17 @@ void store_pkt()
     }
 #endif
 
+}
+
+void gps_enable(void)
+{
+    P6OUT |= BIT0;
+    P4SEL |= 0xc;
+}
+
+void gps_disable(void)
+{
+    P6OUT &= ~BIT0;
+    P4SEL &= ~0xc;
 }
 

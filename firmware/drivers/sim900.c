@@ -173,7 +173,6 @@ static void sim900_tasks(enum sys_message msg)
                     } else if (sim900.task_rv == SUBTASK_CLOSE_GPRS_OK) {
                         sim900.trc = 0;
                         if (m.seg_num < 2) {
-                            gprs_tx_prev = rtca_time.sys;
                             sim900.rdy &= ~TX_FIX_RDY;
                         }
                         sim900.task_next_state = SUBTASK_SWITCHER;
