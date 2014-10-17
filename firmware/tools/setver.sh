@@ -5,5 +5,5 @@ sed  -i "s|^.*BUILD.*$|#define BUILD ${build}|" version.h
 
 compile_date=`date -u`
 
-sed -i "s|^\\ compiled on.*|\\ compiled on ${compile_date}|" version.h
+sed -i "s|^// compiled on.*|// compiled on ${compile_date}|" version.h
 

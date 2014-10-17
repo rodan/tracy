@@ -1369,14 +1369,14 @@ uint8_t sim900_parse_sms(char *str, const uint16_t size)
             sim900_add_subtask(SUBTASK_SEND_SMS, SMS_GPRS_TIMINGS);
         } else if (strstr(str, "smst")) {
             p = strstr(str, "smst");
-            p += 3;
+            p += 4;
             extract_dec(p, &s.gprs_static_tx_interval);
             save = true;
             gprs_tx_next = rtca_time.sys + s.gprs_static_tx_interval;
             sim900_add_subtask(SUBTASK_SEND_SMS, SMS_GPRS_TIMINGS);
         } else if (strstr(str, "smmt")) {
             p = strstr(str, "smmt");
-            p += 3;
+            p += 4;
             extract_dec(p, &s.gprs_static_tx_interval);
             save = true;
             gprs_tx_next = rtca_time.sys + s.gprs_moving_tx_interval;
@@ -1498,7 +1498,7 @@ uint8_t extract_dec(char *str, uint16_t *rv)
         c = *++p;
     }
 
-    while ((i<5) && (c > 47) && (c < 58)) {
+    while ((i<6) && (c > 47) && (c < 58)) {
         *rv *= 10;
         *rv += c - 48;
         i++;

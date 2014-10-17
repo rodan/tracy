@@ -129,13 +129,13 @@ static const struct tracy_settings_t defaults = {
     "trk.simplex.ro",           // server
     80,                         // port
     198,                        // adc vref
-    180,                        // time interval (in seconds) between 2 gps measurements
-    45,                         // time interval (in seconds) between gps powerup and NMEA data gathering
-    20,                         // time interval (in seconds) during which the best PDOP is searched for
-    900,                        // time interval (in seconds) between 2 gsm connection attempts (used to get tower id data and sms commands)
-    3600,                       // time interval (in seconds) between 2 HTTP POSTs when device is stationary
-    600,                        // time interval (in seconds) between 2 HTTP POSTs when device is on the move
-    300                         // minimal distance (in meters) between 2 consecutive fixes at which the device is considered non-stationary
+    180,                        // [sms:spl] time interval (in seconds) between 2 gps measurements
+    45,                         // [sms:spw] time interval (in seconds) between gps powerup and NMEA data gathering
+    20,                         // [sms:spi] time interval (in seconds) during which the best PDOP is searched for
+    900,                        // [sms:sml] time interval (in seconds) between 2 gsm connection attempts (used to get tower id data and sms commands)
+    3600,                       // [sms:smst] time interval (in seconds) between 2 HTTP POSTs when device is stationary
+    600,                        // [sms:smmt] time interval (in seconds) between 2 HTTP POSTs when device is on the move
+    300                         // [sms:spg] minimal distance (in meters) between 2 consecutive fixes at which the device is considered non-stationary
 };
 
 struct tracy_stat_t {
