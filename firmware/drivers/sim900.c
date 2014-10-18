@@ -837,8 +837,10 @@ static void sim900_state_machine(enum sys_message msg)
                                 sim900_tx_str(str_temp, strlen(str_temp));
                             break;
                             case SMS_DEFAULTS:
-                                snprintf(str_temp, STR_LEN, "defaults loaded\r");
-                                sim900_tx_str(str_temp, strlen(str_temp));
+                                settings_init(SEGMENT_B, FACTORY_DEFAULTS);
+                                sim900.rdy |= NEED_SYSTEM_REBOOT;
+                                flash_save(SEGMENT_B, (void *)&s, sizeof(s));
+                                sim900_tx_str("defaults loaded\r", 16);
                             break;
                             case SMS_ERRORS:
                                 if (sim900.err) {
@@ -1393,10 +1395,10 @@ uint8_t sim900_parse_sms(char *str, const uint16_t size)
             }
         } else if (strstr(str, "ping")) {
             sim900.rdy |= TX_FIX_RDY;
+            if (fm24_data_len(m.seg[0], m.seg[1]) > 0) {
+                sim900_add_subtask(SUBTASK_TX_GPRS, SMS_NULL);
+            }
         } else if (strstr(str, "default")) {
-            settings_init(SEGMENT_B, FACTORY_DEFAULTS);
-            save = true;
-            sim900.rdy |= NEED_SYSTEM_REBOOT;
             sim900_add_subtask(SUBTASK_SEND_SMS, SMS_DEFAULTS);
         } else if (strstr(str, "vref")) {
             p = strstr(str, "vref");
@@ -1443,6 +1445,28 @@ void sim900_halt(void)
 
 uint8_t sim900_add_subtask(sim900_task_state_t subtask, sim900_sms_subj_t sms_subj)
 {
+
+    if (subtask == SUBTASK_SEND_SMS) {
+        if (sim900.last_sms < SMS_QUEUE_SIZE - 1) {
+            sim900.sms_queue[sim900.last_sms] = sms_subj;
+            sim900.last_sms++;
+        } else {
+            sim900.err |= ERR_TASK_ADD;
+            return EXIT_FAILURE;
+        }
+    }
+
+    if (sim900.last_t < TASK_QUEUE_SIZE - 1) {
+        sim900.queue[sim900.last_t] = subtask;
+        sim900.last_t++; 
+    } else {
+        sim900.err |= ERR_TASK_ADD;
+        return EXIT_FAILURE;
+    }
+    
+    return EXIT_SUCCESS;
+
+/*
     if (sim900.last_t < TASK_QUEUE_SIZE) {
         sim900.queue[sim900.last_t] = subtask;
         sim900.last_t++;
@@ -1455,6 +1479,7 @@ uint8_t sim900_add_subtask(sim900_task_state_t subtask, sim900_sms_subj_t sms_su
     } else {
         return EXIT_FAILURE;
     }
+*/
 }
 
 void sim900_exec_default_task(void)
