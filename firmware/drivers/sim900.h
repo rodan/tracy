@@ -28,6 +28,7 @@
 #define ERR_GPRS_NO_IP_START    0x80
 #define ERR_PARSE_CENG          0x100
 #define ERR_RAM_WRITE           0x200
+#define ERR_TASK_ADD            0x400
 
 // state machine timeouts
 #define SM_STEP_DELAY   _10ms * 2  // ~20ms
@@ -173,7 +174,7 @@ typedef enum {
 } sim900_sms_subj_t;
 
 #define TASK_MAX_RETRIES    3
-#define TASK_QUEUE_SIZE     MAX_SEG + 7
+#define TASK_QUEUE_SIZE     MAX_SEG + 8
 #define SMS_QUEUE_SIZE      4
 
 // modem status
