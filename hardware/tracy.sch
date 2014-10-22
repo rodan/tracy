@@ -12816,7 +12816,7 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <part name="+3V1" library="supply1" deviceset="+3V3" device=""/>
 <part name="FRAME1" library="frames" deviceset="DOCFIELD" device="" value="ihaaa"/>
 <part name="U$7" library="SparkFun" deviceset="OSHW-LOGO" device="M"/>
-<part name="U$1" library="TI_MSP430_v16" deviceset="F55[0/1]X---PT48" device=""/>
+<part name="U$1" library="TI_MSP430_v16" deviceset="F55[0/1]X---PT48" device="" value="MSP430F5510"/>
 <part name="GND16" library="SparkFun" deviceset="GND" device=""/>
 <part name="GND22" library="SparkFun" deviceset="GND" device=""/>
 <part name="C10" library="rcl" deviceset="C-EU" device="C0805" value="470nF"/>
@@ -12860,9 +12860,9 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <part name="C12" library="rcl" deviceset="C-EU" device="C0805" value="4u7"/>
 <part name="GND28" library="SparkFun" deviceset="GND" device=""/>
 <part name="GND29" library="SparkFun" deviceset="GND" device=""/>
-<part name="C13" library="rcl" deviceset="C-EU" device="C0805" value="100n"/>
+<part name="C13" library="rcl" deviceset="C-EU" device="C0805" value="100nF"/>
 <part name="GND31" library="SparkFun" deviceset="GND" device=""/>
-<part name="C14" library="rcl" deviceset="C-EU" device="C0805" value="22p"/>
+<part name="C14" library="rcl" deviceset="C-EU" device="C0805" value="22pF"/>
 <part name="GND37" library="SparkFun" deviceset="GND" device=""/>
 <part name="T2" library="transistor" deviceset="BC846" device=""/>
 <part name="GND45" library="SparkFun" deviceset="GND" device=""/>

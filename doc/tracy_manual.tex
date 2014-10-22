@@ -111,6 +111,15 @@ tabsize=2, % Number of spaces per tab in the code
   description={Ferroelectric RAM, is a type of non-volatile random-access memory that has far greater write-erase cycle performance than eeprom/flash/SD cards and lower power usage than DRAM, but it has storage capacity limitations that makes it more costly}
 }
 
+\newenvironment{fulltable}[1][htbp]
+ {\begin{table}[#1]%
+  \hspace*{-\leftmarginwidth}%
+  \begin{minipage}{\fullwidth}}
+ {\end{minipage}\end{table}}
+
+\newcommand*\numcircledtikz[1]{\tikz[baseline=(char.base)]{
+            \node[shape=circle,draw,fill=orange,inner sep=2pt] (char) {#1};}}
+
 %\newglossaryentry{}{%
 %  name={},
 %  description={}
@@ -123,18 +132,37 @@ tabsize=2, % Number of spaces per tab in the code
 \date{created September 2014, revised \today}
 \maketitle
 
-\begin{abstract}
-This module can be used to track goods wherever gsm signal is present. It is optimized for very low power consumption and has configurable timings which would make it fit to any use scenario.
-\end{abstract}
+\begin{fulltable}
+\begin{tabular}{ c p{8cm} }
 
+    \raisebox{-\totalheight}{\includegraphics[width=77mm, height=71mm]{img/izometric}} &
+    \textbf{Description:} This module can be used to track goods wherever gsm signal is present. It is optimized for very low power consumption and has configurable timings which would make it fit to any use scenario.
+
+     \textbf{Size:} 50mm x 38mm x 9mm
+     
+     \textbf{Voltage input:} 3.7V battery and optional 5V DC for charging
+
+     \textbf{License:} both hardware and software are under GPL OpenSource license
+\end{tabular}
+\end{fulltable}
 
 \tableofcontents
 \newpage
 
-\section{principles of operation}
+\section{Principles of operation}
 Geographic coordinates are obtained by decoding NMEA sentences received from the GPS chipset and then transmitted via the mobile phone network to a web server. The server stores the received information into a database and provides it on demand to the end-user.
 
 Cell tower identifiers are also transmitted in the same packet and this allows approximate localization when the gps signal is obstructed. When the gsm signal is missing data is being stored on the device and it's transmission will resume once connection is re-established.
+
+\section{What's included}
+
+1 x tracking module \\
+1 x GPRS antenna with ufl adapter (manufacturer id: WLS119E1B) \\
+2 x 2 pin Molex picoblade connectors and short cable for battery and DC input (manufacturer id: MOLEX 0510210200 and MOLEX 0500798000) \\
+1 x 6 pin Molex picoblade connector and crimp terminals for creating a programming cable (manufacturer id: MOLEX 0510210600 and MOLEX 0500798000) \\
+1 x shrink tube
+
+Soldering of the wires is needed. Batteries, sim cards and enclosures are not included.
 
 \section{Quick reference guide}
 
@@ -421,8 +449,8 @@ timing variables. see section \ref{sub:timing} for details.
 \end{tabular}
 
 
-\section{developer guide}
-\subsection{software}
+\section{Developer guide}
+\subsection{Software}
 
 All the documentation, sources and hardware schematics are provided as Open Source in order to encourage further improvements by the community. The TI spy-bi-wire protocol can be used to re-flash the enclosed microcontroller.
 
@@ -448,10 +476,10 @@ Provided scripts have the following run time dependencies (some are optional):
     \item fcgi
 \end{itemize}
 
-\subsubsection{tweaking the firmware}
+\subsubsection{Tweaking the firmware}
 
-the original source code is kept in a git repository at github.com.
-one can grab a copy by running
+The original source code is kept in a git repository at github.com.
+One can grab a copy by running
 
 \begin{lstlisting}
 git clone http://github.com/rodan/tracy
@@ -470,7 +498,7 @@ make clean
 make
 \end{lstlisting} 
 
-the following packages are used to compile and manage the firmware:
+The following packages are used to compile and manage the firmware:
 
 \begin{itemize}
     \item msp430-gcc (ver 4.6.3\_p20120406 has been used)
@@ -480,9 +508,9 @@ the following packages are used to compile and manage the firmware:
     \item mspdebug (0.22)
 \end{itemize}
 
-burning the firmware can be achieved with any MSP430 programmer that supports SPY-Bi-Wire. 
+Burning the firmware can be achieved with any MSP430 programmer that supports SPY-Bi-Wire. 
 
-\marginlabel{Warning} specialized programmers can detect the 2.8V rail the microcontroller uses and will not send signals with a higher voltage. anything higher than 3V is just asking for trouble. 
+\marginlabel{Warning} Specialized programmers can detect the 2.8V rail the microcontroller uses and will not send signals with a higher voltage. Anything higher than 3V is just asking for trouble. 
 
 mspdebug can be used to program the firmware:
 
@@ -693,7 +721,7 @@ A movement that was detected triggers an upload of data and makes the next uploa
 \end{table}
 
 
-\subsubsection{list of timing variables}
+\subsubsection{List of timing variables}
 
 \label{sms:spl}
 \begin{tabular}{ |l|c|c|c|c| }
@@ -781,9 +809,17 @@ each application needs a different trade-off between sms responsiveness and low 
 all the timings in this section are used for scheduling the respective actions. the final timestamps received in the web reports will not follow exactly the values entered. this happens because the device tries to get the best fix possible in the \textbf{spi} interval based on \gls{pdop} measurements and also because most actions performed are dependent on both outside factors (how quickly a good fix is received from the gps, mobile service availability, how many sms actions need to be executed) as well as local interactions (the gprs modem can only perform one task at any given time).
 
 \newpage
-\subsection{hardware}
+\subsection{Hardware}
 
-\marginlabel{MSP430F5510 mixed signal microcontroller}
+\begin{fulltable}
+\begin{tabular}{ c c }
+    \raisebox{-\totalheight}{\includegraphics[width=80mm, height=65mm]{img/hw_front}} &
+    \raisebox{-\totalheight}{\includegraphics[width=80mm, height=65mm]{img/hw_back}}
+\end{tabular}
+\end{fulltable}
+
+
+\marginlabel{\numcircledtikz{1} MSP430F5510 mixed signal microcontroller}
     \begin{itemize}
         \item 16bit RISC architecture with 32KB flash and 4KB of SRAM
         \item low supply voltage - 2.8V used in this implementation
@@ -795,33 +831,47 @@ all the timings in this section are used for scheduling the respective actions. 
         \item watchdog, brown out reset - ensures the system runs in stable parameters
     \end{itemize}
 
-\marginlabel{SIM900 quad-band GSM/GPRS engine}
-    \begin{itemize}
-        \item GSM 850MHz, EGSM 900MHz, DCS 1800MHz, PCS 1900MHz frequencies are supported
-        \item a dedicated user-provided micro SIM is needed to connect to the mobile phone network of choice. \gls{m2m} SIMs also work since voice is never used in this application.
-    \end{itemize}
-
-\marginlabel{MT3339 MediaTek GPS chipset}
+\marginlabel{\numcircledtikz{2} MT3339 MediaTek GPS chipset}
     \begin{itemize}
         \item tiny gps module that can track 22 satellites at any given moment
         \item even if the module is mostly shut down to conserve power, the backup voltage is always provided thus ensuring a fast time-to-fix when started up
         \item automatic antenna switching detects external antennas
     \end{itemize}
-\marginlabel{BQ24072 power path management IC}
+
+\marginlabel{\numcircledtikz{3} FM24CL64B-G F-RAM IC}
+    \begin{itemize}
+        \item additional 8kbytes of \gls{f-ram} for data buffering and storage
+    \end{itemize}
+
+\marginlabel{\numcircledtikz{4} status LED}
+    \begin{itemize}
+        \item very high efficiency LED that uses 28 $\mu A$ while lit
+        \item very faint blips every two seconds while gps is on and there is no usable gps signal
+        \item less faint blips every two seconds while gps is on and gps signal is fine
+        \item full brightness for 2 seconds while modem powers up
+    \end{itemize}
+
+
+\marginlabel{\numcircledtikz{5} SIM900 quad-band GSM/GPRS engine}
+    \begin{itemize}
+        \item GSM 850MHz, EGSM 900MHz, DCS 1800MHz, PCS 1900MHz frequencies are supported
+        \item a dedicated user-provided micro SIM is needed to connect to the mobile phone network of choice. \gls{m2m} SIMs also work since voice is never used in this application.
+    \end{itemize}
+
+\marginlabel{\numcircledtikz{6} SIM card}
+    MICRO form factor SIM card holder
+
+
+\marginlabel{\numcircledtikz{7} BQ24072 power path management IC}
     \begin{itemize}
         \item allows charging of the Li-Ion/LiPo cell from a USB friendly 5V source
         \item maximum charging current is limited to 300mA
     \end{itemize}
-\marginlabel{FM24V10 IC}
-    \begin{itemize}
-        \item additional 1Mbit \gls{f-ram} for data buffering and storage
-    \end{itemize}
-\marginlabel{accu}
-    \begin{itemize}
-        \item 1 cell LiPo battery for standalone operation
-    \end{itemize}
 
-\subsubsection{absolute maximum ratings}
+\marginlabel{\numcircledtikz{8} 2.8V rail}
+    the only power rail that remains on. it can be used to power low voltage sensors/accelerometers/etc via the programming connector.
+
+\subsubsection{Absolute maximum ratings}
 
 \begin{tabular}{ |c|c|l|c|c|c| }
     \hline
@@ -836,7 +886,7 @@ all the timings in this section are used for scheduling the respective actions. 
 
 Stresses above those listed in absolute maximum ratings may cause permanent damage to the device. This is a stress rating only, functional operation of the device at these or any other conditions above those indicated in the operational section of this specification is not implied. Exposure to absolute maximum rating conditions for extended periods may affect device reliability.
 
-\subsubsection{electrical characteristics}
+\subsubsection{Electrical characteristics}
 
 \begin{tabular}{ |c|l|c|c|c|c| }
     \hline
@@ -855,29 +905,51 @@ Stresses above those listed in absolute maximum ratings may cause permanent dama
 
 \footnotetext{The charging current is configurable by changing the value of R11. See the module schematic and the bq24072 datasheet for details}
 
-\section{connectors}
+\newpage
+\section{Connectors}
+
+\begin{fulltable}
+    \centering
+    {\includegraphics[width=80mm, height=68mm]{img/conn_back.png}} 
+\end{fulltable}
+
 for all pin connectors, pin 1 is marked by a small triangle in the silkscreen
 
-%\marginlabel{battery thermistor}
 \begin{tabular}{ |l|p{8cm}| }
     \hline
-    \multicolumn{2}{|l|}{battery thermistor} \\
+    \multicolumn{2}{|l|}{\numcircledtikz{1} gsm antenna} \\
     \hline
-        connector & Molex 053048-0210 \\
-        footprint & \begin{center} \includegraphics[height=50pt]{img/con2} \end{center} \\ \hline
-        silkscreen & \verb"10KOhm ts" \\ \hline
-        use & some battery packs provide this component as a charge ending protection. by default this connector is unpopulated and if it's use is required the 10K resistor located on the other side of the PCB needs to be removed \\
+        connector & UFL \\
+         & \begin{center} \includegraphics[height=40pt]{img/ufl} \end{center} \\ \hline
+        silkscreen & \verb"gsm" \\ \hline
+        use & it is mandatory to connect the enclosed antenna via this connector \\
     \hline
     \multicolumn{2}{|l|}{pin assignments} \\
     \hline
-        1   &   10K NTC thermistor \\
-        2   &   10K NTC thermistor (also GND)\\
+        shroud   &   GND \\
+        center   &   signal \\
     \hline
 \end{tabular}
 
 \begin{tabular}{ |l|p{8cm}| }
     \hline
-    \multicolumn{2}{|l|}{LiPo/Li-Ion 1 cell battery} \\
+    \multicolumn{2}{|l|}{\numcircledtikz{2} gps antenna} \\
+    \hline
+        connector & UFL \\
+         & \begin{center} \includegraphics[height=40pt]{img/ufl} \end{center} \\ \hline
+        silkscreen & \verb"gps" \\ \hline
+        use & the gps module provides a small patch antenna but one could improve signal reception by using an external one connected here\\
+    \hline
+    \multicolumn{2}{|l|}{pin assignments} \\
+    \hline
+        shroud   &   GND \\
+        center   &   signal \\
+    \hline
+\end{tabular}
+
+\begin{tabular}{ |l|p{8cm}| }
+    \hline
+    \multicolumn{2}{|l|}{\numcircledtikz{3} LiPo/Li-Ion 1 cell battery} \\
     \hline
         connector & Molex 053048-0210 \\
         footprint & \begin{center} \includegraphics[height=50pt]{img/con2} \end{center} \\ \hline
@@ -893,7 +965,7 @@ for all pin connectors, pin 1 is marked by a small triangle in the silkscreen
 
 \begin{tabular}{ |l|p{8cm}| }
     \hline
-    \multicolumn{2}{|l|}{5V DC input} \\
+    \multicolumn{2}{|l|}{\numcircledtikz{4} 5V DC input} \\
     \hline
         connector & Molex 053048-0210 \\
         footprint & \begin{center} \includegraphics[height=50pt]{img/con2} \end{center} \\ \hline
@@ -909,7 +981,7 @@ for all pin connectors, pin 1 is marked by a small triangle in the silkscreen
 
 \begin{tabular}{ |l|p{8cm}| }
     \hline
-    \multicolumn{2}{|l|}{programming/debug connector} \\
+    \multicolumn{2}{|l|}{\numcircledtikz{5} programming/debug connector} \\
     \hline
         connector & Molex 053048-0610 \\
         footprint & \begin{center} \includegraphics[height=50pt]{img/con6} \end{center} \\ \hline
@@ -929,35 +1001,20 @@ for all pin connectors, pin 1 is marked by a small triangle in the silkscreen
 
 \begin{tabular}{ |l|p{8cm}| }
     \hline
-    \multicolumn{2}{|l|}{gsm antenna} \\
+    \multicolumn{2}{|l|}{\numcircledtikz{6} battery thermistor} \\
     \hline
-        connector & UFL \\
-         & \begin{center} \includegraphics[height=40pt]{img/ufl} \end{center} \\ \hline
-        silkscreen & \verb"gsm" \\ \hline
-        use & it is mandatory to connect the enclosed antenna via this connector \\
+        connector & Molex 053048-0210 \\
+        footprint & \begin{center} \includegraphics[height=50pt]{img/con2} \end{center} \\ \hline
+        silkscreen & \verb"10KOhm ts" \\ \hline
+        use & some battery packs provide this component as a charge ending protection. by default this connector is unpopulated and if it's use is required the 10K resistor located on the other side of the PCB needs to be removed \\
     \hline
     \multicolumn{2}{|l|}{pin assignments} \\
     \hline
-        shroud   &   GND \\
-        center   &   signal \\
+        1   &   10K NTC thermistor \\
+        2   &   10K NTC thermistor (also GND)\\
     \hline
 \end{tabular}
 
-\begin{tabular}{ |l|p{8cm}| }
-    \hline
-    \multicolumn{2}{|l|}{gps antenna} \\
-    \hline
-        connector & UFL \\
-         & \begin{center} \includegraphics[height=40pt]{img/ufl} \end{center} \\ \hline
-        silkscreen & \verb"gps" \\ \hline
-        use & the gps module provides a small patch antenna but one could improve signal reception by using an external one connected here\\
-    \hline
-    \multicolumn{2}{|l|}{pin assignments} \\
-    \hline
-        shroud   &   GND \\
-        center   &   signal \\
-    \hline
-\end{tabular}
 
 \newpage
 
