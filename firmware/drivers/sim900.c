@@ -436,7 +436,7 @@ static void sim900_state_machine(enum sys_message msg)
                         // full system reset
                         WDTCTL = WDTHOLD; 
                     }
-                    sim900.rdy = 0;
+                    sim900.rdy &= TX_FIX_RDY;
                 break;
             }
         break;
@@ -1466,20 +1466,6 @@ uint8_t sim900_add_subtask(sim900_task_state_t subtask, sim900_sms_subj_t sms_su
     
     return EXIT_SUCCESS;
 
-/*
-    if (sim900.last_t < TASK_QUEUE_SIZE) {
-        sim900.queue[sim900.last_t] = subtask;
-        sim900.last_t++;
-
-        if (subtask == SUBTASK_SEND_SMS) {
-            sim900.sms_queue[sim900.last_sms] = sms_subj;
-            sim900.last_sms++;
-        }
-        return EXIT_SUCCESS;
-    } else {
-        return EXIT_FAILURE;
-    }
-*/
 }
 
 void sim900_exec_default_task(void)

@@ -173,8 +173,12 @@ typedef enum {
     SMS_CODE_OK
 } sim900_sms_subj_t;
 
+#ifdef PCB_REV1
+#define MAX_SEG 1
+#endif
+
 #define TASK_MAX_RETRIES    3
-#define TASK_QUEUE_SIZE     MAX_SEG + 8
+#define TASK_QUEUE_SIZE     MAX_SEG + 12
 #define SMS_QUEUE_SIZE      4
 
 // modem status

@@ -25,14 +25,14 @@ uint8_t fm24_seek(const uint32_t addr)
         c_addr = addr;
     }
 
-    for (retry = 0; retry < FM24V10_MAX_RETRY; retry++) {
+    for (retry = 0; retry < FM24_MAX_RETRY; retry++) {
         rv = i2cm_start();
 
         if (rv != I2C_OK) {
             return EXIT_FAILURE;
         }
 
-        rv = i2cm_tx(FM24V10_BA | (c_addr >> 16), I2C_WRITE);
+        rv = i2cm_tx(FM24_BA | (c_addr >> 16), I2C_WRITE);
 
         if (rv == I2C_ACK) {
             // f-ram memory address
@@ -50,7 +50,9 @@ uint8_t fm24_seek(const uint32_t addr)
         return EXIT_FAILURE;
     }
 
+#ifdef FM24_HAS_SLEEP_MODE
     fm24_status |= FM24_AWAKE;
+#endif
     return EXIT_SUCCESS;
 }
 
@@ -64,7 +66,7 @@ uint32_t fm24_read(uint8_t * buf, const uint32_t nbyte)
         return EXIT_FAILURE;
     }
 
-    rv = i2cm_tx(FM24V10_BA, I2C_READ);
+    rv = i2cm_tx(FM24_BA, I2C_READ);
 
     if (rv == I2C_ACK) {
         rv = i2cm_rx(buf, nbyte, I2C_LAST_NAK);
@@ -76,7 +78,9 @@ uint32_t fm24_read(uint8_t * buf, const uint32_t nbyte)
         return EXIT_FAILURE;
     }
 
+#ifdef FM24_HAS_SLEEP_MODE
     fm24_status |= FM24_AWAKE;
+#endif
     return nbyte;
 }
 
@@ -110,14 +114,14 @@ uint32_t fm24_write(const uint8_t * buf, const uint32_t addr,
         c_addr = addr;
     }
 
-    for (retry = 0; retry < FM24V10_MAX_RETRY; retry++) {
+    for (retry = 0; retry < FM24_MAX_RETRY; retry++) {
         rv = i2cm_start();
 
         if (rv != I2C_OK) {
             return 0;
         }
         // device slave address + memory page bit
-        rv = i2cm_tx(FM24V10_BA | (c_addr >> 16), I2C_WRITE);
+        rv = i2cm_tx(FM24_BA | (c_addr >> 16), I2C_WRITE);
 
         if (rv == I2C_ACK) {
             // f-ram memory address
@@ -145,10 +149,13 @@ uint32_t fm24_write(const uint8_t * buf, const uint32_t addr,
         }
     }
 
+#ifdef FM24_HAS_SLEEP_MODE
     fm24_status |= FM24_AWAKE;
+#endif
     return 0;
 }
 
+#ifdef FM24_HAS_SLEEP_MODE
 uint8_t fm24_sleep(void)
 {
     uint8_t rv = 0;
@@ -159,17 +166,17 @@ uint8_t fm24_sleep(void)
         return EXIT_FAILURE;
     }
 
-    rv = i2cm_tx(FM24V10_RSVD, I2C_NO_ADDR_SHIFT);
+    rv = i2cm_tx(FM24_RSVD, I2C_NO_ADDR_SHIFT);
 
     if (rv == I2C_ACK) {
-        rv = i2cm_tx(FM24V10_BA, I2C_WRITE);
+        rv = i2cm_tx(FM24_BA, I2C_WRITE);
     } else {
         rv = EXIT_FAILURE;
     }
 
     if (rv == I2C_ACK) {
         i2cm_start();
-        i2cm_tx(FM24V10_SLEEP, I2C_NO_ADDR_SHIFT);
+        i2cm_tx(FM24_SLEEP, I2C_NO_ADDR_SHIFT);
         rv = EXIT_SUCCESS;
     } else {
         rv = EXIT_FAILURE;
@@ -179,6 +186,7 @@ uint8_t fm24_sleep(void)
     fm24_status &= ~FM24_AWAKE;
     return rv;
 }
+#endif
 
 uint32_t fm24_data_len(const uint32_t first, const uint32_t last)
 {

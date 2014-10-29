@@ -20,6 +20,8 @@
 #include "drivers/flash.h"
 #include "drivers/adc.h"
 #include "drivers/fm24.h"
+#include "drivers/fm24_memtest.h"
+#include "qa.h"
 
 #define GPSMAX 255
 
@@ -58,38 +60,7 @@ static void parse_gprs(enum sys_message msg)
 #ifdef DEBUG_GPRS
 static void parse_UI(enum sys_message msg)
 {
-    uint8_t i;
-    char in[3];
-    uint8_t data[10];
-    char f = uart0_rx_buf[0];
-
-    if (f == '?') {
-        sim900_exec_default_task();
-    } else if (f == '!') {
-        sim900_start();
-    } else if (f == ')') {
-        sim900_halt();
-    } else if (f == 's') {
-        adc_read();
-        store_pkt();
-    } else if (f == 'w') {
-        for (i = 0; i < 100; i++) {
-            data[i] = i;
-        }
-        fm24_write(data, 0x1fffb, 100);
-    } else if (f == 'r') {
-        fm24_read_from((uint8_t *) & str_temp, 0x1fffb, 100);
-        for (i=0;i<100;i++) {
-            snprintf(in, 3, "%02x", str_temp[i]);
-            uart0_tx_str(in, strlen(in));
-            uart0_tx_str(" ", 1);
-        }
-    } else if (f == 'S') {
-        fm24_sleep();
-    } else {
-        sim900_tx_str((char *)uart0_rx_buf, uart0_p);
-        sim900_tx_str("\r", 1);
-    }
+    parse_user_input();
 
     uart0_p = 0;
     uart0_rx_enable = 1;
@@ -274,6 +245,7 @@ int main(void)
 
 #ifdef DEBUG_GPRS
     uart0_tx_str("gprs debug state\r\n", 18);
+    display_menu();
 #endif
 
 #ifdef CALIBRATION
@@ -291,7 +263,9 @@ int main(void)
 
 #endif
 
+#ifdef FM24_HAS_SLEEP_MODE
     fm24_sleep();
+#endif
 
     // main loop
     while (1) {
@@ -307,12 +281,15 @@ int main(void)
         check_events();
         check_events();
 
+#ifdef FM24_HAS_SLEEP_MODE
         // sleep
         if (fm24_status & FM24_AWAKE) {
             fm24_sleep();
         }
+#endif
+
         // P4.0 and P4.1
-        P4SEL &= ~0x3;
+        //P4SEL &= ~0x3;
         
         /*
         PMMCTL0_H = 0xA5;

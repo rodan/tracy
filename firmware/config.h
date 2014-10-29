@@ -8,9 +8,14 @@
 #define CONFIG_GEOFENCE
 
 #ifdef PCB_REV2
-    #define CONFIG_HAVE_FM24V10
-//    #define CONFIG_HAVE_FM24CL64B
+//    #define CONFIG_HAVE_FM24V10
+    #define CONFIG_HAVE_FM24CL64B
 #endif
+
+#ifdef CONFIG_HAVE_FM24V10
+    #define FM24_HAS_SLEEP_MODE
+#endif
+
 
 //#define CONFIG_RTC_DST
 //#define CONFIG_RTC_DST_ZONE 4
@@ -24,7 +29,7 @@
 
 //#define CALIBRATION
 //#define DEBUG_GPS
-//#define DEBUG_GPRS
+#define DEBUG_GPRS
 //#define CONFIG_DEBUG
 
 #endif
