@@ -239,7 +239,6 @@ static void sim900_tasks(enum sys_message msg)
                 break;
                 case SUBTASK_PWROFF:
                     GPS_IRQ_ENABLE;
-                    sim900.rdy &= ~TASK_IN_PROGRESS;
                     sim900.task = TASK_NULL;
                     sim900.cmd = CMD_OFF;
                     timer_a0_delay_noblk_ccr2(SM_STEP_DELAY);
@@ -419,24 +418,28 @@ static void sim900_state_machine(enum sys_message msg)
             switch (sim900.next_state) {
                 default:
                     sim900.next_state = SIM900_VBAT_OFF;
-                    timer_a0_delay_noblk_ccr2(_3sp);
-                    sim900_tx_cmd("AT+CPOWD=1\r", 11, _3s);
+                    timer_a0_delay_noblk_ccr2(_5sp);
+                    sim900_tx_cmd("AT+CPOWD=1\r", 11, _5s);
                 break;
                 case SIM900_VBAT_OFF:
                     sim900.next_state = SIM900_OFF;
-                    sim900.checks = 0;
-                    sim900.cmd = CMD_NULL;
+                    timer_a0_delay_noblk_ccr2(_3s);
                     P1DIR &= 0xb7; // make RTS, DTR inputs
                     P4SEL &= 0xcf; // make both gprs RX and TX inputs
                     P4DIR &= 0xcf;
                     SIM900_VBAT_DISABLE;
                     SIM900_PWRKEY_HIGH;
+                break;
+                case SIM900_OFF:
+                    sim900.checks = 0;
+                    sim900.cmd = CMD_NULL;
                     if (sim900.rdy & NEED_SYSTEM_REBOOT) {
                         // use the wrong watchdog password, thus trigger a 
                         // full system reset
                         WDTCTL = WDTHOLD; 
                     }
                     sim900.rdy &= TX_FIX_RDY;
+                    //sim900.rdy &= ~TASK_IN_PROGRESS;
                 break;
             }
         break;

@@ -1,4 +1,8 @@
 
+// tool that outputs the contents of the fm24* F-RAM chip
+// it works in conjunction with the DEBUG_GPRS compilation option
+
+
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>

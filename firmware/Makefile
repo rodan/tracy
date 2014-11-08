@@ -87,8 +87,7 @@ $(OBJS): $(PROJ).cflags
 
 $(PROJ).elf: $(OBJS)
 	@echo -e "\n>> Building $@ as target $(TARGET)"
-	@$(CC) $(CFLAGS) $(LDFLAGS) $(INCLUDES) -o $@ $+ && size $@
-	@bash tools/setver.sh
+	@$(CC) $(CFLAGS) $(LDFLAGS) $(INCLUDES) -o $@ $+ && size $@ && bash tools/setver.sh
 	@#@python tools/msp430-ram-usage $@
 
 modinit.o: modinit.c
@@ -111,7 +110,8 @@ tags: $(SRCS)
 	@exuberant-ctags -R
 
 install: $(PROJ).elf
-	mspdebug olimex-iso-mk2 "prog $<"
+	@bash ~/bin/burn.sh
+	@#mspdebug olimex-iso-mk2 "prog $<"
 
 clean: $(SUBDIRS)
 	@for subdir in $(SUBDIRS); do \

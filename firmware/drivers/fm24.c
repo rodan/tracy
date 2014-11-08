@@ -20,7 +20,7 @@ uint8_t fm24_seek(const uint32_t addr)
     // in case a seek beyond the end of device is requested
     // we roll to the beginning since this memory is circular in nature
     if (addr > FM_LA) {
-        c_addr = addr - FM_LA - 1;
+        c_addr = addr % FM_LA - 1;
     } else {
         c_addr = addr;
     }
@@ -109,10 +109,12 @@ uint32_t fm24_write(const uint8_t * buf, const uint32_t addr,
     // in case a seek beyond the end of device is requested
     // we roll to the beginning since this memory is circular in nature
     if (addr > FM_LA) {
-        c_addr = addr - FM_LA - 1;
+        c_addr = addr % FM_LA - 1;
     } else {
         c_addr = addr;
     }
+
+    m.e = addr;
 
     for (retry = 0; retry < FM24_MAX_RETRY; retry++) {
         rv = i2cm_start();
@@ -136,7 +138,7 @@ uint32_t fm24_write(const uint8_t * buf, const uint32_t addr,
                 } else {
                     m.e++;
                     if (m.e > FM_LA) {
-                        m.e -= FM_LA + 1;
+                        m.e = m.e % FM_LA - 1;
                     }
                 }
             }
