@@ -18,7 +18,6 @@
 #include "drivers/gps.h"
 #include "drivers/sim900.h"
 #include "drivers/flash.h"
-#include "drivers/adc.h"
 #include "drivers/fm24.h"
 #include "drivers/fm24_memtest.h"
 #include "qa.h"
@@ -30,6 +29,9 @@ const char gps_init[] = "$PMTK314,0,2,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0*28\r\n";
 uint32_t rtca_set_next = 0;
 
 uint32_t status_show_next = 0;
+
+uint32_t adc_check_next = 0;
+uint16_t adc_check_interval = 15;
 
 uint32_t gps_reinit_next = 0;
 uint16_t gps_reinit_interval = 120;
@@ -70,6 +72,25 @@ static void parse_UI(enum sys_message msg)
 
 static void schedule(enum sys_message msg)
 {
+
+    // battery related
+    if (!(s.settings & CONF_ALWAYS_CHARGE)) {
+        if (rtca_time.sys > adc_check_next) {
+            adc_check_next = rtca_time.sys + adc_check_interval;
+            adc_read();
+
+            if (stat.v_bat < 380) {
+                // force charging
+                CHARGE_ENABLE;
+            } else if (stat.v_bat > 400) {
+                if (CHARGING_STOPPED) {
+                    CHARGE_DISABLE;
+                }
+            }
+        }
+    }
+
+
     // GPS related
     if (rtca_time.sys > gps_trigger_next) {
 
@@ -81,15 +102,10 @@ static void schedule(enum sys_message msg)
                     gps_trigger_next = rtca_time.sys + s.gps_loop_interval - s.gps_warmup_interval - 2;
                 }
                 gps_next_state = MAIN_GPS_START;
-                adc_read();
             break;
     
             case MAIN_GPS_START:
                 gps_next_state = MAIN_GPS_INIT;
-                if (stat.v_bat < 350) {
-                    // force charging
-                    CHARGE_ENABLE;
-                }
                 gps_enable();
             break;
 
@@ -127,6 +143,7 @@ static void schedule(enum sys_message msg)
         }
     }
 
+    /*
     // show current status
     if (rtca_time.sys > status_show_next) {
         status_show_next = rtca_time.sys + 300;
@@ -137,6 +154,7 @@ static void schedule(enum sys_message msg)
         //snprintf(str_temp, STR_LEN, "spl %u spw %u spi %u\r", s.gps_loop_interval, s.gps_warmup_interval, s.gps_invalidate_interval);
         //uart0_tx_str(str_temp, strlen(str_temp));
     }
+    */
 
     // GPRS related
 
@@ -147,11 +165,17 @@ static void schedule(enum sys_message msg)
         } else {
             gprs_tx_next = rtca_time.sys + s.gprs_static_tx_interval;
         }
-        sim900.rdy |= TX_FIX_RDY;
+        sim900.flags |= TX_FIX_RDY;
     }
 
-    if (((rtca_time.sys > gprs_trigger_next) || (sim900.rdy & TX_FIX_RDY)) && 
-            !(sim900.rdy & TASK_IN_PROGRESS)) {
+    if (sim900.flags & BLACKOUT) {
+       if (rtca_time.sys > gprs_blackout_lift) {
+           sim900.flags &= ~BLACKOUT;
+       }
+    }
+
+    if (((rtca_time.sys > gprs_trigger_next) || (sim900.flags & TX_FIX_RDY)) && 
+            !(sim900.flags & TASK_IN_PROGRESS)) {
 
         // time to act
         adc_read();
@@ -161,11 +185,10 @@ static void schedule(enum sys_message msg)
 #ifndef DEBUG_GPS
             // if battery voltage is below ~3.4v
             // the sim will most likely lock up while trying to TX
-            sim900_exec_default_task();
+            if (!(sim900.flags & BLACKOUT)) {
+                sim900_exec_default_task();
+            }
 #endif
-        } else {
-            // force charging
-            CHARGE_ENABLE;
         }
     }
 }
@@ -203,11 +226,8 @@ int main(void)
     sim900_init_messagebus();
     sim900.next_state = SIM900_OFF;
 
-    // rev2 hardwires the gps backup power
-#ifdef PCB_REV1
-    GPS_BKP_ENABLE;
-#endif
     settings_init(SEGMENT_B, VERSION_BASED);
+    settings_apply();
 
     m.e = 0x0;
     m.seg[0] = 0x0;
@@ -217,12 +237,8 @@ int main(void)
     stat.fix_id = 1;
 
     sim900.imei[0] = 0;
+    sim900.flags = 0;
 
-    if (s.settings & CONF_ALWAYS_CHARGE) {
-        CHARGE_ENABLE;
-    } else {
-        CHARGE_DISABLE;
-    }
 
     gps_trigger_next = 0;
     gprs_trigger_next = s.gprs_loop_interval;
@@ -237,6 +253,8 @@ int main(void)
    
     gprs_tx_trig = 0;
     gprs_tx_next = s.gprs_static_tx_interval;
+
+    gprs_blackout_lift = 0;
 
 #ifdef DEBUG_GPS
     uart1_init(9600);
@@ -331,19 +349,8 @@ void main_init(void)
     P3DIR = 0x1f;
     P3OUT = 0x0;
 
-#ifdef PCB_REV1
-    P4DIR = 0xc0;
-#endif
-
-#ifdef PCB_REV2
     //P4DIR = 0x00;
     P4DIR = 0x3;
-
-#ifdef CONFIG_HAVE_FM24V10
-
-#endif
-#endif
-
     P4OUT = 0x0;
 
     PMAPPWD = 0x02D52;
@@ -442,6 +449,15 @@ void settings_init(uint8_t * addr, const uint8_t location)
     }
 }
 
+void settings_apply()
+{
+    if (s.settings & CONF_ALWAYS_CHARGE) {
+        CHARGE_ENABLE;
+    } else {
+        CHARGE_DISABLE;
+    }
+}
+
 void adc_read()
 {
     uint16_t q_bat = 0, q_raw = 0;
@@ -466,7 +482,7 @@ void store_pkt()
 
     me_temp = m.e;
 
-    if (s.settings & CONF_SHOW_CELL_LOC) {
+    if (!(s.settings & CONF_IGNORE_CELL_LOC)) {
         for (i = 0; i < 4; i++) {
             if ((sim900.cell[i].cellid != 65535) && (sim900.cell[i].cellid != 0)) {
                 payload_content_desc = i + 1;
@@ -576,7 +592,7 @@ void store_pkt()
         movement_next = rtca_time.sys + 600;
         if (!(gprs_tx_trig & TG_NOW_MOVING)) {
             gprs_tx_trig |= TG_NOW_MOVING;
-            sim900.rdy |= TX_FIX_RDY;
+            sim900.flags |= TX_FIX_RDY;
             gprs_tx_next = rtca_time.sys + s.gprs_moving_tx_interval;
         }
     } else {
@@ -588,7 +604,7 @@ void store_pkt()
 
     // if only 2 more segments can be created
     if (m.seg_num > MAX_SEG - 3) {
-        sim900.rdy |= TX_FIX_RDY;
+        sim900.flags |= TX_FIX_RDY;
     }
 
 #ifdef DEBUG_GPRS
@@ -601,7 +617,7 @@ void store_pkt()
     }
     uart0_tx_str("\r\n", 2);
 
-    if (sim900.rdy & TX_FIX_RDY) {
+    if (sim900.flags & TX_FIX_RDY) {
         uart0_tx_str("rdy\r\n", 5);
     }
 #endif

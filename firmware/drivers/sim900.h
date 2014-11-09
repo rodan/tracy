@@ -30,6 +30,14 @@
 #define ERR_RAM_WRITE           0x200
 #define ERR_TASK_ADD            0x400
 
+// depending on the error, the modem will not be reused 
+// for at least these many seconds
+#define BLACKOUT_PIN_RDY            300
+#define BLACKOUT_CALL_RDY           300
+#define BLACKOUT_IMEI_UNKNOWN       600
+#define BLACKOUT_SEND_FIX_GPRS       60
+#define BLACKOUT_GPRS_NO_IP_START   300
+
 // state machine timeouts
 #define SM_STEP_DELAY   _10ms * 2  // ~20ms
 #define SM_R_DELAY      _10ms * 130 // ~1.3s
@@ -173,10 +181,6 @@ typedef enum {
     SMS_CODE_OK
 } sim900_sms_subj_t;
 
-#ifdef PCB_REV1
-#define MAX_SEG 1
-#endif
-
 #define TASK_MAX_RETRIES    3
 #define TASK_QUEUE_SIZE     MAX_SEG + 12
 #define SMS_QUEUE_SIZE      4
@@ -187,8 +191,11 @@ typedef enum {
 #define CALL_RDY            0x4
 #define NEED_SYSTEM_REBOOT  0x8
 #define GPRS_RDY            0x10
-#define TX_FIX_RDY          0x20
-#define TASK_IN_PROGRESS    0x40
+
+// modem flags
+#define TX_FIX_RDY          0x1
+#define TASK_IN_PROGRESS    0x2
+#define BLACKOUT            0x4
 
 // HTTP payload content
 #define GEOFENCE_PRESENT    0x8
@@ -205,6 +212,7 @@ typedef struct {      // cell tower data
 struct sim900_t {
     uint8_t checks;         // status register  - maybe remove?
     uint8_t rdy;            // ready status register {RDY, PIN_RDY ... }
+    uint8_t flags;          // flags register {TASK_IN_PROGRESS, BLACKOUT ... }
     uint8_t trc;            // task retry counter [0 - TASK_MAX_RETRIES-1]
     uint8_t current_t;      // current task in the task queue [0 - TASK_QUEUE_SIZE-1]
     uint8_t last_t;         // number of entries in the task queue [0 - TASK_QUEUE_SIZE-1]
