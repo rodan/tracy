@@ -66,7 +66,7 @@ int main()
     // if pipe is used, I need more than an empty output
     setvbuf(stdout, NULL, _IONBF, 0);
 
-    write(fd_dev, "r\r\n", 3);
+    write(fd_dev, "!mem read\r\n", 11);
     alarm(1);
 
     while (keep_going) {
