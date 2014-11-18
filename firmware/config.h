@@ -9,7 +9,7 @@
 
 //#define CALIBRATION
 //#define DEBUG_GPS
-#define DEBUG_GPRS
+//#define DEBUG_GPRS
 //#define CONFIG_DEBUG
 
 

@@ -55,10 +55,13 @@ void display_menu(void)
     snprintf(str_temp, STR_LEN, " \e[33;1m!mem test\e[0m    - memtest\r\n" );
     uart0_tx_str(str_temp, strlen(str_temp));
 
-    snprintf(str_temp, STR_LEN, " \e[33;1m!mem read\e[0m    - read all mem\r\n" );
+    snprintf(str_temp, STR_LEN, " \e[33;1m!mem read\e[0m    - read all external mem\r\n" );
     uart0_tx_str(str_temp, strlen(str_temp));
 
     snprintf(str_temp, STR_LEN, " \e[33;1m!flash read\e[0m  - read flash segment B\r\n" );
+    uart0_tx_str(str_temp, strlen(str_temp));
+
+    snprintf(str_temp, STR_LEN, " \e[33;1m!flash clear\e[0m - clear flash segment B\r\n" );
     uart0_tx_str(str_temp, strlen(str_temp));
 }
 
@@ -70,6 +73,7 @@ void parse_user_input(void)
     uint16_t i;
     uint8_t j;
     uint8_t row[8];
+    uint8_t zeroes[128];
 
     if (f == '?') {
         display_menu();
@@ -119,6 +123,9 @@ void parse_user_input(void)
                 for (i=0;i<128;i++) {
                     uart0_tx_str((char *)src_p + i, 1);
                 }
+            } else if (strstr(in, "clear")) {
+                memset(zeroes, 0, 128);
+                flash_save(SEGMENT_B, zeroes, 128);
             }
         }
     } else {
