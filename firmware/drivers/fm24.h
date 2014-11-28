@@ -18,14 +18,14 @@
 
 #ifdef CONFIG_HAVE_FM24CL64B
 #define FM_LA        0x1FFF          // last addressable byte
-#define MAX_SEG      8
+#define MAX_SEG      9
 #endif
 
 // sim900 can only send about 1000 bytes at a time
 // so the unsent data has to be segmented up
 // transmitted packets also include a header which can become 106bytes long
 // MAX_SEG must be at least 4
-#define MAX_SEG_SIZE  1000 - 106
+#define MAX_SEG_SIZE  894 // 1000 - 106
 
 #if MAX_SEG * MAX_SEG_SIZE > FM_LA
 #error "invalid segmentation in fm24.h"
