@@ -143,21 +143,7 @@ static void schedule(enum sys_message msg)
         }
     }
 
-    /*
-    // show current status
-    if (rtca_time.sys > status_show_next) {
-        status_show_next = rtca_time.sys + 300;
-        snprintf(str_temp, STR_LEN, "err 0x%04x\tm.e 0x%05lx\tntx %lu \r\n", 
-                sim900.err, m.e, fm24_data_len(m.seg[0], m.e));
-        uart0_tx_str(str_temp, strlen(str_temp));
-
-        //snprintf(str_temp, STR_LEN, "spl %u spw %u spi %u\r", s.gps_loop_interval, s.gps_warmup_interval, s.gps_invalidate_interval);
-        //uart0_tx_str(str_temp, strlen(str_temp));
-    }
-    */
-
     // GPRS related
-
     // force the HTTP POST from time to time
     if (rtca_time.sys > gprs_tx_next) {
         if (gprs_tx_trig & TG_NOW_MOVING) {
@@ -191,29 +177,6 @@ static void schedule(enum sys_message msg)
 #endif
         }
     }
-}
-#endif
-
-#ifdef CALIBRATION
-static void adc_calibration(enum sys_message msg)
-{
-    uint16_t q_bat = 0;
-    uint16_t q_raw = 0;
-
-    uint32_t v_bat, v_raw;
-
-    adc10_read(3, &q_bat, REFVSEL_1);
-    adc10_read(2, &q_raw, REFVSEL_1);
-
-    v_bat = (uint32_t) q_bat *s.vref * DIV_BAT / 10000;
-    v_raw = (uint32_t) q_raw *s.vref * DIV_RAW / 10000;
-
-    stat.v_bat = v_bat;
-    stat.v_raw = v_raw;
-
-    snprintf(str_temp, STR_LEN, "bat %u\t%u raw %u\t%u\r\n", q_bat, stat.v_bat,
-             q_raw, stat.v_raw);
-    uart0_tx_str(str_temp, strlen(str_temp));
 }
 #endif
 

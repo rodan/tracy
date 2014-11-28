@@ -7,7 +7,6 @@
 
 // debug flags, keep all of them disabled for a RELEASE version
 
-//#define CALIBRATION
 //#define DEBUG_GPS
 //#define DEBUG_GPRS
 //#define CONFIG_DEBUG
