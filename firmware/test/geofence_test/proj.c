@@ -1,7 +1,7 @@
 
 #include <stdio.h>
 #include <math.h>
-#include "gps.h"
+#include "proj.h"
 #include "helper.h"
 
 char loc_str[LOC_MAX][STR_MAX] = {
