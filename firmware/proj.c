@@ -74,22 +74,36 @@ static void schedule(enum sys_message msg)
 {
 
     // battery related
-    if (!(s.settings & CONF_ALWAYS_CHARGE)) {
-        if (rtca_time.sys > adc_check_next) {
-            adc_check_next = rtca_time.sys + adc_check_interval;
-            adc_read();
+    if (rtca_time.sys > adc_check_next) {
+        adc_read();
 
-            if (stat.v_bat < 380) {
-                // force charging
-                CHARGE_ENABLE;
-            } else if (stat.v_bat > 400) {
-                if (CHARGING_STOPPED) {
+        adc_check_next = rtca_time.sys + adc_check_interval;
+
+        if ((stat.v_raw > 450) && (stat.v_raw < 550)) {
+            if (CHARGING_STOPPED) {
+                if (stat.should_charge) {
                     CHARGE_DISABLE;
+                    stat.should_charge = false;
+                    adc_check_next = rtca_time.sys + 300;
+                } else {
+                    if (stat.v_bat < 390) {
+                        CHARGE_ENABLE;
+                        stat.should_charge = true;
+                        charge_start = rtca_time.sys;
+                    }
+                }
+            } else {
+                if (rtca_time.sys > charge_start + 36000) {
+                    CHARGE_DISABLE;
+                    stat.should_charge = false;
+                    adc_check_next = rtca_time.sys + 3600;
                 }
             }
+        } else {
+            CHARGE_DISABLE;
+            stat.should_charge = false;
         }
     }
-
 
     // GPS related
     if (rtca_time.sys > gps_trigger_next) {
@@ -190,7 +204,7 @@ int main(void)
     sim900.next_state = SIM900_OFF;
 
     settings_init(SEGMENT_B, VERSION_BASED);
-    settings_apply();
+    //settings_apply();
 
     m.e = 0x0;
     m.seg[0] = 0x0;
@@ -414,11 +428,6 @@ void settings_init(uint8_t * addr, const uint8_t location)
 
 void settings_apply()
 {
-    if (s.settings & CONF_ALWAYS_CHARGE) {
-        CHARGE_ENABLE;
-    } else {
-        CHARGE_DISABLE;
-    }
 }
 
 void adc_read()

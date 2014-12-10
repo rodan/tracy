@@ -7,6 +7,7 @@
 #include "drivers/uart1.h"
 #include "drivers/timer_a0.h"
 #include "drivers/flash.h"
+#include "drivers/rtc.h"
 #include "version.h"
 #include "qa.h"
 
@@ -34,35 +35,42 @@ void display_menu(void)
             "\r\n --- tracy build #%d\r\n  available commands:\r\n", BUILD);
     uart0_tx_str(str_temp, strlen(str_temp));
 
-    snprintf(str_temp, STR_LEN, " \e[33;1m?\e[0m            - show menu\r\n" );
+    snprintf(str_temp, STR_LEN, " \e[33;1m?\e[0m              - show menu\r\n" );
     uart0_tx_str(str_temp, strlen(str_temp));
 
-    snprintf(str_temp, STR_LEN, " \e[33;1m!gprs on\e[0m     - gprs power on\r\n" );
+    snprintf(str_temp, STR_LEN, " \e[33;1m!gprs [on/off]\e[0m - gprs power on/off\r\n" );
     uart0_tx_str(str_temp, strlen(str_temp));
 
-    snprintf(str_temp, STR_LEN, " \e[33;1m!gprs off\e[0m    - gprs power off\r\n" );
+    snprintf(str_temp, STR_LEN, " \e[33;1m!gprs init\e[0m     - gprs initial setup\r\n" );
     uart0_tx_str(str_temp, strlen(str_temp));
 
-    snprintf(str_temp, STR_LEN, " \e[33;1m!gprs init\e[0m   - gprs initial setup\r\n" );
+    snprintf(str_temp, STR_LEN, " \e[33;1m!gprs def\e[0m      - gprs start default task\r\n" );
     uart0_tx_str(str_temp, strlen(str_temp));
 
-    snprintf(str_temp, STR_LEN, " \e[33;1m!gprs def\e[0m    - gprs start default task\r\n" );
+    snprintf(str_temp, STR_LEN, " \e[33;1m!gps [on/off]\e[0m  - gps power on/off\r\n" );
     uart0_tx_str(str_temp, strlen(str_temp));
 
-    snprintf(str_temp, STR_LEN, " \e[33;1m!mem store\e[0m   - store packet\r\n" );
+    snprintf(str_temp, STR_LEN, " \e[33;1m!mem store\e[0m     - store packet\r\n" );
     uart0_tx_str(str_temp, strlen(str_temp));
 
-    snprintf(str_temp, STR_LEN, " \e[33;1m!mem test\e[0m    - memtest\r\n" );
+    snprintf(str_temp, STR_LEN, " \e[33;1m!mem test\e[0m      - memtest\r\n" );
     uart0_tx_str(str_temp, strlen(str_temp));
 
-    snprintf(str_temp, STR_LEN, " \e[33;1m!mem read\e[0m    - read all external mem\r\n" );
+    snprintf(str_temp, STR_LEN, " \e[33;1m!mem read\e[0m      - read all external mem\r\n" );
     uart0_tx_str(str_temp, strlen(str_temp));
 
-    snprintf(str_temp, STR_LEN, " \e[33;1m!flash read\e[0m  - read flash segment B\r\n" );
+    snprintf(str_temp, STR_LEN, " \e[33;1m!flash read\e[0m    - read flash segment B\r\n" );
     uart0_tx_str(str_temp, strlen(str_temp));
 
-    snprintf(str_temp, STR_LEN, " \e[33;1m!flash clear\e[0m - clear flash segment B\r\n" );
+    snprintf(str_temp, STR_LEN, " \e[33;1m!flash clear\e[0m   - clear flash segment B\r\n" );
     uart0_tx_str(str_temp, strlen(str_temp));
+
+    snprintf(str_temp, STR_LEN, " \e[33;1m!chg [on/off]\e[0m  - charge on/off\r\n" );
+    uart0_tx_str(str_temp, strlen(str_temp));
+
+    snprintf(str_temp, STR_LEN, " \e[33;1m!stat\e[0m          - system status\r\n" );
+    uart0_tx_str(str_temp, strlen(str_temp));
+
 }
 
 void parse_user_input(void)
@@ -95,6 +103,12 @@ void parse_user_input(void)
                 sim900.next_state = SIM900_IDLE;
                 timer_a0_delay_noblk_ccr2(SM_STEP_DELAY);
             }
+        } else if (strstr(in, "gps")) {
+            if (strstr(in, "on")) {
+                gps_enable();
+            } else if (strstr(in, "off")) {
+                gps_disable();
+            } 
         } else if (strstr(in, "mem")) {
             if (strstr(in, "test")) {
             // mem test
@@ -127,6 +141,37 @@ void parse_user_input(void)
                 memset(zeroes, 0, 128);
                 flash_save(SEGMENT_B, zeroes, 128);
             }
+        } else if (strstr(in, "chg")) {
+            if (strstr(in, "on")) {
+                CHARGE_ENABLE;
+                stat.should_charge = true;
+            } else if (strstr(in, "off")) {
+                CHARGE_DISABLE;
+                stat.should_charge = false;
+            }
+        } else if (strstr(in, "stat")) {
+
+            adc_read();
+
+            snprintf(str_temp, STR_LEN, "  Vbat %d.%02dV, Vraw %d.%02dV, charging ", stat.v_bat/100, stat.v_bat%100, stat.v_raw/100, stat.v_raw%100);
+            uart0_tx_str(str_temp, strlen(str_temp));
+
+            if (CHARGING_STOPPED) {
+                uart0_tx_str("\e[31;1moff\e[0m ", 15);
+            } else {
+                uart0_tx_str("\e[32;1mon\e[0m ", 14);
+            }
+
+            uart0_tx_str("should be ", 10);
+
+            if (stat.should_charge) {
+                uart0_tx_str("\e[32;1mon\e[0m\r\n", 15);
+            } else {
+                uart0_tx_str("\e[31;1moff\e[0m\r\n", 16);
+            }
+
+            snprintf(str_temp, STR_LEN, "  tchg %lus\r\n", rtca_time.sys - charge_start);
+            uart0_tx_str(str_temp, strlen(str_temp));
         }
     } else {
         sim900_tx_str((char *)uart0_rx_buf, uart0_p);
