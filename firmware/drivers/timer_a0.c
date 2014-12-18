@@ -1,7 +1,7 @@
 
 //   timer a0 handling
 //   CCR0 is currently unused
-//   CCR1 is currently unused
+//   CCR1 is used for timer_a0_delay_noblk_ccr1()
 //   CCR2 is used for timer_a0_delay_noblk_ccr2()
 //   CCR3 is used for timer_a0_delay_noblk_ccr3()
 //   CCR4 is currently unused

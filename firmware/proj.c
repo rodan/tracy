@@ -454,6 +454,8 @@ void store_pkt()
 
     me_temp = m.e;
 
+    adc_read();
+
     if (!(s.settings & CONF_IGNORE_CELL_LOC)) {
         for (i = 0; i < 4; i++) {
             if ((sim900.cell[i].cellid != 65535) && (sim900.cell[i].cellid != 0)) {
