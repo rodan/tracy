@@ -1,79 +1,17 @@
 
  gps tracker with a gprs connection for reporting and command input.
 
- UNDER DEVELOPMENT, FAR FROM BEING READY
-
  source:       https://github.com/rodan/tracy 
  author:       Petre Rodan <petre.rodan@simplex.ro>
  license:      GNU GPLv3
 
 Features:
- - an MSP430F5510 uC for very low quiescent current
- - programming/debug via TI spy-bi-wire
- - can be powered from USB friendly 5V and also has a LiPo cell for standalone opperation
- - receives settings and commands via SMS once a phone is authenticated
- - can send location via gprs to a website or via SMS to a phone
- - analog readout of battery voltage, input voltage
+ - both hardware and software are opensource
+ - an f-ram chip for input data buffering
+ - resilient software architecture
+ - all gps/gsm operations controlled by timer interrupts which allows control of both sub-systems in the same time
+ - great flexibility given by configuration variables
 
  prototype pictures available here:  http://goo.gl/BzzAdJ
-
-how to install a local SIM card
-
-these are step-by-step instructions for a 'Cartela Vodafone' from the Romanian telephony provider:
- - buy a SIM card
- - write down the associated phone number, or even better enter it into your phone's phonebook - don't forget to also add the country prefix so you can contact the tracker while abroad. it's "+4" prefixed to the number in Romania.
- - place the new SIM card inside a phone
- - if it has no initial credit, fill it with at least 5EUR
- - make sure no PIN is set on the SIM itself
- - disable any 'best value plan' the provider might have selected - this is easiest to do from the 'MYVodafone' entry from within the vodafone.ro website. This SIM will mostly be used to connect to the internet, and it will send a minimal number of SMS messages during the setup process. the only extra options that are needed are '100MB internet for 1 Month - 2EUR'. you can optionaly activate roaming.
- - disable 'VOX voicemail' by calling ##002#
- - place the SIMs back into their proper locations: the newly purchased one in the tracker and your old one into the phone.
- - while inserting the SIM into the tracker write down the last 4 digits that you see written on the SIM900 IC that is adiacent to the SIM holder.
- - send a SMS from the phone to the tracker that contains:
-
-code 1234
-
-'1234' will need to be replaced by those digits you wrote down during the previous step
-
- - power on the tracker and wait. it only connects to the gsm network every 10 minutes by default and it has a 1 minute interval in which it's actively listening to incoming SMS messages. once the code is received and acknowledged you will get a 'code ok' reply on the phone. from this moment on you can send commands to the tracker.
-
-valid commands:
-
-code STRING
-authenticate a phone to the tracker. use last 4 digits of the SIM900 IMEI as the STRING.
-
-gprs
-show APN, USER, PASSWORD that are currently used in order to authenticate for a gprs session
-
-setup
-show a hex value containing current switches
-
-fix
-try to send back a GPS fix as a SMS reply
-
-apn STRING
-default: live.vodafone.com
-set the gprs apn value - max 20 char long
-in case STRING is missing, an empty apn is used
-
-user STRING
-default: live
-set the gprs user  - max 20 char long
-in case STRING is missing, an empty username is used
-
-pass STRING
-default: vodafone
-set the gprs pass - max 20 char long
-in case STRING is missing, an empty password is used
-
-srv STRING
-default: www.simplex.ro
-what server to contact in order to send the tracking data
-
-port STRING
-default: 80
-TCP port used during connection to the server
-
-err
-shows a hex value in case there were any errors logged in the device. this value gets reset when all power is lost or when an 'err' command is replied to. only used for debug.
+ documentation available here:       https://www.simplex.ro/en/tracy.html
 
