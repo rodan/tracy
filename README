@@ -1,5 +1,5 @@
 
- gps tracker with a gprs connection for reporting and command input.
+ gps tracker based on a MSP430F5510 uC with a gprs connection for reporting and command input.
 
  source:       https://github.com/rodan/tracy 
  author:       Petre Rodan <petre.rodan@simplex.ro>
