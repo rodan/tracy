@@ -20,19 +20,13 @@
 #define LED_ON          P1OUT |= BIT2
 #define LED_OFF         P1OUT &= ~BIT2
 
-#define GPS_ENABLE      P6OUT |= BIT0
-#define GPS_DISABLE     P6OUT &= ~BIT0
-
 #define GPS_IRQ_ENABLE  UCA0IE |= UCRXIE
 #define GPS_IRQ_DISABLE UCA0IE &= ~UCRXIE
 
-#ifdef PCB_REV1
-#define GPS_BKP_ENABLE  P4OUT |= BIT6
-#define GPS_BKP_DISABLE P4OUT &= ~BIT6
-#endif
-
 #define CHARGE_ENABLE   P6OUT &= ~BIT1
 #define CHARGE_DISABLE  P6OUT |= BIT1
+
+#define CHARGING_STOPPED P1IN & BIT1
 
 #define I2C_MASTER_DIR  P4DIR
 #define I2C_MASTER_OUT  P4OUT
@@ -42,23 +36,46 @@
 
 // resistor divider ratio
 // calculated as (R1+R2)/R2 * 100 / 1023 * 100
-#define DIV_RAW         91
+#define DIV_RAW         41
 #define DIV_BAT         25
 
 #define STR_LEN 64
 char str_temp[STR_LEN];
 
-#define RTC_SET_PERIOD  86400 // maximum period (in seconds) after which the local RTC is set using gps values
-uint32_t rtca_set_next;
+#define RTC_SET_INTERVAL  86400 // maximum interval (in seconds) after which the local RTC is set using gps values
 
-#define VERSION         3   // must be incremented if struct settings_t changes
+uint32_t gps_trigger_next;
+uint32_t gprs_trigger_next;
+uint32_t gprs_tx_next;
+uint8_t gprs_tx_trig;
+
+// system time when the gprs is opperational again
+uint32_t gprs_blackout_lift;
+
+#define TG_NOW_MOVING   0x1
+#define TG_GEOFENCE     0x2
+#define TG_INTERVAL     0x4
+
+uint32_t rtca_set_next;
+uint8_t rtc_not_set;
+
+uint32_t charge_start;
+
+#define FLASH_VER       4   // must be incremented if struct settings_t changes
 #define FLASH_ADDR      SEGMENT_B
 
 void main_init(void);
 void check_events(void);
-void settings_init(uint8_t * addr);
+void settings_init(uint8_t * addr, const uint8_t location);
+void settings_apply(void);
 void adc_read(void);
 void store_pkt(void);
+
+void gps_enable(void);
+void gps_disable(void);
+
+#define VERSION_BASED           0
+#define FACTORY_DEFAULTS        1
 
 #define MAX_PHONE_LEN           16
 #define MAX_APN_LEN             20
@@ -66,18 +83,15 @@ void store_pkt(void);
 #define MAX_PASS_LEN            20
 #define MAX_SERVER_LEN          20
 
-#define CONF_SHOW_CELL_LOC      0x1
-#define CONF_MIN_INTERFERENCE   0x2
-#define CONF_ALWAYS_CHARGE      0x4
-
-#define GEOFENCE_TRIGGER        100
+#define CONF_IGNORE_SRV_REPLY   0x1
+#define CONF_IGNORE_CELL_LOC    0x2
 
 // this struct will end up written into an information flash segment
 // so it better not exceed 128bytes
-// tracy_settings_t ver1 is 108bytes long
+// tracy_settings_t FLASH_VER 4 is 121bytes long
 
 struct tracy_settings_t {
-    uint8_t ver;                // firmware version
+    uint8_t ver;                    // settings struct version
     uint16_t settings;
     uint8_t ctrl_phone_len;
     char ctrl_phone[MAX_PHONE_LEN];
@@ -91,15 +105,20 @@ struct tracy_settings_t {
     char server[MAX_SERVER_LEN];
     uint16_t port;
     uint8_t vref;
-    uint16_t gps_loop_period;
-    uint16_t gprs_loop_period;
+    uint16_t gps_loop_interval;
+    uint16_t gps_warmup_interval;
+    uint16_t gps_invalidate_interval;
+    uint16_t gprs_loop_interval;
+    uint16_t gprs_static_tx_interval;
+    uint16_t gprs_moving_tx_interval;
+    uint16_t geofence_trigger;
 };
 
 struct tracy_settings_t s;
 
 static const struct tracy_settings_t defaults = {
-    VERSION,                    // ver
-    CONF_SHOW_CELL_LOC | CONF_MIN_INTERFERENCE | CONF_ALWAYS_CHARGE,  // settings
+    FLASH_VER,                  // ver
+    0,                          // settings
     0,                          // ctrl_phone_len
     "",                         // ctrl_phone
     17,                         // gprs apn_len
@@ -111,16 +130,22 @@ static const struct tracy_settings_t defaults = {
     14,                         // server_len
     "trk.simplex.ro",           // server
     80,                         // port
-    200,                        // adc vref
-    10,                         // period (in seconds) between 2 gps measurements
-    600                         // period (in seconds) between 2 gsm connection attempts (used to get tower id data and sms commands)
+    198,                        // adc vref
+    180,                        // [sms:spl] time interval (in seconds) between 2 gps measurements
+    45,                         // [sms:spw] time interval (in seconds) between gps powerup and NMEA data gathering
+    20,                         // [sms:spi] time interval (in seconds) during which the best PDOP is searched for
+    900,                        // [sms:sml] time interval (in seconds) between 2 gsm connection attempts (used to get tower id data and sms commands)
+    3600,                       // [sms:smst] time interval (in seconds) between 2 HTTP POSTs when device is stationary
+    600,                        // [sms:smmt] time interval (in seconds) between 2 HTTP POSTs when device is on the move
+    300                         // [sms:spg] minimal distance (in meters) between 2 consecutive fixes at which the device is considered non-stationary
 };
 
 struct tracy_stat_t {
     uint16_t v_bat; // LiPo battery voltage multiplied by 100
     uint16_t v_raw; // 5v rail voltage multiplied by 100
     uint16_t http_post_version;
-    uint16_t http_msg_id;
+    uint16_t fix_id;
+    uint8_t should_charge;
 };
 
 struct tracy_stat_t stat;
@@ -134,13 +159,6 @@ typedef enum {
 } main_gps_state_t;
 
 main_gps_state_t gps_next_state;
-
-typedef enum {
-    MAIN_GPRS_IDLE,
-    MAIN_GPRS_START,
-} main_gprs_state_t;
-
-main_gprs_state_t gprs_next_state;
 
 
 #endif

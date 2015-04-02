@@ -25,4 +25,25 @@ struct loc_t
 
 struct loc_t l;
 
+// fake declarations since we don't run on designated hardware
+
+struct {
+    uint32_t sys;
+    uint16_t year;
+    uint8_t mon;
+    uint8_t day;
+    uint8_t dow;
+    uint8_t hour;
+    uint8_t min;
+    uint8_t sec;
+} rtca_time;
+
+//struct rtca_time_t rtca_time;
+#define RTC_SET_INTERVAL  0
+
+uint8_t rtc_not_set;
+uint32_t rtca_set_next;
+extern void rtca_set_time(void);
+
+
 #endif

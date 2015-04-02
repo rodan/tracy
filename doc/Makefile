@@ -5,6 +5,7 @@ PROJ = tracy_manual
 BASH := $(shell which bash || which bash)
 
 .PHONY: all
+.PHONY: check
 .PHONY: clean
 .PHONY: doc
 
@@ -17,8 +18,12 @@ $(foreach subdir,$(SUBDIRS), \
 	$(eval SRCS := $(SRCS) $(wildcard $(subdir)/*.tex)) \
 )
 
+check:
+	@aspell --mode tex --check $(SRCS)
+
 $(PROJ).pdf: $(SRCS)
 	@pdflatex $(SRCS)
+	@./makeglossaries $(PROJ)
 	@pdflatex $(SRCS)
 	#@echo -e "\n>> Building $@ as target $(TARGET)"
 	#@$(CC) $(CFLAGS) $(LDFLAGS) $(INCLUDES) -o $@ $+ && size $@

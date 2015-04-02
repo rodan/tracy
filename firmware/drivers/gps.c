@@ -192,7 +192,7 @@ uint8_t nmea_parse(char *s, const uint8_t len)
             mc_f.pdop = 9999;
         }
 
-        if (mc_t.fix && (mc_t.pdop < 300) && ((rtca_time.sys > rtca_set_next) || (rtca_time.min != mc_f.minute))) {
+        if (mc_t.fix && ((mc_t.pdop < 300) || rtc_not_set) && ((rtca_time.sys > rtca_set_next) || (rtca_time.min != mc_f.minute))) {
             rtca_time.year = mc_t.year;
             rtca_time.mon = mc_t.month;
             rtca_time.day = mc_t.day;
@@ -201,11 +201,11 @@ uint8_t nmea_parse(char *s, const uint8_t len)
             rtca_time.sec = mc_t.second;
 
             rtca_set_time();
-            rtca_set_next += RTC_SET_PERIOD;
+            rtc_not_set = 0;
+            rtca_set_next += RTC_SET_INTERVAL;
         }
 
-        // store the new fix only if pdop is better or FIX_INVALIDATE_PERIOD since last fix has elapsed
-        if (mc_t.fix && ((mc_t.pdop <= mc_f.pdop) || (rtca_time.sys - mc_f.fixtime > FIX_INVALIDATE_PERIOD))) {
+        if (mc_t.fix && (mc_t.pdop <= mc_f.pdop)) {
 
             mc_t.lat = nmea_to_float(mc_t.lat_deg, mc_t.lat_min, mc_t.lat_fr, mc_t.lat_suffix);
             mc_t.lon = nmea_to_float(mc_t.lon_deg, mc_t.lon_min, mc_t.lon_fr, mc_t.lon_suffix);
@@ -261,6 +261,8 @@ float nmea_to_float(const uint8_t deg, const uint8_t min, const uint16_t fr, con
     return rv;
 }
 
+#ifdef CONFIG_GEOFENCE
+
 void geofence_calc(void)
 {
     geo.lat_home = geo.lat_cur;
@@ -270,6 +272,7 @@ void geofence_calc(void)
     distance_between(geo.lat_home, geo.lon_home, geo.lat_cur, geo.lon_cur, &geo.distance, &geo.bearing);
 }
 
+#endif
 
 void distance_between(const float lat1, const float long1, const float lat2,
                 const float long2, float * distance, uint16_t * bearing) {

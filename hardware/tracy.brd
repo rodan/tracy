@@ -1217,7 +1217,7 @@ design rules under a new name.</description>
 <element name="C4" library="rcl" package="C0805" value="1uF" x="41.3" y="14.3" rot="MR180"/>
 <element name="C6" library="rcl" package="C0805" value="100nF" x="38.2" y="11.1" rot="MR90"/>
 <element name="U$7" library="SparkFun" package="OSHW-LOGO-M" value="OSHW-LOGOM" x="9.35" y="5.92" rot="MR0"/>
-<element name="U$1" library="TI_MSP430_v16" package="PT48" value="F55[0/1]X---PT48" x="15.6" y="23.9" rot="MR90"/>
+<element name="U$1" library="TI_MSP430_v16" package="PT48" value="MSP430F5510" x="15.6" y="23.9" rot="MR90"/>
 <element name="C10" library="rcl" package="C0805" value="470nF" x="5.6" y="17.4" rot="MR270"/>
 <element name="Y1" library="Simplex-FreqCtrl" package="CRYSTAL-SMD-3.2X1.5" value="32768Hz CFPX-217 12.5pF" x="14.1" y="15.5" rot="MR180"/>
 <element name="C23" library="rcl" package="C0805" value="22pF" x="15.1" y="12.3" rot="MR270"/>
@@ -1238,8 +1238,8 @@ design rules under a new name.</description>
 <element name="R14" library="rcl" package="R0805W" value="DNP 10k th" x="28.94" y="2.14" rot="MR180"/>
 <element name="R15" library="rcl" package="R0805W" value="1k1" x="14.3" y="1.9" rot="R180"/>
 <element name="C12" library="rcl" package="C0805" value="4u7" x="34" y="21.55" rot="R90"/>
-<element name="C13" library="rcl" package="C0805" value="100n" x="34" y="25.7" rot="R90"/>
-<element name="C14" library="rcl" package="C0805" value="22p" x="42.7" y="9.65"/>
+<element name="C13" library="rcl" package="C0805" value="100nF" x="34" y="25.7" rot="R90"/>
+<element name="C14" library="rcl" package="C0805" value="22pF" x="42.7" y="9.65"/>
 <element name="T2" library="transistor" package="SOT23" value="BC846" x="3.1" y="9.3"/>
 <element name="R18" library="rcl" package="R0805W" value="47k" x="3.1" y="6.1" rot="R180"/>
 <element name="R20" library="rcl" package="R0805W" value="4k7" x="3.1" y="4"/>
