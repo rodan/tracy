@@ -18,6 +18,7 @@ my $input;
 my $clean;
 $input->{'imei'} = $CGI->param('i');
 $input->{'onlyrow'} = $CGI->param('r');
+$input->{'rowno'} = $CGI->param('n');
 $input->{'maptype'} = $CGI->param('m');
 
 print "Content-Type: text/html\n\n";
@@ -34,6 +35,16 @@ if ($input->{'onlyrow'}) {
     if ($input->{'onlyrow'} =~ /^([0-9]{1,15})$/) {
        $clean->{'onlyrow'} = $1;
     }
+}
+
+if ($input->{'rowno'}) {
+    if ($input->{'rowno'} =~ /^([0-9]{1,5})$/) {
+        $clean->{'rowno'} = $1;
+    } else {
+        $clean->{'rowno'} = 200;
+    }
+} else {
+        $clean->{'rowno'} = 200;
 }
 
 if ($input->{'maptype'}) {
@@ -156,7 +167,7 @@ if ($clean->{'onlyrow'} && !$clean->{'maptype'}) {
     
         for (my $j = 0; $j < ($i->{'payload'} & 0x7); $j++) {
     
-            if (( "$cell[$j]->{'id'}" != "65535") && ("$cell[$j]->{'id'}" != "0")) {
+            if (( "$cell[$j]->{'id'}" != "65535")) { # && ("$cell[$j]->{'id'}" != "0")) {
                 $table->addRow( $j, $cell[$j]->{'rxl'}, $cell[$j]->{'id'}, $cell[$j]->{'mcc'}, $cell[$j]->{'mnc'}, $cell[$j]->{'lac'},
                 $cell[$j]->{'latitude'}, $cell[$j]->{'longitude'});
     
@@ -250,7 +261,7 @@ EOF_googlemap2
     fillOpacity: 0.1,
     map: map,
     center: new google.maps.LatLng($avg_lat, $avg_lon),
-    radius: 200
+    radius: 500
 
   });
 
@@ -273,7 +284,7 @@ if ($i->{'payload'} & 0x10) {
     fillOpacity: 0.3,
     map: map,
     center: new google.maps.LatLng($i->{'latitude'}, $i->{'longitude'}),
-    radius: 50
+    radius: 100
   });
 EOF_googlemap4
 }
@@ -305,7 +316,7 @@ EOF_googlemap5
     print '<tr><td class="title">id</td><td class="title">timestamp (GMT)</td><td class="title">latitude</td><td class="title">longitude</td><td class="title">map</td><td class="title">PDOP</td><td class="title">gd</td><td class="title">V</td><td class="title">avg cell coord</td></tr>' . "\n";
 
 
-    $sth = $dbh->prepare('SELECT row_id, v_bat, v_raw, payload, timestamp, latitude, longitude, pdop, geo_distance, avg_latitude, avg_longitude FROM live order by row_id DESC LIMIT 200');
+    $sth = $dbh->prepare('SELECT row_id, v_bat, v_raw, payload, timestamp, latitude, longitude, pdop, geo_distance, avg_latitude, avg_longitude FROM live order by row_id DESC LIMIT ' . $clean->{'rowno'});
     $sth->execute();
 
     my $row;
