@@ -79,7 +79,7 @@ static void schedule(enum sys_message msg)
 
         adc_check_next = rtca_time.sys + adc_check_interval;
 
-        if ((stat.v_raw > 450) && (stat.v_raw < 550)) {
+        if ((stat.v_raw > 400) && (stat.v_raw < 550)) {
             if (CHARGING_STOPPED) {
                 if (stat.should_charge) {
                     CHARGE_DISABLE;
