@@ -23,17 +23,12 @@ check:
 
 $(PROJ).pdf: $(SRCS)
 	@pdflatex $(SRCS)
-	@./makeglossaries $(PROJ)
+	@perl ~/texmf/scripts/makeglossaries $(PROJ)
 	@pdflatex $(SRCS)
-	#@echo -e "\n>> Building $@ as target $(TARGET)"
-	#@$(CC) $(CFLAGS) $(LDFLAGS) $(INCLUDES) -o $@ $+ && size $@
-	#@#@python tools/msp430-ram-usage $@
+	@pdflatex $(SRCS)
 
 clean: $(SUBDIRS)
-	#@for subdir in $(SUBDIRS); do \
-	#	echo "Cleaning $$subdir .."; rm -f $$subdir/*.o; \
-	#done
-	@rm -f $(PROJ).{aux,log,out,pdf,toc} *.log
+	@rm -f $(PROJ).{aux,log,out,pdf,toc,glg,glo,gls,ist,xdy} *.log
 
 doc:
 	rm -rf doc/*

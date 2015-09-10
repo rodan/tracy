@@ -23,9 +23,11 @@
 #define GPS_IRQ_ENABLE  UCA0IE |= UCRXIE
 #define GPS_IRQ_DISABLE UCA0IE &= ~UCRXIE
 
+// charging is enabled when CE is low
 #define CHARGE_ENABLE   P6OUT &= ~BIT1
 #define CHARGE_DISABLE  P6OUT |= BIT1
 
+// read CHG - 0 if charging
 #define CHARGING_STOPPED P1IN & BIT1
 
 #define I2C_MASTER_DIR  P4DIR

@@ -1,13 +1,14 @@
 
 \documentclass[a4paper,twoside]{refart}
 
+\hfuzz=10pt
+
 \usepackage{longtable}
 \usepackage{graphicx} 
 \usepackage[bitheight=6ex]{bytefield}
 \usepackage{gensymb}
 \usepackage[stable]{footmisc}
 \usepackage{multirow}
-\usepackage{hyperref}
 \usepackage[toc]{glossaries}
 
 \makeglossaries
@@ -136,13 +137,14 @@ tabsize=2, % Number of spaces per tab in the code
 \begin{tabular}{ c p{8cm} }
 
     \raisebox{-\totalheight}{\includegraphics[width=77mm, height=71mm]{img/izometric}} &
-    \textbf{Description:} This module can be used to track goods wherever gsm signal is present. It is optimized for very low power consumption and has configurable timings which would make it fit to any use scenario.
+    \textbf{Description:} This module can be used to track goods wherever gsm signal is present. It is optimized for very low power consumption and has configurable timings which would make it fit to any use case scenario.
 
-     \textbf{Size:} 50mm x 38mm x 9mm
+    \textbf{Main features:} both hardware and software are open-source, an f-ram chip for input data buffering, resilient software architecture, all gps/gsm operations controlled by timer interrupts which allows control of both subsystems in the same time, great flexibility given by configuration variables
+
+    \textbf{Size:} 50mm x 38mm x 9mm
      
-     \textbf{Voltage input:} 3.7V battery and optional 5V DC for charging
+    \textbf{Voltage input:} 3.7V battery and optional 5V DC for charging
 
-     \textbf{License:} both hardware and software are under GPL OpenSource license
 \end{tabular}
 \end{fulltable}
 
@@ -182,21 +184,21 @@ Below is a step-by-step guide for installing a local SIM card into the tracking 
 
 \begin{itemize}
     \item buy a SIM card. any SIM card will do: prepay-ed, subscription (but do keep in mind that no voice transmission will ever be used on this SIM tho), machine to machine (also known as \gls{m2m}). mini SIM form factor cards are needed.
-    \item obtain the associated phone number and enter it into your phone's address-book - don't forget to also add the country prefix so you can contact the tracker while abroad. it's "+4" prefixed to the number in Romania.
-    \item place the newly purchased SIM card into an actual phone
+    \item obtain the associated phone number and enter it into your phone's address-book - don't forget to also add the country prefix so you can contact the tracker while abroad.
+    \item place the newly purchased SIM card into a mobile phone
     \item if it has no initial credit, fill it with at least 5EUR
     \item make sure no PIN is set on the SIM itself
     \item disable any 'best value plan' the provider might have selected - this SIM will mostly be used to connect to the internet, and it will send a minimal number of SMS messages during the setup process. the only extra options that are needed are the cheapest internet plan available ('100MB internet for 1 Month - 2EUR' for vodafone). also activate data roaming.
     \item disable 'VOX voicemail' by calling \#\#002\#
     \item place the SIMs back into their proper locations: the newly purchased one in the tracker and your old one into the phone.
-    \item while inserting the SIM into the tracker write down the last 4 IMEI digits that you see written on the SIM900 IC that is adjacent to the SIM holder.
+    \item while inserting the SIM into the tracker write down the 15 IMEI digits that you see written on the SIM900 IC that is adjacent to the SIM holder.
     \item send a SMS from the phone to the tracker that contains:
 
 \begin{lstlisting}
 code 5551
 \end{lstlisting}
 
-'5551' will need to be replaced by those digits you wrote down during the previous step
+'5551' will need to be replaced by the last 4 digits you wrote down during the previous step
 
     \item power on the tracker and wait. it only connects to the gsm network every 15 minutes by default and it has a 1 minute interval in which it's actively listening to incoming SMS messages. once the code is received and acknowledged you will get a 'code ok' reply on the phone. from this moment on you can send commands to the tracker.
 \end{itemize}
@@ -811,6 +813,44 @@ all the timings in this section are used for scheduling the respective actions. 
 \newpage
 \subsection{Hardware}
 
+\subsubsection{Absolute maximum ratings}
+
+\begin{tabular}{ |c|c|l|c|c|c| }
+    \hline
+    \multicolumn{3}{|c|}{} & \multicolumn{2}{|c|}{value} & unit \\ \cline{4-6}
+    \multicolumn{3}{|c|}{} & min & max & \\ \hline
+    \multicolumn{1}{|c|}{\multirow{2}{*}{$V_{I}$}} & \multicolumn{1}{|c|}{\multirow{2}{*}{input voltage}} &    IN (with respect to VSS) & -0.3    & 28  & V \\ \cline{3-6}
+                &                       &  VBAT (with respect to VSS)   & -0.3  & 5   & V \\ \hline
+    $V_{IO}$ & \multicolumn{2}{|l|}{IO voltage thru the debug connector}                      & -0.3  & 3.1 & V \\ \hline
+    $T_{stg}$   & \multicolumn{2}{|l|}{storage temperature}             & -65   & 150 & \degree C \\  \hline
+    $T_{op}$   & \multicolumn{2}{|l|}{operating temperature}          & 0     & 125 & \degree C \\  \hline
+\end{tabular}
+
+Stresses above those listed in absolute maximum ratings may cause permanent damage to the device. This is a stress rating only, functional operation of the device at these or any other conditions above those indicated in the operational section of this specification is not implied. Exposure to absolute maximum rating conditions for extended periods may affect device reliability.
+
+\subsubsection{Electrical characteristics}
+
+\begin{tabular}{ |c|l|c|c|c|c| }
+    \hline
+    \multicolumn{2}{|c|}{} & \multicolumn{3}{|c|}{value} & unit \\ \cline{3-6}
+    \multicolumn{2}{|c|}{} & min & typ & max & \\ \hline
+    $V_{I}$ & input voltage range                      & 4.35  & 5     & 6.4  & V \\ \hline
+    $I_{I}$ & input current                            & X     & X     & 1.5  & A \\ \hline
+    $V_{BAT}$ & battery voltage range                  & 3.5   &       & 4.1  & V \\ \hline
+    $I_{BAT}$ & battery current on sim900 poweron      &       &       & 3200 & mA \\ \hline
+    $I_{BAT}$ & battery current while sim900 tx        &       &       & 1600 & mA \\ \hline
+    $I_{BAT}$ & battery current while gps on           &       & 25    & 45   & mA \\ \hline
+    $I_{BAT}$ & battery current while sleeping         & 70    &       & 75   & $\mu$A \\ \hline
+    $I_{CHG}$ & battery charging current \footnotemark &       & 0.3   &   & A \\ \hline
+    $V_{IO}$ & IO voltage thru the debug connector     & 0     &       & 2.8  & V \\ \hline
+\end{tabular}
+
+\footnotetext{The charging current is configurable by changing the value of R11. See the module schematic and the bq24072 datasheet for details}
+
+
+
+\subsubsection{Components}
+
 \begin{fulltable}
 \begin{tabular}{ c c }
     \raisebox{-\totalheight}{\includegraphics[width=80mm, height=65mm]{img/hw_front}} &
@@ -869,44 +909,10 @@ all the timings in this section are used for scheduling the respective actions. 
     \end{itemize}
 
 \marginlabel{\numcircledtikz{8} 2.8V rail}
-    the only power rail that remains on. it can be used to power low voltage sensors/accelerometers/etc via the programming connector.
-
-\subsubsection{Absolute maximum ratings}
-
-\begin{tabular}{ |c|c|l|c|c|c| }
-    \hline
-    \multicolumn{3}{|c|}{} & \multicolumn{2}{|c|}{value} & unit \\ \cline{4-6}
-    \multicolumn{3}{|c|}{} & min & max & \\ \hline
-    \multicolumn{1}{|c|}{\multirow{2}{*}{$V_{I}$}} & \multicolumn{1}{|c|}{\multirow{2}{*}{input voltage}} &    IN (with respect to VSS) & -0.3    & 28  & V \\ \cline{3-6}
-                &                       &  VBAT (with respect to VSS)   & -0.3  & 5   & V \\ \hline
-    $V_{IO}$ & \multicolumn{2}{|l|}{IO voltage thru the debug connector}                      & -0.3  & 3.1 & V \\ \hline
-    $T_{stg}$   & \multicolumn{2}{|l|}{storage temperature}             & -65   & 150 & \degree C \\  \hline
-    $T_{op}$   & \multicolumn{2}{|l|}{operating temperature}          & 0     & 125 & \degree C \\  \hline
-\end{tabular}
-
-Stresses above those listed in absolute maximum ratings may cause permanent damage to the device. This is a stress rating only, functional operation of the device at these or any other conditions above those indicated in the operational section of this specification is not implied. Exposure to absolute maximum rating conditions for extended periods may affect device reliability.
-
-\subsubsection{Electrical characteristics}
-
-\begin{tabular}{ |c|l|c|c|c|c| }
-    \hline
-    \multicolumn{2}{|c|}{} & \multicolumn{3}{|c|}{value} & unit \\ \cline{3-6}
-    \multicolumn{2}{|c|}{} & min & typ & max & \\ \hline
-    $V_{I}$ & input voltage range                      & 4.35  & 5     & 6.4  & V \\ \hline
-    $I_{I}$ & input current                            & X     & X     & 1.5  & A \\ \hline
-    $V_{BAT}$ & battery voltage range                  & 3.5   &       & 4.1  & V \\ \hline
-    $I_{BAT}$ & battery current on sim900 poweron      &       &       & 3200 & mA \\ \hline
-    $I_{BAT}$ & battery current while sim900 tx        &       &       & 1600 & mA \\ \hline
-    $I_{BAT}$ & battery current while gps on           &       & 25    & 45   & mA \\ \hline
-    $I_{BAT}$ & battery current while sleeping         & 70    &       & 75   & $\mu$A \\ \hline
-    $I_{CHG}$ & battery charging current \footnotemark &       & 0.3   &   & A \\ \hline
-    $V_{IO}$ & IO voltage thru the debug connector     & 0     &       & 2.8  & V \\ \hline
-\end{tabular}
-
-\footnotetext{The charging current is configurable by changing the value of R11. See the module schematic and the bq24072 datasheet for details}
+    the only power rail that remains on during microcontroller standby intervals. it can be used to power low voltage sensors/accelerometers/etc via the programming connector.
 
 \newpage
-\section{Connectors}
+\subsubsection{Connectors}
 
 \begin{fulltable}
     \centering
@@ -1017,7 +1023,6 @@ for all pin connectors, pin 1 is marked by a small triangle in the silkscreen
 
 
 \newpage
-
 
 %\glsaddall
 \printglossaries
