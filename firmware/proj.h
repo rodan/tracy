@@ -61,6 +61,8 @@ uint32_t gprs_blackout_lift;
 uint32_t rtca_set_next;
 uint8_t rtc_not_set;
 
+uint32_t charge_start;
+
 #define FLASH_VER       4   // must be incremented if struct settings_t changes
 #define FLASH_ADDR      SEGMENT_B
 
@@ -83,9 +85,8 @@ void gps_disable(void);
 #define MAX_PASS_LEN            20
 #define MAX_SERVER_LEN          20
 
-#define CONF_IGNORE_CELL_LOC    0x1
-#define CONF_ALWAYS_CHARGE      0x2
-#define CONF_IGNORE_SRV_REPLY   0x4
+#define CONF_IGNORE_SRV_REPLY   0x1
+#define CONF_IGNORE_CELL_LOC    0x2
 
 // this struct will end up written into an information flash segment
 // so it better not exceed 128bytes
@@ -146,6 +147,7 @@ struct tracy_stat_t {
     uint16_t v_raw; // 5v rail voltage multiplied by 100
     uint16_t http_post_version;
     uint16_t fix_id;
+    uint8_t should_charge;
 };
 
 struct tracy_stat_t stat;

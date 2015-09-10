@@ -21,6 +21,7 @@ $ENV{PATH}='';
 
 my $database = undef;
 my $database_cell = "/var/lib/tracking/cell_cache.db";
+my $cellpos_bin = "/usr/bin/python ./cellpos.py";
 my $verbose  = 0;
 my $dryrun = 0;
 
@@ -51,26 +52,41 @@ my $dbh_cell = DBI->connect($dsn_cell, $username, $password, { RaiseError => 1 }
 sub cell_tower_pos {
     my ($cell_id, $lac, $mcc, $mnc) = @_;
 
+    #if ($verbose) {
+    #    print 'SELECT lat, long FROM live where cell_id = "' . $cell_id . '" and lac = "' . $lac . '" and mnc = "' . $mnc . '" and mcc = "' . $mcc . '";' . "\n";
+    #}
+
     # try to get the values from local cache db
     my $sth = $dbh_cell->prepare('SELECT lat, long FROM live where cell_id = "' . $cell_id . '" and lac = "' . $lac . '" and mnc = "' . $mnc . '" and mcc = "' . $mcc . '";');
     $sth->execute();
 
     my $row_cell = $sth->fetchrow_arrayref();
 
-    if (!$row_cell) {
-        my $coord_cell = `/usr/bin/python ./cellpos.py $cell_id $lac $mcc $mnc`;
-        $coord_cell =~ s/[()]//g;
-        (@$row_cell[0], @$row_cell[1]) = split(', ', $coord_cell, 2);
+    if ($row_cell) {
+        # return cached version
+        return (@$row_cell[0], @$row_cell[1]);
 
-        if ($row_cell) {
-            # insert into local cache
-            my $u = time;
-            my $sth = $dbh_cell->prepare('INSERT INTO live (date, cell_id, lac, mnc, mcc, lat, long) VALUES ("' . $u . '", "' . $cell_id . '", "' . $lac . '", "' . $mnc . '", "' . $mcc .'", "' . @$row_cell[0] . '", "' . @$row_cell[1] . '")');
-            $sth->execute();
+    } else {
+        # try to find out the location
+        #my $dir = getcwd;
+        my $coord_cell = `$cellpos_bin $cell_id $lac $mcc $mnc`;
+
+        if ($coord_cell) {
+            $coord_cell =~ s/[()]//g;
+            (@$row_cell[0], @$row_cell[1]) = split(', ', $coord_cell, 2);
+
+            if ($row_cell) {
+                # insert into local cache
+                my $u = time;
+                my $sth = $dbh_cell->prepare('INSERT INTO live (date, cell_id, lac, mnc, mcc, lat, long) VALUES ("' . $u . '", "' . $cell_id . '", "' . $lac . '", "' . $mnc . '", "' . $mcc .'", "' . @$row_cell[0] . '", "' . @$row_cell[1] . '")');
+                $sth->execute();
+            }
+        
+            return (@$row_cell[0], @$row_cell[1]);
+        } else {
+            return ('', '');
         }
     }
-
-    return (@$row_cell[0], @$row_cell[1]);
 }
 
 sub avg_coord {
@@ -83,20 +99,29 @@ sub avg_coord {
     my $X = 0;
     my $Y = 0;
     my $Z = 0;
+    my $invalid_tower = 0;
 
     for (my $i = 0; $i < $elem; $i++) {
 
-        my $lat = deg2rad($cell[$i]->{'latitude'});
-        my $lon = deg2rad($cell[$i]->{'longitude'});
+        # ignore cell tower location if cell id is zero
+        if ( "$cell[$i]->{'id'}" == "0" ) {
+            $invalid_tower++;
+        } else {
 
-        my $x = cos($lat) * cos($lon);
-        my $y = cos($lat) * sin($lon);
-        my $z = sin($lat);
+            my $lat = deg2rad($cell[$i]->{'latitude'});
+            my $lon = deg2rad($cell[$i]->{'longitude'});
 
-        $X += $x;
-        $Y += $y;
-        $Z += $z;
+            my $x = cos($lat) * cos($lon);
+            my $y = cos($lat) * sin($lon);
+            my $z = sin($lat);
+
+            $X += $x;
+            $Y += $y;
+            $Z += $z;
+        }
     }
+
+    $elem -= $invalid_tower;
 
     $X /= $elem;
     $Y /= $elem;
@@ -151,20 +176,24 @@ while ($row = $sth->fetchrow_arrayref()) {
         ($cell[$i]->{'latitude'}, $cell[$i]->{'longitude'}) = cell_tower_pos($cell[$i]->{'id'}, $cell[$i]->{'lac'}, $cell[$i]->{'mcc'}, $cell[$i]->{'mnc'});
         if ($verbose) {
             print '+';
+            #print $cell[$i]->{'latitude'}, ' ', $cell[$i]->{'longitude'};
         }
     }
-        ($tr->{'avg_latitude'}, $tr->{'avg_longitude'}) = avg_coord();
-        if ($verbose) {
-            print '}, ';
-        }
-        $sth_update = $dbh->prepare('UPDATE live SET c0_latitude = "' . $cell[0]->{'latitude'} . '", c0_longitude = "' . $cell[0]->{'longitude'} .
+
+    ($tr->{'avg_latitude'}, $tr->{'avg_longitude'}) = avg_coord();
+
+    if ($verbose) {
+        print '}, ';
+    }
+    
+    $sth_update = $dbh->prepare('UPDATE live SET c0_latitude = "' . $cell[0]->{'latitude'} . '", c0_longitude = "' . $cell[0]->{'longitude'} .
                 '", c1_latitude = "' . $cell[1]->{'latitude'} . '", c1_longitude = "' . $cell[1]->{'longitude'} .
                 '", c2_latitude = "' . $cell[2]->{'latitude'} . '", c2_longitude = "' . $cell[2]->{'longitude'} .
                 '", c3_latitude = "' . $cell[3]->{'latitude'} . '", c3_longitude = "' . $cell[3]->{'longitude'} .
                 '", avg_latitude = "' . $tr->{'avg_latitude'} . '", avg_longitude = "' . $tr->{'avg_longitude'} .
                 '", calc_status = "' . 0x1 .
                 '" WHERE row_id = ' . $tr->{'row_id'});
-        $sth_update->execute();
+    $sth_update->execute();
 }
 
 $sth->finish();

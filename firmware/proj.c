@@ -74,22 +74,36 @@ static void schedule(enum sys_message msg)
 {
 
     // battery related
-    if (!(s.settings & CONF_ALWAYS_CHARGE)) {
-        if (rtca_time.sys > adc_check_next) {
-            adc_check_next = rtca_time.sys + adc_check_interval;
-            adc_read();
+    if (rtca_time.sys > adc_check_next) {
+        adc_read();
 
-            if (stat.v_bat < 380) {
-                // force charging
-                CHARGE_ENABLE;
-            } else if (stat.v_bat > 400) {
-                if (CHARGING_STOPPED) {
+        adc_check_next = rtca_time.sys + adc_check_interval;
+
+        if ((stat.v_raw > 400) && (stat.v_raw < 550)) {
+            if (CHARGING_STOPPED) {
+                if (stat.should_charge) {
                     CHARGE_DISABLE;
+                    stat.should_charge = false;
+                    adc_check_next = rtca_time.sys + 300;
+                } else {
+                    if (stat.v_bat < 390) {
+                        CHARGE_ENABLE;
+                        stat.should_charge = true;
+                        charge_start = rtca_time.sys;
+                    }
+                }
+            } else {
+                if (rtca_time.sys > charge_start + 36000) {
+                    CHARGE_DISABLE;
+                    stat.should_charge = false;
+                    adc_check_next = rtca_time.sys + 3600;
                 }
             }
+        } else {
+            CHARGE_DISABLE;
+            stat.should_charge = false;
         }
     }
-
 
     // GPS related
     if (rtca_time.sys > gps_trigger_next) {
@@ -143,21 +157,7 @@ static void schedule(enum sys_message msg)
         }
     }
 
-    /*
-    // show current status
-    if (rtca_time.sys > status_show_next) {
-        status_show_next = rtca_time.sys + 300;
-        snprintf(str_temp, STR_LEN, "err 0x%04x\tm.e 0x%05lx\tntx %lu \r\n", 
-                sim900.err, m.e, fm24_data_len(m.seg[0], m.e));
-        uart0_tx_str(str_temp, strlen(str_temp));
-
-        //snprintf(str_temp, STR_LEN, "spl %u spw %u spi %u\r", s.gps_loop_interval, s.gps_warmup_interval, s.gps_invalidate_interval);
-        //uart0_tx_str(str_temp, strlen(str_temp));
-    }
-    */
-
     // GPRS related
-
     // force the HTTP POST from time to time
     if (rtca_time.sys > gprs_tx_next) {
         if (gprs_tx_trig & TG_NOW_MOVING) {
@@ -194,29 +194,6 @@ static void schedule(enum sys_message msg)
 }
 #endif
 
-#ifdef CALIBRATION
-static void adc_calibration(enum sys_message msg)
-{
-    uint16_t q_bat = 0;
-    uint16_t q_raw = 0;
-
-    uint32_t v_bat, v_raw;
-
-    adc10_read(3, &q_bat, REFVSEL_1);
-    adc10_read(2, &q_raw, REFVSEL_1);
-
-    v_bat = (uint32_t) q_bat *s.vref * DIV_BAT / 10000;
-    v_raw = (uint32_t) q_raw *s.vref * DIV_RAW / 10000;
-
-    stat.v_bat = v_bat;
-    stat.v_raw = v_raw;
-
-    snprintf(str_temp, STR_LEN, "bat %u\t%u raw %u\t%u\r\n", q_bat, stat.v_bat,
-             q_raw, stat.v_raw);
-    uart0_tx_str(str_temp, strlen(str_temp));
-}
-#endif
-
 int main(void)
 {
     main_init();
@@ -227,7 +204,7 @@ int main(void)
     sim900.next_state = SIM900_OFF;
 
     settings_init(SEGMENT_B, VERSION_BASED);
-    settings_apply();
+    //settings_apply();
 
     m.e = 0x0;
     m.seg[0] = 0x0;
@@ -451,11 +428,6 @@ void settings_init(uint8_t * addr, const uint8_t location)
 
 void settings_apply()
 {
-    if (s.settings & CONF_ALWAYS_CHARGE) {
-        CHARGE_ENABLE;
-    } else {
-        CHARGE_DISABLE;
-    }
 }
 
 void adc_read()
@@ -481,6 +453,8 @@ void store_pkt()
     uint16_t rv = 0;
 
     me_temp = m.e;
+
+    adc_read();
 
     if (!(s.settings & CONF_IGNORE_CELL_LOC)) {
         for (i = 0; i < 4; i++) {

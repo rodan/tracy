@@ -1,17 +1,16 @@
 
- gps tracker with a gprs connection for reporting and command input.
+ gps tracker based on a MSP430F5510 uC with a gprs connection for reporting and command input.
 
  source:       https://github.com/rodan/tracy 
  author:       Petre Rodan <petre.rodan@simplex.ro>
  license:      GNU GPLv3
 
 Features:
- - an MSP430F5510 uC for very low quiescent current
- - programming/debug via TI spy-bi-wire
- - can be powered from USB friendly 5V and also has a LiPo cell for standalone opperation
- - receives settings and commands via SMS once a phone is authenticated
- - can send location via gprs to a website or via SMS to a phone
- - analog readout of battery voltage, input voltage
+ - both hardware and software are opensource
+ - an f-ram chip for input data buffering
+ - resilient software architecture
+ - all gps/gsm operations controlled by timer interrupts which allows control of both sub-systems in the same time
+ - great flexibility given by configuration variables
 
  prototype pictures available here:  http://goo.gl/BzzAdJ
-
+ documentation available here:       https://www.simplex.ro/en/tracy.html

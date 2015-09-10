@@ -743,8 +743,9 @@ static void sim900_state_machine(enum sys_message msg)
                                 sim900_tx_str("code ok\r", 8);
                             break;
                             case SMS_VREF:
-                                snprintf(str_temp, STR_LEN, "vref %d vbat %d.%02dV\r",
-                                    s.vref, stat.v_bat/100, stat.v_bat%100 );
+                                snprintf(str_temp, STR_LEN, "vref %d vbat %d.%02dV vraw %d.%02dV\r",
+                                    s.vref, stat.v_bat/100, stat.v_bat%100, 
+                                    stat.v_raw/100, stat.v_raw%100);
                                 sim900_tx_str(str_temp, strlen(str_temp));
                             break;
                         }
