@@ -2,7 +2,7 @@
 //  software bitbang of serial protocols
 //  currently supported:
 //        - i2c master
-//  author:          Petre Rodan <petre.rodan@simplex.ro>
+//  author:          Petre Rodan <2b4eda@subdimension.ro>
 //  available from:  https://github.com/rodan/
 //  license:         GNU GPLv3
 

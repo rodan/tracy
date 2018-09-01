@@ -2,7 +2,7 @@
 // minimal NMEA parser library. decodes GPRMC and GPGSA sentences
 // checksum is ignored
 //
-//   author:          Petre Rodan <petre.rodan@simplex.ro>
+//   author:          Petre Rodan <2b4eda@subdimension.ro>
 //   available from:  https://github.com/rodan/
 //   license:         GNU GPLv3
 

@@ -1,7 +1,7 @@
 
 //  GPS/GPRS tracking system based on a MSP430F5510 uC
 //
-//  author:          Petre Rodan <petre.rodan@simplex.ro>
+//  author:          Petre Rodan <2b4eda@subdimension.ro>
 //  available from:  https://github.com/rodan/
 //  license:         GNU GPLv3
 

@@ -3,6 +3,7 @@
 
 #include <msp430.h>
 #include <stdlib.h>
+#include <inttypes.h>
 #include "config.h"
 
 // msp430's stdlib.h is missing these

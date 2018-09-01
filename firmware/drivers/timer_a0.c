@@ -6,7 +6,7 @@
 //   CCR3 is used for timer_a0_delay_noblk_ccr3()
 //   CCR4 is currently unused
 //
-//   author:          Petre Rodan <petre.rodan@simplex.ro>
+//   author:          Petre Rodan <2b4eda@subdimension.ro>
 //   available from:  https://github.com/rodan/
 //   license:         GNU GPLv3
 
@@ -16,6 +16,7 @@
 void timer_a0_init(void)
 {
     __disable_interrupt();
+    _NOP();
     timer_a0_ovf = 0;
 
     TA0EX0 |= TAIDEX_7;

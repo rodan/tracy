@@ -1,7 +1,7 @@
 
 // driver for CYPRESS FM24Vxx f-ram chips
 //
-//   author:          Petre Rodan <petre.rodan@simplex.ro>
+//   author:          Petre Rodan <2b4eda@subdimension.ro>
 //   available from:  https://github.com/rodan/
 //   license:         GNU GPLv3
 

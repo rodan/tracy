@@ -4,7 +4,7 @@
 //  at least a 1ms delay should be inserted between two adc10_read()s or
 //  between an adc10_read(port, &rv) and the use of rv.
 //
-//  author:          Petre Rodan <petre.rodan@simplex.ro>
+//  author:          Petre Rodan <2b4eda@subdimension.ro>
 //  available from:  https://github.com/rodan/
 //  license:         GNU GPLv3
 
