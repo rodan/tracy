@@ -35,6 +35,11 @@ static void sim900_tasks(enum sys_message msg)
 {
     uint8_t i;
 
+#ifdef DEBUG_GPRS
+    snprintf(str_temp, STR_LEN, "highlevel machine task:%d t_n_s:%d\r\n", sim900.task, sim900.next_state);
+    uart0_tx_str(str_temp, strlen(str_temp));
+#endif
+
     switch (sim900.task) {
         case TASK_DEFAULT:
             switch (sim900.task_next_state) {
@@ -263,6 +268,11 @@ static void sim900_tasks(enum sys_message msg)
 static void sim900_state_machine(enum sys_message msg)
 {
     uint32_t i;
+
+#ifdef DEBUG_GPRS
+    snprintf(str_temp, STR_LEN, "lowlevel machine cmd:%d next_state:%d\r\n", sim900.cmd, sim900.next_state);
+    uart0_tx_str(str_temp, strlen(str_temp));
+#endif
 
     switch (sim900.cmd) {
 

@@ -527,15 +527,13 @@ Tracking information is sent to the server by TCP packets via the HTTP POST meth
 
 In order to have a good bandwidth usage the data is sent in a binary format and the \gls{f-ram} chip that is being used allows the data to be buffered and sent out at set intervals. Most scripting languages have an unpack() function that can correctly decode these packets. A sample perl script is provided in the repository (see \verb"server/scripts/l1").
 
-Each positional measurement will be placed in a subsegment. At least one of these subsegments will constitute one segment that is sent out together with a HTTP header to create an HTTP POST request (see Figure~\ref{fig:packet-format}).
-
 \begin{figure}[htbp]
   \centering
   \begin{bytefield}{32}
     \bitheader{0,0} \\
     \begin{rightwordgroup}{HTTP \\ POST \\ method \\ header}
         \bitbox{32}{POST /u1 HTTP/1.0} \\
-        \bitbox{32}{Host: trk.simplex.ro} \\
+        \bitbox{32}{Host: trk.subdimension.ro} \\
         \bitbox{32}{Content-Type: application/binary} \\
         \bitbox{32}{Content-Length: 00000}
     \end{rightwordgroup} \\
@@ -548,8 +546,10 @@ Each positional measurement will be placed in a subsegment. At least one of thes
   \end{rightwordgroup}
   \end{bytefield}
   \caption{packet format}
-  \label{fig:packet-format}
+  \label{fig:packetformat}
 \end{figure}
+
+Each positional measurement will be placed in a subsegment. At least one of these subsegments will constitute one segment that is sent out together with a HTTP header to create an HTTP POST request (see Figure~\ref{fig:packetformat}).
 
 \begin{figure}[htbp]
   \centering

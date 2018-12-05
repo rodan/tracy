@@ -81,41 +81,41 @@ typedef enum {
 
 // commands that are compatible with the low level state machine
 typedef enum {
-    CMD_NULL,
-    CMD_ON,
-    CMD_OFF,
-    CMD_FIRST_PWRON,
-    CMD_GET_READY,
-    CMD_GET_IMEI,
-    CMD_SEND_SMS,
-    CMD_START_GPRS,
-    CMD_POST_GPRS,
-    CMD_CLOSE_GPRS,
-    CMD_PARSE_SMS,
-    CMD_PARSE_CENG
+    CMD_NULL,               // 0
+    CMD_ON,                 // 1
+    CMD_OFF,                // 2
+    CMD_FIRST_PWRON,        // 3
+    CMD_GET_READY,          // 4
+    CMD_GET_IMEI,           // 5
+    CMD_SEND_SMS,           // 6
+    CMD_START_GPRS,         // 7
+    CMD_POST_GPRS,          // 8
+    CMD_CLOSE_GPRS,         // 9
+    CMD_PARSE_SMS,          // 10
+    CMD_PARSE_CENG          // 11
 } sim900_cmd_t;
 
 // highest level tasks for commanding a sim900
 typedef enum {
-    TASK_NULL,
-    TASK_DEFAULT,
+    TASK_NULL,              // 0
+    TASK_DEFAULT,           // 1
 } sim900_task_t;
 
 // discrete states for the high level state machine
 typedef enum {
-    SUBTASK_NULL,
-    SUBTASK_ON,
-    SUBTASK_WAIT_FOR_RDY,
-    SUBTASK_GET_IMEI,
-    SUBTASK_TX_GPRS,
-    SUBTASK_START_GPRS,
-    SUBTASK_CLOSE_GPRS,
-    SUBTASK_HTTP_POST,
-    SUBTASK_SEND_SMS,
-    SUBTASK_PWROFF,
-    SUBTASK_PARSE_SMS,
-    SUBTASK_SWITCHER,
-    SUBTASK_PARSE_CENG
+    SUBTASK_NULL,           // 0
+    SUBTASK_ON,             // 1
+    SUBTASK_WAIT_FOR_RDY,   // 2
+    SUBTASK_GET_IMEI,       // 3
+    SUBTASK_TX_GPRS,        // 4
+    SUBTASK_START_GPRS,     // 5
+    SUBTASK_CLOSE_GPRS,     // 6
+    SUBTASK_HTTP_POST,      // 7
+    SUBTASK_SEND_SMS,       // 8
+    SUBTASK_PWROFF,         // 9
+    SUBTASK_PARSE_SMS,      // 10
+    SUBTASK_SWITCHER,       // 11
+    SUBTASK_PARSE_CENG      // 12
 } sim900_task_state_t;
 
 
