@@ -61,6 +61,9 @@ void display_menu(void)
     snprintf(str_temp, STR_LEN, " \e[33;1m!mem read\e[0m      - read all external mem\r\n" );
     uart0_tx_str(str_temp, strlen(str_temp));
 
+    snprintf(str_temp, STR_LEN, " \e[33;1m!flash store\e[0m   - store defaults\r\n" );
+    uart0_tx_str(str_temp, strlen(str_temp));
+
     snprintf(str_temp, STR_LEN, " \e[33;1m!flash read\e[0m    - read flash segment B\r\n" );
     uart0_tx_str(str_temp, strlen(str_temp));
 
@@ -142,6 +145,9 @@ void parse_user_input(void)
             } else if (strstr(in, "clear")) {
                 memset(zeroes, 0, 128);
                 flash_save(SEGMENT_B, zeroes, 128);
+            } else if (strstr(in, "store")) {
+                settings_init(SEGMENT_B, FACTORY_DEFAULTS);
+                flash_save(SEGMENT_B, (void *)&s, sizeof(s));
             }
         } else if (strstr(in, "chg")) {
             if (strstr(in, "on")) {

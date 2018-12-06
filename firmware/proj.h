@@ -64,7 +64,7 @@ uint8_t rtc_not_set;
 
 uint32_t charge_start;
 
-#define FLASH_VER       4   // must be incremented if struct settings_t changes
+#define FLASH_VER       5   // must be incremented if struct settings_t changes
 #define FLASH_ADDR      SEGMENT_B
 
 void main_init(void);
@@ -130,8 +130,8 @@ static const struct tracy_settings_t defaults = {
     "live",                     // gprs user
     8,                          // gprs pass_len
     "vodafone",                 // gprs pass
-    14,                         // server_len
-    "trk.simplex.ro",           // server
+    17,                         // server_len
+    "t.subdimension.ro",        // server
     80,                         // port
     198,                        // adc vref
     180,                        // [sms:spl] time interval (in seconds) between 2 gps measurements

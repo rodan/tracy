@@ -36,7 +36,7 @@ static void sim900_tasks(enum sys_message msg)
     uint8_t i;
 
 #ifdef DEBUG_GPRS
-    snprintf(str_temp, STR_LEN, "highlevel machine task:%d t_n_s:%d\r\n", sim900.task, sim900.next_state);
+    snprintf(str_temp, STR_LEN, "[%ld] high level machine task:%d t_n_s:%d\r\n", rtca_time.sys, sim900.task, sim900.next_state);
     uart0_tx_str(str_temp, strlen(str_temp));
 #endif
 
@@ -270,7 +270,7 @@ static void sim900_state_machine(enum sys_message msg)
     uint32_t i;
 
 #ifdef DEBUG_GPRS
-    snprintf(str_temp, STR_LEN, "lowlevel machine cmd:%d next_state:%d\r\n", sim900.cmd, sim900.next_state);
+    snprintf(str_temp, STR_LEN, "[%ld] low level machine cmd:%d next_state:%d\r\n", rtca_time.sys, sim900.cmd, sim900.next_state);
     uart0_tx_str(str_temp, strlen(str_temp));
 #endif
 

@@ -44,41 +44,6 @@
 
 #define POST_VERSION            0x1
 
-// states that can be reached by the low level state machine
-typedef enum {
-    SIM900_ON,
-    SIM900_OFF,
-    SIM900_PWRKEY_ACT,
-    SIM900_VBAT_ON,
-    SIM900_PRE_IDLE,
-    SIM900_WAIT_FOR_RDY,
-    SIM900_IDLE,
-    SIM900_AT,
-    SIM900_WAITREPLY,
-    SIM900_VBAT_OFF,
-    SIM900_SET1,
-    SIM900_GET_IMEI,
-    SIM900_PARSE_SMS,
-    SIM900_DEL_SMS,
-    SIM900_CLOSE_CMD,
-    SIM900_TEXT_INPUT,
-    SIM900_IP_INITIAL,
-    SIM900_IP_START,
-    SIM900_IP_GPRSACT,
-    SIM900_IP_STATUS,
-    SIM900_IP_CONNECT,
-    SIM900_IP_CONNECT_OK,
-    SIM900_TCP_START,
-    SIM900_TCP_CLOSE,
-    SIM900_IP_SEND,
-    SIM900_IP_PUT,
-    SIM900_IP_CLOSE,
-    SIM900_IP_SHUT,
-    SIM900_SEND_OK,
-    SIM900_HTTP_REPLY,
-    SIM900_SET_CENG,
-} sim900_state_t;
-
 // commands that are compatible with the low level state machine
 typedef enum {
     CMD_NULL,               // 0
@@ -95,7 +60,42 @@ typedef enum {
     CMD_PARSE_CENG          // 11
 } sim900_cmd_t;
 
-// highest level tasks for commanding a sim900
+// states that can be reached by the low level state machine
+typedef enum {
+    SIM900_ON,              // 0
+    SIM900_OFF,             // 1
+    SIM900_PWRKEY_ACT,      // 2
+    SIM900_VBAT_ON,         // 3
+    SIM900_PRE_IDLE,        // 4
+    SIM900_WAIT_FOR_RDY,    // 5
+    SIM900_IDLE,            // 6
+    SIM900_AT,              // 7
+    SIM900_WAITREPLY,       // 8
+    SIM900_VBAT_OFF,        // 9
+    SIM900_SET1,            // 10
+    SIM900_GET_IMEI,        // 11
+    SIM900_PARSE_SMS,       // 12
+    SIM900_DEL_SMS,         // 13
+    SIM900_CLOSE_CMD,       // 14
+    SIM900_TEXT_INPUT,      // 15
+    SIM900_IP_INITIAL,      // 16
+    SIM900_IP_START,        // 17
+    SIM900_IP_GPRSACT,      // 18
+    SIM900_IP_STATUS,       // 19
+    SIM900_IP_CONNECT,      // 20
+    SIM900_IP_CONNECT_OK,   // 21
+    SIM900_TCP_START,       // 22
+    SIM900_TCP_CLOSE,       // 23
+    SIM900_IP_SEND,         // 24
+    SIM900_IP_PUT,          // 25
+    SIM900_IP_CLOSE,        // 26
+    SIM900_IP_SHUT,         // 27
+    SIM900_SEND_OK,         // 28
+    SIM900_HTTP_REPLY,      // 29
+    SIM900_SET_CENG,        // 30
+} sim900_state_t;
+
+// high level state machine tasks for commanding a sim900
 typedef enum {
     TASK_NULL,              // 0
     TASK_DEFAULT,           // 1
