@@ -3,6 +3,7 @@
 
 \hfuzz=10pt
 
+\usepackage{etex}
 \usepackage{longtable}
 \usepackage{graphicx} 
 \usepackage[bitheight=6ex]{bytefield}
@@ -129,7 +130,7 @@ tabsize=2, % Number of spaces per tab in the code
 
 \begin{document}
 \title{Gps tracking module with gprs connectivity}
-\author{Petre Rodan \url{http://www.simplex.ro}}
+\author{Petre Rodan \url{http://www.subdimension.ro}}
 \date{created September 2014, revised \today}
 \maketitle
 
@@ -230,7 +231,7 @@ gprs?
 
 \subsection{Web visualization of data}
 
-You can check all the info the tracker sends out by visiting \\ \verb"http://www.simplex.ro/scripts/l1?i=IMEI_NUMBER" .\\
+You can check all the info the tracker sends out by visiting \\ \verb"http://www.subdimension.ro/scripts/l1?i=IMEI_NUMBER" .\\
 the \verb"IMEI_NUMBER" is a 15 digit number and it's written on the sim900 module.
 
 This project offers the possibility to advanced users to redirect the tracking data to another web server.
@@ -324,7 +325,9 @@ apn STRING
         action & 
 set the gprs apn value - max 20 char long
 
-in case STRING is missing, an empty apn is used \\ \hline
+in case STRING is missing, an empty apn is used 
+
+should be set to 'net' for an orange SIM \\ \hline
 \end{tabular}
 
 
@@ -361,7 +364,7 @@ in case STRING is missing, an empty password is used  \\ \hline
 \begin{lstlisting}
 srv STRING
 \end{lstlisting} \\
-        default & trk.simplex.ro \\
+        default & t.subdimension.ro \\
         action & 
 what server to contact in order to send the tracking data \\ \hline
 \end{tabular}
