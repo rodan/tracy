@@ -11,7 +11,6 @@
 #include "version.h"
 #include "qa.h"
 
-#ifdef DEBUG_GPRS
 
 void display_memtest(const uint32_t start_addr, const uint32_t stop_addr, fm24_test_t test)
 {
@@ -187,4 +186,3 @@ void parse_user_input(void)
     }
 }
 
-#endif

@@ -32,11 +32,11 @@
 
 // depending on the error, the modem will not be reused 
 // for at least these many seconds
-#define BLACKOUT_PIN_RDY            300
-#define BLACKOUT_CALL_RDY           300
-#define BLACKOUT_IMEI_UNKNOWN       600
-#define BLACKOUT_SEND_FIX_GPRS       60
-#define BLACKOUT_GPRS_NO_IP_START   300
+#define BLACKOUT_PIN_RDY            1800
+#define BLACKOUT_CALL_RDY           1800
+#define BLACKOUT_IMEI_UNKNOWN       1800
+#define BLACKOUT_SEND_FIX_GPRS      1800
+#define BLACKOUT_GPRS_NO_IP_START   1800
 
 // state machine timeouts
 #define SM_STEP_DELAY   _10ms * 2  // ~20ms
