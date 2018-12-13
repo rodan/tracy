@@ -206,14 +206,14 @@ if ($clean->{'onlyrow'} && !$clean->{'maptype'}) {
         padding: 0px
       }
     </style>
-    <script src='https://maps.googleapis.com/maps/api/js?v=3.exp'></script>
+    <script src='https://maps.googleapis.com/maps/api/js?v=3.exp&key=AIzaSyDhlsZz_AtKzFZKzZsejIqRLexzXJC9cxs'></script>
     <script>
 function initialize() {
 
   var img_tower = '/img/tower.png';
 
   var mapOptions = {
-    zoom: 16,
+    zoom: 14,
 EOF_googlemap1
 
 if ($i->{'payload'} & 0x10) {
@@ -250,7 +250,7 @@ EOF_googlemap2
     fillOpacity: 0.1,
     map: map,
     center: new google.maps.LatLng($avg_lat, $avg_lon),
-    radius: 200
+    radius: 1000
 
   });
 
