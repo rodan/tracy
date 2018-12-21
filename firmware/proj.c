@@ -311,24 +311,24 @@ void main_init(void)
     UCSCTL6 &= ~(XT1OFF | XT1DRIVE0);
 
     P1SEL = 0x0;
+    P1OUT = 0x2;
     P1DIR = 0x85;
     //P1REN = 0x2;
     // make sure CTS is pulled low so the software doesn't get stuck 
     // in case the sim900 is missing - or broken.
     P1REN = 0x22;
-    P1OUT = 0x2;
 
     P2SEL = 0x0;
-    P2DIR = 0x1;
     P2OUT = 0x0;
+    P2DIR = 0x1;
 
     P3SEL = 0x0;
-    P3DIR = 0x1f;
     P3OUT = 0x0;
+    P3DIR = 0x1f;
 
+    P4OUT = 0x0;
     //P4DIR = 0x00;
     P4DIR = 0x3;
-    P4OUT = 0x0;
 
     PMAPPWD = 0x02D52;
     // set up UART port mappings
@@ -359,16 +359,16 @@ void main_init(void)
 #endif
     PMAPPWD = 0;
 
+    P5OUT = 0x0;
     //P5SEL is set above
     P5DIR = 0xf;
-    P5OUT = 0x0;
 
     P6SEL = 0xc;
-    P6DIR = 0x3;
     P6OUT = 0x2;
+    P6DIR = 0x3;
 
-    PJDIR = 0xFF;
     PJOUT = 0x00;
+    PJDIR = 0xFF;
 
     // disable VUSB LDO and SLDO
     USBKEYPID = 0x9628;
