@@ -1320,9 +1320,9 @@ uint8_t sim900_parse_sms(char *str, const uint16_t size)
 
 void sim900_init_messagebus(void)
 {
-    sys_messagebus_register(&sim900_tasks, SYS_MSG_TIMER0_CRR1);
-    sys_messagebus_register(&sim900_state_machine, SYS_MSG_TIMER0_CRR2);
-    sys_messagebus_register(&sim900_console_timing, SYS_MSG_TIMER0_CRR3);
+    sys_messagebus_register(&sim900_tasks, SYS_MSG_TIMER0_CCR1);
+    sys_messagebus_register(&sim900_state_machine, SYS_MSG_TIMER0_CCR2);
+    sys_messagebus_register(&sim900_console_timing, SYS_MSG_TIMER0_CCR3);
 }
 
 void sim900_start(void)

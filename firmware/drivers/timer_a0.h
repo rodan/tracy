@@ -22,6 +22,7 @@
 #define _75s            _1s * 75
 
 enum timer_a0_event {
+    TIMER_A0_EVENT_NONE = 0,
     TIMER_A0_EVENT_CCR0 = BIT0,
     TIMER_A0_EVENT_CCR1 = BIT1,
     TIMER_A0_EVENT_CCR2 = BIT2,

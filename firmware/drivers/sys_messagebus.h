@@ -11,11 +11,11 @@
 	If you need to add a new entry, append it to the end! */
 enum sys_message {
     // TIMER0
-    SYS_MSG_TIMER0_CRR0 = BIT0,
-    SYS_MSG_TIMER0_CRR1 = BIT1, // timer_a0_delay_noblk_ccr1
-    SYS_MSG_TIMER0_CRR2 = BIT2, // timer_a0_delay_noblk_ccr2
-    SYS_MSG_TIMER0_CRR3 = BIT3, // timer_a0_delay_noblk_ccr3
-    SYS_MSG_TIMER0_CRR4 = BIT4,
+    SYS_MSG_TIMER0_CCR0 = BIT0,
+    SYS_MSG_TIMER0_CCR1 = BIT1, // timer_a0_delay_noblk_ccr1
+    SYS_MSG_TIMER0_CCR2 = BIT2, // timer_a0_delay_noblk_ccr2
+    SYS_MSG_TIMER0_CCR3 = BIT3, // timer_a0_delay_noblk_ccr3
+    SYS_MSG_TIMER0_CCR4 = BIT4,
     // UARTs
     SYS_MSG_UART0_RX = BITA,
     SYS_MSG_UART1_RX = BITB,

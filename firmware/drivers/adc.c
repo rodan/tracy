@@ -52,6 +52,43 @@ void adc10_halt(void)
     REFCTL0 &= ~REFON;
 }
 
+// calculate internal temperature based on the linear regression 
+// established by the two calibration registers flashed into the chip
+// qtemp the adc value on channel 10 with a 1.5V reference
+// function returns the temperature in degrees C
+int16_t calc_temp(const uint16_t qtemp)
+{
+    uint16_t x1 = *(uint16_t *)0x1a1a; // value at 30dC
+    uint16_t x2 = *(uint16_t *)0x1a1c; // value at 85dC, see datasheet
+    uint16_t y1 = 30;
+    uint16_t y2 = 85;
+    int32_t sumxsq;
+    int32_t sumx, sumy, sumxy;
+    int32_t coef1, coef2, t10;
+    int32_t rv;
+
+    sumx = x1 + x2;
+    sumy = y1 + y2;
+    sumxsq = (int32_t)x1 * (int32_t)x1 + (int32_t)x2 * (int32_t)x2;
+    sumxy = (int32_t)x1 * (int32_t)y1 + (int32_t)x2 * (int32_t)y2;
+
+    coef1 = ((sumy*sumxsq)-(sumx*sumxy))/((2*sumxsq)-(sumx*sumx))*100;
+    coef2 = 100*((2*sumxy)-(sumx*sumy))/((2*sumxsq)-(sumx*sumx));
+
+    t10 = (qtemp * coef2 + coef1)/10;
+    rv = t10/10;
+
+    // add 1 if first digit after decimal is > 4
+    if ( (t10 % 10) > 4 ) {
+        if (t10 > 0) {
+            rv += 1;
+        } else {
+            rv -= 1;
+        }
+    }
+    return rv;
+}
+
 __attribute__ ((interrupt(ADC10_VECTOR)))
 void adc10_ISR(void)
 {
