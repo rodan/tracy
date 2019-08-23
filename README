@@ -12,6 +12,6 @@ Features:
  - all gps/gsm operations controlled by timer interrupts which allows control of both sub-systems in the same time
  - great flexibility given by configuration variables
 
- prototype pictures available here:  http://goo.gl/BzzAdJ
- documentation available here:       https://github.com/rodan/tracy/raw/master/doc/tracy_manual.pdf
- 
+ prototype pictures available here:  https://photos.app.goo.gl/5ZgdGM5Km6QHHfX5A
+ documentation available here:       https://github.com/rodan/tracy/blob/master/doc/tracy_manual.pdf
+
