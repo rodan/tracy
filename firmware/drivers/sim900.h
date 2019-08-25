@@ -243,7 +243,9 @@ void sim900_start(void);
 void sim900_halt(void);
 void sim900_exec_default_task(void);
 
-uint16_t sim900_tx_str(char *str, const uint16_t size);
+uint16_t sim900_tx_sz(char *str);
+uint16_t sim900_tx_s(char *str, const uint16_t size);
+uint16_t sim900_tx_cmdz(char *str, const uint16_t reply_tmout);
 uint16_t sim900_tx_cmd(char *str, const uint16_t size, const uint16_t reply_tmout);
 uint8_t sim900_parse_rx(char *str, const uint16_t size);
 uint8_t sim900_parse_sms(char *str, const uint16_t size);

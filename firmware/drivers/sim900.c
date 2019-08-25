@@ -17,6 +17,7 @@
 #include "rtc.h"
 #include "gps.h"
 #include "fm24.h"
+#include "helper.h"
 
 #ifdef DEBUG_GPRS
 #include "uart0.h"
@@ -25,6 +26,7 @@
 uint8_t sm_c; // state machine internal counter
 
 char eom[2] = { 0x1a, 0x0 };
+char sconv[CONV_BASE_10_BUF_SZ];
 
 uint32_t payload_size;
 uint8_t payload_content_desc;   // 1 byte that describes what the payload contains
@@ -367,7 +369,7 @@ static void sim900_state_machine(enum sys_message msg)
                 case SIM900_IDLE:
                     sim900.next_state = SIM900_GET_IMEI;
                     timer_a0_delay_noblk_ccr2(SM_R_DELAY);
-                    sim900_tx_cmd("AT+GSN\r", 7, REPLY_TMOUT);
+                    sim900_tx_cmdz("AT+GSN\r", REPLY_TMOUT);
                     sim900.cmd_type = CMD_SOLICITED_GSN;
                 break;
                 case SIM900_GET_IMEI:
@@ -397,12 +399,12 @@ static void sim900_state_machine(enum sys_message msg)
                 case SIM900_AT:
                     if (sim900.rc == RC_OK) {
                         timer_a0_delay_noblk_ccr2(SM_R_DELAY);
-                        sim900_tx_cmd("AT+IPR=9600;+IFC=2,2;E0&W\r", 26, REPLY_TMOUT);
+                        sim900_tx_cmdz("AT+IPR=9600;+IFC=2,2;E0&W\r", REPLY_TMOUT);
                         sim900.next_state = SIM900_WAITREPLY;
                     } else {
                         sm_c++;
                         timer_a0_delay_noblk_ccr2(SM_R_DELAY);
-                        sim900_tx_cmd("AT\r", 3, REPLY_TMOUT);
+                        sim900_tx_cmdz("AT\r", REPLY_TMOUT);
                     }
                     if (sm_c > 15) {
                         // something terribly wrong, stop sim900
@@ -435,7 +437,7 @@ static void sim900_state_machine(enum sys_message msg)
                 default:
                     sim900.next_state = SIM900_VBAT_OFF;
                     timer_a0_delay_noblk_ccr2(_5sp);
-                    sim900_tx_cmd("AT+CPOWD=1\r", 11, _5s);
+                    sim900_tx_cmdz("AT+CPOWD=1\r", _5s);
                 break;
                 case SIM900_VBAT_OFF:
                     sim900.next_state = SIM900_OFF;
@@ -470,21 +472,21 @@ static void sim900_state_machine(enum sys_message msg)
                 case SIM900_IP_INITIAL:
                     sim900.next_state = SIM900_IP_START;
                     timer_a0_delay_noblk_ccr2(SM_R_DELAY);
-                    sim900_tx_str("AT+CGDCONT=1,\"IP\",\"", 19);
-                    sim900_tx_str(s.apn, s.apn_len);
-                    sim900_tx_cmd("\";+CIPSTATUS\r", 13, REPLY_TMOUT);
+                    sim900_tx_sz("AT+CGDCONT=1,\"IP\",\"");
+                    sim900_tx_s(s.apn, s.apn_len);
+                    sim900_tx_cmdz("\";+CIPSTATUS\r", REPLY_TMOUT);
                 break;
                 case SIM900_IP_START:
                     if (sim900.rc == RC_STATE_IP_INITIAL) {
                         sim900.next_state = SIM900_IP_GPRSACT;
                         timer_a0_delay_noblk_ccr2(SM_R_DELAY);
-                        sim900_tx_str("AT+CSTT=\"", 9);
-                        sim900_tx_str(s.apn, s.apn_len);
-                        sim900_tx_str("\",\"", 3);
-                        sim900_tx_str(s.user, s.user_len);
-                        sim900_tx_str("\",\"", 3);
-                        sim900_tx_str(s.pass, s.pass_len);
-                        sim900_tx_cmd("\";+CIPSTATUS\r", 13, REPLY_TMOUT);
+                        sim900_tx_sz("AT+CSTT=\"");
+                        sim900_tx_s(s.apn, s.apn_len);
+                        sim900_tx_sz("\",\"");
+                        sim900_tx_s(s.user, s.user_len);
+                        sim900_tx_sz("\",\"");
+                        sim900_tx_s(s.pass, s.pass_len);
+                        sim900_tx_cmdz("\";+CIPSTATUS\r", REPLY_TMOUT);
                     } else {
                         sim900.cmd = CMD_CLOSE_GPRS;
                         timer_a0_delay_noblk_ccr2(SM_STEP_DELAY);
@@ -494,7 +496,7 @@ static void sim900_state_machine(enum sys_message msg)
                     if (sim900.rc == RC_STATE_IP_START) {
                         sim900.next_state = SIM900_IP_STATUS;
                         timer_a0_delay_noblk_ccr2(_3sp);
-                        sim900_tx_cmd("AT+CIICR;+CIPSTATUS\r", 20, _3s);
+                        sim900_tx_cmdz("AT+CIICR;+CIPSTATUS\r", _3s);
                     } else {
                         sim900.err |= ERR_GPRS_NO_IP_START;
                         sim900.cmd = CMD_CLOSE_GPRS;
@@ -509,7 +511,7 @@ static void sim900_state_machine(enum sys_message msg)
                     if (sim900.rc == RC_STATE_IP_GPRSACT) {
                         sim900.next_state = SIM900_IP_CONNECT;
                         timer_a0_delay_noblk_ccr2(_3sp);
-                        sim900_tx_cmd("AT+CIFSR;+CIPHEAD=1;+CIPSTATUS\r", 31, _3s);
+                        sim900_tx_cmdz("AT+CIFSR;+CIPHEAD=1;+CIPSTATUS\r", _3s);
                     } else {
                         sim900.cmd = CMD_CLOSE_GPRS;
                         timer_a0_delay_noblk_ccr2(SM_STEP_DELAY);
@@ -539,10 +541,11 @@ static void sim900_state_machine(enum sys_message msg)
                 case SIM900_TCP_START:
                     sim900.next_state = SIM900_IP_CONNECT_OK;
                     timer_a0_delay_noblk_ccr2(SM_R_DELAY);
-                    sim900_tx_str("AT+CIPSTART=\"TCP\",\"", 19);
-                    sim900_tx_str(s.server, s.server_len);
-                    snprintf(str_temp, STR_LEN, "\",\"%u\"\r", s.port);
-                    sim900_tx_cmd(str_temp, strlen(str_temp), REPLY_TMOUT);
+                    sim900_tx_sz("AT+CIPSTART=\"TCP\",\"");
+                    sim900_tx_s(s.server, s.server_len);
+                    sim900_tx_sz("\",\"");
+                    sim900_tx_sz(_utoa(sconv, s.port));
+                    sim900_tx_cmdz("\"\r", REPLY_TMOUT);
                 break;
                 case SIM900_IP_CONNECT_OK:
                     if (sim900.rc == RC_OK) {
@@ -569,10 +572,10 @@ static void sim900_state_machine(enum sys_message msg)
                         //payload_size = fm24_data_len(m.ntx, m.e);
                         payload_size = fm24_data_len(m.seg[0], m.seg[1]);
 
-                        sim900_tx_str("AT+CIPSEND=", 11);
+                        sim900_tx_sz("AT+CIPSEND=");
                         // HTTP header is 19 + 6 + s.server_len + 2 + 34 + 25 = 86 bytes + s.server_len
-                        snprintf(str_temp, STR_LEN, "%lu\r", payload_size + 86 + s.server_len);
-                        sim900_tx_cmd(str_temp, strlen(str_temp), REPLY_TMOUT);
+                        sim900_tx_sz(_utoa(sconv, payload_size + 86 + s.server_len));
+                        sim900_tx_cmdz("\r", REPLY_TMOUT);
                     } else {
                         sim900.next_state = SIM900_TCP_CLOSE;
                         timer_a0_delay_noblk_ccr2(SM_STEP_DELAY);
@@ -582,18 +585,19 @@ static void sim900_state_machine(enum sys_message msg)
                     if (sim900.rc == RC_TEXT_INPUT) {
                         sim900.next_state = SIM900_SEND_OK;
                         timer_a0_delay_noblk_ccr2(_10sp);
-                        sim900_tx_str("POST /u1 HTTP/1.0\r\n", 19);
-                        sim900_tx_str("Host: ", 6);
-                        sim900_tx_str(s.server, s.server_len);
-                        sim900_tx_str("\r\n", 2);
-                        sim900_tx_str("Content-Type: application/binary\r\n", 34);
-                        snprintf(str_temp, STR_LEN, "Content-Length: %05lu\r\n\r\n", payload_size);
-                        sim900_tx_str(str_temp, strlen(str_temp));
+                        sim900_tx_sz("POST /u1 HTTP/1.0\r\n");
+                        sim900_tx_sz("Host: ");
+                        sim900_tx_s(s.server, s.server_len);
+                        sim900_tx_sz("\r\n");
+                        sim900_tx_sz("Content-Type: application/binary\r\n");
+                        sim900_tx_sz("Content-Length: ");
+                        sim900_tx_sz(prepend_padding(sconv, _utoa(sconv, payload_size), PAD_ZEROES, 5));
+                        sim900_tx_sz("\r\n\r\n");
 
                         for (i=0; i<payload_size; i++) {
                             fm24_read_from((uint8_t *)str_temp, m.seg[0] + i, 1);
                             if (i != payload_size - 1) {
-                                sim900_tx_str(str_temp, 1);
+                                sim900_tx_s(str_temp, 1);
                             } else {
                                 sim900_tx_cmd(str_temp, 1, _10s);
                             }
@@ -644,7 +648,7 @@ static void sim900_state_machine(enum sys_message msg)
                 case SIM900_TCP_CLOSE:
                     sim900.next_state = SIM900_CLOSE_CMD;
                     timer_a0_delay_noblk_ccr2(_3sp);
-                    sim900_tx_cmd("AT+CIPCLOSE\r", 12, _3s);
+                    sim900_tx_cmdz("AT+CIPCLOSE\r", _3s);
                 break;
                 case SIM900_CLOSE_CMD:
                     sim900.next_state = SIM900_IDLE;
@@ -663,7 +667,7 @@ static void sim900_state_machine(enum sys_message msg)
                 default:
                     sim900.next_state = SIM900_CLOSE_CMD;
                     timer_a0_delay_noblk_ccr2(_3sp);
-                    sim900_tx_cmd("AT+CIPSHUT\r", 11, _3s);
+                    sim900_tx_cmdz("AT+CIPSHUT\r", _3s);
                 break;
                 case SIM900_CLOSE_CMD:
                     sim900.next_state = SIM900_IDLE;
@@ -683,15 +687,15 @@ static void sim900_state_machine(enum sys_message msg)
                 default:
                     sim900.next_state = SIM900_SET1;
                     timer_a0_delay_noblk_ccr2(SM_R_DELAY);
-                    sim900_tx_cmd("AT+CMGF=1\r", 10, REPLY_TMOUT);
+                    sim900_tx_cmdz("AT+CMGF=1\r", REPLY_TMOUT);
                 break;
                 case SIM900_SET1:
                     if (sim900.rc == RC_OK) {
                         sim900.next_state = SIM900_TEXT_INPUT;
                         timer_a0_delay_noblk_ccr2(SM_R_DELAY);
-                        sim900_tx_str("AT+CMGS=\"", 9);
-                        sim900_tx_str(s.ctrl_phone, s.ctrl_phone_len);
-                        sim900_tx_cmd("\"\r", 2, REPLY_TMOUT);
+                        sim900_tx_sz("AT+CMGS=\"");
+                        sim900_tx_s(s.ctrl_phone, s.ctrl_phone_len);
+                        sim900_tx_cmdz("\"\r", REPLY_TMOUT);
                     }
                 break;
                 case SIM900_TEXT_INPUT:
@@ -701,62 +705,89 @@ static void sim900_state_machine(enum sys_message msg)
                         switch (sim900.sms_queue[sim900.current_s]) {
                             case SMS_FIX:
                                 if (mc_f.fix) {
-                                    snprintf(str_temp, STR_LEN, "%d %d.%04d%c %d %d.%04d%c  %lds\r",
-                                    mc_f.lat_deg, mc_f.lat_min, mc_f.lat_fr, mc_f.lat_suffix,
-                                    mc_f.lon_deg, mc_f.lon_min, mc_f.lon_fr, mc_f.lon_suffix,
-                                    rtca_time.sys - mc_f.fixtime);
-                                    sim900_tx_str(str_temp, strlen(str_temp));
+                                    sim900_tx_sz(_utoa(sconv, mc_f.lat_deg));
+                                    sim900_tx_sz(" ");
+                                    sim900_tx_sz(_utoa(sconv, mc_f.lat_min));
+                                    sim900_tx_sz(".");
+                                    sim900_tx_sz(prepend_padding(sconv, _utoa(sconv, mc_f.lat_fr), PAD_ZEROES, 4));
+                                    sim900_tx_s((char *)&mc_f.lat_suffix, 1);
+                                    sim900_tx_sz(",");
+                                    sim900_tx_sz(_utoa(sconv, mc_f.lon_deg));
+                                    sim900_tx_sz(" ");
+                                    sim900_tx_sz(_utoa(sconv, mc_f.lon_min));
+                                    sim900_tx_sz(".");
+                                    sim900_tx_sz(prepend_padding(sconv, _utoa(sconv, mc_f.lon_fr), PAD_ZEROES, 4));
+                                    sim900_tx_s((char *)&mc_f.lon_suffix, 1);
+                                    sim900_tx_sz(",");
+                                    sim900_tx_sz(_utoa(sconv, rtca_time.sys - mc_f.fixtime));
+                                    sim900_tx_sz("\r");
                                 } else {
-                                    sim900_tx_str("no_fix\r", 7);
+                                    sim900_tx_sz("no_fix\r");
                                 }
                             break;
                             case SMS_GENERIC_SETUP:
-                                snprintf(str_temp, STR_LEN, "setup 0x%04x\r", s.settings);
-                                sim900_tx_str(str_temp, strlen(str_temp));
+                                sim900_tx_sz("setup ");
+                                sim900_tx_sz(_utoh(sconv, s.settings));
+                                sim900_tx_sz("\r");
                             break;
                             case SMS_GPRS_SETUP:
-                                sim900_tx_str("aup=\"", 5);
-                                sim900_tx_str(s.apn, s.apn_len);
-                                sim900_tx_str("\",\"", 3);
-                                sim900_tx_str(s.user, s.user_len);
-                                sim900_tx_str("\",\"", 3);
-                                sim900_tx_str(s.pass, s.pass_len);
-                                sim900_tx_str("\" srv=\"", 7);
-                                sim900_tx_str(s.server, s.server_len);
-                                snprintf(str_temp, STR_LEN, ":%u\"\r", s.port);
-                                sim900_tx_str(str_temp, strlen(str_temp));
+                                sim900_tx_sz("aup=\"");
+                                sim900_tx_s(s.apn, s.apn_len);
+                                sim900_tx_sz("\",\"");
+                                sim900_tx_s(s.user, s.user_len);
+                                sim900_tx_sz("\",\"");
+                                sim900_tx_s(s.pass, s.pass_len);
+                                sim900_tx_sz("\" srv=\"");
+                                sim900_tx_s(s.server, s.server_len);
+                                sim900_tx_sz(":");
+                                sim900_tx_sz(_utoa(sconv, s.port));
+                                sim900_tx_sz("\"\r");
                             break;
                             case SMS_GPRS_TIMINGS:
-                                snprintf(str_temp, STR_LEN, "sml %u smst %u smmt %u\r", s.gprs_loop_interval, s.gprs_static_tx_interval, s.gprs_moving_tx_interval);
-                                sim900_tx_str(str_temp, strlen(str_temp));
+                                sim900_tx_sz("sml ");
+                                sim900_tx_sz(_utoa(sconv, s.gprs_loop_interval));
+                                sim900_tx_sz("smst ");
+                                sim900_tx_sz(_utoa(sconv, s.gprs_static_tx_interval));
+                                sim900_tx_sz("smmt ");
+                                sim900_tx_sz(_utoa(sconv, s.gprs_moving_tx_interval));
+                                sim900_tx_sz("\r");
                             break;
                             case SMS_GPS_TIMINGS:
-                                snprintf(str_temp, STR_LEN, "spl %u spw %u spi %u spg %u\r", s.gps_loop_interval, s.gps_warmup_interval, s.gps_invalidate_interval, s.geofence_trigger);
-                                sim900_tx_str(str_temp, strlen(str_temp));
+                                sim900_tx_sz("spl ");
+                                sim900_tx_sz(_utoa(sconv, s.gps_loop_interval));
+                                sim900_tx_sz("spw ");
+                                sim900_tx_sz(_utoa(sconv, s.gps_warmup_interval));
+                                sim900_tx_sz("spi ");
+                                sim900_tx_sz(_utoa(sconv, s.gps_invalidate_interval));
+                                sim900_tx_sz("spg ");
+                                sim900_tx_sz(_utoa(sconv, s.geofence_trigger));
+                                sim900_tx_sz("\r");
                             break;
                             case SMS_DEFAULTS:
                                 settings_init(SEGMENT_B, FACTORY_DEFAULTS);
                                 sim900.rdy |= NEED_SYSTEM_REBOOT;
                                 flash_save(SEGMENT_B, (void *)&s, sizeof(s));
-                                sim900_tx_str("defaults loaded\r", 16);
+                                sim900_tx_sz("defaults loaded\r");
                             break;
                             case SMS_ERRORS:
                                 if (sim900.err) {
-                                    snprintf(str_temp, STR_LEN, "err 0x%04x\r", sim900.err);
-                                    sim900_tx_str(str_temp, strlen(str_temp));
+                                    sim900_tx_sz("err ");
+                                    sim900_tx_sz(_utoh(sconv, sim900.err));
+                                    sim900_tx_sz("\r");
                                     sim900.err = 0;
                                 } else {
-                                    sim900_tx_str("no errors\r", 10);
+                                    sim900_tx_sz("no errors\r");
                                 }
                             break;
                             case SMS_CODE_OK:
-                                sim900_tx_str("code ok\r", 8);
+                                sim900_tx_sz("code ok\r");
                             break;
                             case SMS_VREF:
-                                snprintf(str_temp, STR_LEN, "vref %d vbat %d.%02dV vraw %d.%02dV\r",
-                                    s.vref, stat.v_bat/100, stat.v_bat%100, 
-                                    stat.v_raw/100, stat.v_raw%100);
-                                sim900_tx_str(str_temp, strlen(str_temp));
+                                //snprintf(str_temp, STR_LEN, "vref %d vbat %d.%02dV vraw %d.%02dV\r",
+                                //    s.vref, stat.v_bat/100, stat.v_bat%100, 
+                                //    stat.v_raw/100, stat.v_raw%100);
+                                //sim900_tx_sz(str_temp);
+                                sim900_tx_sz("vref ch\r");
                             break;
                         }
                         sim900_tx_cmd(eom, 2, _5s);
@@ -784,19 +815,19 @@ static void sim900_state_machine(enum sys_message msg)
                 case SIM900_IDLE:
                     sim900.next_state = SIM900_SET1;
                     timer_a0_delay_noblk_ccr2(SM_R_DELAY);
-                    sim900_tx_cmd("AT+CMGF=1\r", 10, REPLY_TMOUT);
+                    sim900_tx_cmdz("AT+CMGF=1\r", REPLY_TMOUT);
                 break;
                 case SIM900_SET1:
                     sim900.next_state = SIM900_PARSE_SMS;
                     timer_a0_delay_noblk_ccr2(_5sp);
-                    sim900_tx_cmd("AT+CMGL=\"ALL\",\r", 15, _5s);
+                    sim900_tx_cmdz("AT+CMGL=\"ALL\",\r", _5s);
                 break;
                 case SIM900_PARSE_SMS:
                     if (sim900.rc == RC_CMGL) {
                         timer_a0_delay_noblk_ccr2(SM_R_DELAY);
-                        sim900_tx_str("AT+CMGR=", 8);
-                        sim900_tx_str(sim900.rcvd_sms_id, sim900.rcvd_sms_id_len);
-                        sim900_tx_cmd(",1\r", 3, REPLY_TMOUT);
+                        sim900_tx_sz("AT+CMGR=");
+                        sim900_tx_s(sim900.rcvd_sms_id, sim900.rcvd_sms_id_len);
+                        sim900_tx_cmdz(",1\r", REPLY_TMOUT);
                         sim900.next_state = SIM900_DEL_SMS;
                         // deincrement task queue so we parse SMSs again
                         sim900.current_t--;
@@ -809,9 +840,9 @@ static void sim900_state_machine(enum sys_message msg)
                 case SIM900_DEL_SMS:
                     if (sim900.rc == RC_CMGR) {
                         timer_a0_delay_noblk_ccr2(_5sp);
-                        sim900_tx_str("AT+CMGD=", 8);
-                        sim900_tx_str(sim900.rcvd_sms_id, sim900.rcvd_sms_id_len);
-                        sim900_tx_cmd(",0\r", 3, _5s);
+                        sim900_tx_sz("AT+CMGD=");
+                        sim900_tx_s(sim900.rcvd_sms_id, sim900.rcvd_sms_id_len);
+                        sim900_tx_cmdz(",0\r", _5s);
                         sim900.next_state = SIM900_CLOSE_CMD;
                     }
                 break;
@@ -834,7 +865,7 @@ static void sim900_state_machine(enum sys_message msg)
                 case SIM900_IDLE:
                     sim900.next_state = SIM900_SET_CENG;
                     timer_a0_delay_noblk_ccr2(SM_R_DELAY);
-                    sim900_tx_cmd("AT+CENG=2,1\r", 12, REPLY_TMOUT);
+                    sim900_tx_cmdz("AT+CENG=2,1\r", REPLY_TMOUT);
                 break;
                 case SIM900_SET_CENG:
                     if (sim900.rc == RC_OK) {
@@ -852,7 +883,7 @@ static void sim900_state_machine(enum sys_message msg)
                     if (sim900.rc == RC_CENG_RCVD) {
                         sim900.next_state = SIM900_CLOSE_CMD;
                         timer_a0_delay_noblk_ccr2(SM_R_DELAY);
-                        sim900_tx_cmd("AT+CENG=0,1\r", 12, REPLY_TMOUT);
+                        sim900_tx_cmdz("AT+CENG=0,1\r", REPLY_TMOUT);
                     }
                 break;
                 case SIM900_CLOSE_CMD:
@@ -888,7 +919,12 @@ static void sim900_console_timing(enum sys_message msg)
     }
 }
 
-uint16_t sim900_tx_str(char *str, const uint16_t size)
+uint16_t sim900_tx_sz(char *str)
+{
+    return sim900_tx_s(str, strlen(str));
+}
+
+uint16_t sim900_tx_s(char *str, const uint16_t size)
 {
     uint16_t p = 0;
     
@@ -949,6 +985,11 @@ uint16_t sim900_tx_cmd(char *str, const uint16_t size, const uint16_t reply_tmou
     }
 
     return p;
+}
+
+uint16_t sim900_tx_cmdz(char *str, const uint16_t reply_tmout)
+{
+    return sim900_tx_cmd(str, strlen(str), reply_tmout);
 }
 
 uint8_t sim900_parse_rx(char *str, const uint16_t size)

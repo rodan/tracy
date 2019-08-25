@@ -181,8 +181,8 @@ void parse_user_input(void)
             uart0_tx_str(str_temp, strlen(str_temp));
         }
     } else {
-        sim900_tx_str((char *)uart0_rx_buf, uart0_p);
-        sim900_tx_str("\r", 1);
+        sim900_tx_s((char *)uart0_rx_buf, uart0_p);
+        sim900_tx_sz("\r");
     }
 }
 
