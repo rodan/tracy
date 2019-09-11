@@ -31,12 +31,6 @@
 // read CHG - 0 if charging
 #define CHARGING_STOPPED P1IN & BIT1
 
-#define I2C_MASTER_DIR  P4DIR
-#define I2C_MASTER_OUT  P4OUT
-#define I2C_MASTER_IN   P4IN
-#define I2C_MASTER_SCL  BIT6
-#define I2C_MASTER_SDA  BIT7
-
 // resistor divider ratio
 // calculated as (R1+R2)/R2 * 100 / 1023 * 100
 #define DIV_RAW         41

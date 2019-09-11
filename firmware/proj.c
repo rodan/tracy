@@ -259,7 +259,7 @@ int main(void)
 #endif
 
 #ifdef FM24_HAS_SLEEP_MODE
-    fm24_sleep();
+    FM24_sleep(EUSCI_BASE_ADDR);
 #endif
 
     // main loop
@@ -279,7 +279,7 @@ int main(void)
 #ifdef FM24_HAS_SLEEP_MODE
         // sleep
         if (fm24_status & FM24_AWAKE) {
-            fm24_sleep();
+            FM24_sleep(EUSCI_BASE_ADDR);
         }
 #endif
 
@@ -478,53 +478,53 @@ void store_pkt()
     }
 #endif
 
-    rv += fm24_write((uint8_t *) & stat.http_post_version, m.e, 2);
-    rv += fm24_write((uint8_t *) sim900.imei, m.e, 15);
-    rv += fm24_write((uint8_t *) & s.settings, m.e, 2);
-    rv += fm24_write((uint8_t *) & stat.v_bat, m.e, 2);
-    rv += fm24_write((uint8_t *) & stat.v_raw, m.e, 2);
-    rv += fm24_write((uint8_t *) & sim900.err, m.e, 2);
-    rv += fm24_write((uint8_t *) & stat.fix_id, m.e, 2);
-    rv += fm24_write((uint8_t *) & payload_content_desc, m.e, 1);
+    rv += FM24_write(EUSCI_BASE_ADDR, (uint8_t *) & stat.http_post_version, m.e, 2);
+    rv += FM24_write(EUSCI_BASE_ADDR, (uint8_t *) sim900.imei, m.e, 15);
+    rv += FM24_write(EUSCI_BASE_ADDR, (uint8_t *) & s.settings, m.e, 2);
+    rv += FM24_write(EUSCI_BASE_ADDR, (uint8_t *) & stat.v_bat, m.e, 2);
+    rv += FM24_write(EUSCI_BASE_ADDR, (uint8_t *) & stat.v_raw, m.e, 2);
+    rv += FM24_write(EUSCI_BASE_ADDR, (uint8_t *) & sim900.err, m.e, 2);
+    rv += FM24_write(EUSCI_BASE_ADDR, (uint8_t *) & stat.fix_id, m.e, 2);
+    rv += FM24_write(EUSCI_BASE_ADDR, (uint8_t *) & payload_content_desc, m.e, 1);
 
     if (mc_f.fix) {
-        //fm24_write((uint8_t *) &mc_f, 25); // epic fail, struct not continguous
-        rv += fm24_write((uint8_t *) & mc_f.year, m.e, 2);
-        rv += fm24_write((uint8_t *) & mc_f.month, m.e, 1);
-        rv += fm24_write((uint8_t *) & mc_f.day, m.e, 1);
-        rv += fm24_write((uint8_t *) & mc_f.hour, m.e, 1);
-        rv += fm24_write((uint8_t *) & mc_f.minute, m.e, 1);
-        rv += fm24_write((uint8_t *) & mc_f.second, m.e, 1);
+        //FM24_write((uint8_t *) &mc_f, 25); // epic fail, struct not continguous
+        rv += FM24_write(EUSCI_BASE_ADDR, (uint8_t *) & mc_f.year, m.e, 2);
+        rv += FM24_write(EUSCI_BASE_ADDR, (uint8_t *) & mc_f.month, m.e, 1);
+        rv += FM24_write(EUSCI_BASE_ADDR, (uint8_t *) & mc_f.day, m.e, 1);
+        rv += FM24_write(EUSCI_BASE_ADDR, (uint8_t *) & mc_f.hour, m.e, 1);
+        rv += FM24_write(EUSCI_BASE_ADDR, (uint8_t *) & mc_f.minute, m.e, 1);
+        rv += FM24_write(EUSCI_BASE_ADDR, (uint8_t *) & mc_f.second, m.e, 1);
 
-        rv += fm24_write((uint8_t *) & mc_f.lat, m.e, 4);
-        rv += fm24_write((uint8_t *) & mc_f.lon, m.e, 4);
-        rv += fm24_write((uint8_t *) & mc_f.pdop, m.e, 2);
-        rv += fm24_write((uint8_t *) & mc_f.speed, m.e, 2);
-        rv += fm24_write((uint8_t *) & mc_f.heading, m.e, 2);
-        rv += fm24_write((uint8_t *) & mc_f.fixtime, m.e, 4);
+        rv += FM24_write(EUSCI_BASE_ADDR, (uint8_t *) & mc_f.lat, m.e, 4);
+        rv += FM24_write(EUSCI_BASE_ADDR, (uint8_t *) & mc_f.lon, m.e, 4);
+        rv += FM24_write(EUSCI_BASE_ADDR, (uint8_t *) & mc_f.pdop, m.e, 2);
+        rv += FM24_write(EUSCI_BASE_ADDR, (uint8_t *) & mc_f.speed, m.e, 2);
+        rv += FM24_write(EUSCI_BASE_ADDR, (uint8_t *) & mc_f.heading, m.e, 2);
+        rv += FM24_write(EUSCI_BASE_ADDR, (uint8_t *) & mc_f.fixtime, m.e, 4);
 #ifdef CONFIG_GEOFENCE
-        rv += fm24_write((uint8_t *) & geo.distance, m.e, 4);
-        rv += fm24_write((uint8_t *) & geo.bearing, m.e, 2);
+        rv += FM24_write(EUSCI_BASE_ADDR, (uint8_t *) & geo.distance, m.e, 4);
+        rv += FM24_write(EUSCI_BASE_ADDR, (uint8_t *) & geo.bearing, m.e, 2);
 #endif
     } else {
         // since gps is not available RTC time will be used
-        rv += fm24_write((uint8_t *) & rtca_time.year, m.e, 2);
-        rv += fm24_write((uint8_t *) & rtca_time.mon, m.e, 1);
-        rv += fm24_write((uint8_t *) & rtca_time.day, m.e, 1);
-        rv += fm24_write((uint8_t *) & rtca_time.hour, m.e, 1);
-        rv += fm24_write((uint8_t *) & rtca_time.min, m.e, 1);
-        rv += fm24_write((uint8_t *) & rtca_time.sec, m.e, 1);
+        rv += FM24_write(EUSCI_BASE_ADDR, (uint8_t *) & rtca_time.year, m.e, 2);
+        rv += FM24_write(EUSCI_BASE_ADDR, (uint8_t *) & rtca_time.mon, m.e, 1);
+        rv += FM24_write(EUSCI_BASE_ADDR, (uint8_t *) & rtca_time.day, m.e, 1);
+        rv += FM24_write(EUSCI_BASE_ADDR, (uint8_t *) & rtca_time.hour, m.e, 1);
+        rv += FM24_write(EUSCI_BASE_ADDR, (uint8_t *) & rtca_time.min, m.e, 1);
+        rv += FM24_write(EUSCI_BASE_ADDR, (uint8_t *) & rtca_time.sec, m.e, 1);
     }
 
     if (payload_content_desc & 0x7) {
         // tower cell data
-        rv += fm24_write((uint8_t *) & sim900.cell[0], m.e,
+        rv += FM24_write(EUSCI_BASE_ADDR, (uint8_t *) & sim900.cell[0], m.e,
                (payload_content_desc & 0x7) * sizeof(sim900_cell_t));
         memset(&sim900.cell, 0, sizeof(sim900_cell_t));
     }
 
     // suffix
-    rv += fm24_write((uint8_t *) & suffix, m.e, 1);
+    rv += FM24_write(EUSCI_BASE_ADDR, (uint8_t *) & suffix, m.e, 1);
 
     if (rv < 31) {
         sim900.err |= ERR_RAM_WRITE;
@@ -539,7 +539,7 @@ void store_pkt()
     mc_f.fix = 0;
 
     // organize data into < MAX_SEG_SIZE byte segments
-    if (fm24_data_len(m.seg[m.seg_num - 1], m.e) > MAX_SEG_SIZE) {
+    if (FM24_data_len(m.seg[m.seg_num - 1], m.e) > MAX_SEG_SIZE) {
         if (m.seg_num == MAX_SEG) {
             // drop oldest segment
             for (i = 0; i < MAX_SEG; i++) {

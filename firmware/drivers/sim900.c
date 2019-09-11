@@ -569,8 +569,8 @@ static void sim900_state_machine(enum sys_message msg)
 
                         // payload contains everything after the HTTP header
                         //  - version (2 bytes), imei (15 bytes), settings (2 bytes), etc
-                        //payload_size = fm24_data_len(m.ntx, m.e);
-                        payload_size = fm24_data_len(m.seg[0], m.seg[1]);
+                        //payload_size = FM24_data_len(m.ntx, m.e);
+                        payload_size = FM24_data_len(m.seg[0], m.seg[1]);
 
                         sim900_tx_sz("AT+CIPSEND=");
                         // HTTP header is 19 + 6 + s.server_len + 2 + 34 + 25 = 86 bytes + s.server_len
@@ -595,7 +595,7 @@ static void sim900_state_machine(enum sys_message msg)
                         sim900_tx_sz("\r\n\r\n");
 
                         for (i=0; i<payload_size; i++) {
-                            fm24_read_from((uint8_t *)str_temp, m.seg[0] + i, 1);
+                            FM24_read(EUSCI_BASE_ADDR, (uint8_t *)str_temp, m.seg[0] + i, 1);
                             if (i != payload_size - 1) {
                                 sim900_tx_s(str_temp, 1);
                             } else {
@@ -1331,7 +1331,7 @@ uint8_t sim900_parse_sms(char *str, const uint16_t size)
             settings_apply();
         } else if (strstr(str, "ping")) {
             sim900.flags |= TX_FIX_RDY;
-            if (fm24_data_len(m.seg[0], m.seg[1]) > 0) {
+            if (FM24_data_len(m.seg[0], m.seg[1]) > 0) {
                 sim900_add_subtask(SUBTASK_TX_GPRS, SMS_NULL);
             }
         } else if (strstr(str, "default")) {
@@ -1418,7 +1418,7 @@ void sim900_exec_default_task(void)
     sim900_add_subtask(SUBTASK_PARSE_SMS, SMS_NULL);
     sim900_add_subtask(SUBTASK_PARSE_CENG, SMS_NULL);
     if (sim900.flags & TX_FIX_RDY) {
-        if (fm24_data_len(m.seg[0], m.seg[1]) > 0) {
+        if (FM24_data_len(m.seg[0], m.seg[1]) > 0) {
             sim900_add_subtask(SUBTASK_TX_GPRS, SMS_NULL);
         } else {
             sim900.flags &= ~TX_FIX_RDY;

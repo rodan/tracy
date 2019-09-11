@@ -4,8 +4,8 @@ PROJ = proj
 
 ### Machine flags
 #
-CC_CMACH	= -mmcu=msp430f5510
-CC_DMACH	= -D__MSP430F5510__
+CC_CMACH	= -mmcu=msp430f5994
+CC_DMACH	= -D__MSP430FR5994__
 ### Build flags
 #
 # -fdata-sections, -ffunction-sections and -Wl,--gc-sections -Wl,-s
